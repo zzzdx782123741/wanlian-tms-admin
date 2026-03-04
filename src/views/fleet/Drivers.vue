@@ -2,22 +2,27 @@
   <div class="fleet-drivers">
     <!-- 统计卡片 -->
     <el-row :gutter="20">
-      <el-col :span="6">
+      <el-col :span="5">
         <el-card class="stat-card">
           <el-statistic title="司机总数" :value="stats.total" />
         </el-card>
       </el-col>
-      <el-col :span="6">
+      <el-col :span="5">
         <el-card class="stat-card stat-card-success">
           <el-statistic title="正常" :value="stats.normal" />
         </el-card>
       </el-col>
-      <el-col :span="6">
-        <el-card class="stat-card stat-card-warning">
-          <el-statistic title="待审核" :value="stats.pending" />
+      <el-col :span="4">
+        <el-card class="stat-card stat-card-info">
+          <el-statistic title="待激活" :value="stats.pending_activation" />
         </el-card>
       </el-col>
-      <el-col :span="6">
+      <el-col :span="5">
+        <el-card class="stat-card stat-card-warning">
+          <el-statistic title="待审核" :value="stats.pending_audit" />
+        </el-card>
+      </el-col>
+      <el-col :span="5">
         <el-card class="stat-card stat-card-danger">
           <el-statistic title="已停用" :value="stats.suspended" />
         </el-card>
@@ -29,10 +34,14 @@
       <template #header>
         <div class="card-header">
           <span>车队司机管理</span>
-          <div>
-            <el-button type="success" size="small" @click="handleBatchImport">
+          <div class="header-actions">
+            <el-button v-if="userRole === 'FLEET_MANAGER'" type="success" size="small" @click="handleBatchImport">
               <el-icon><Upload /></el-icon>
               批量导入
+            </el-button>
+            <el-button type="warning" size="small" @click="handleBatchExport">
+              <el-icon><Download /></el-icon>
+              批量导出
             </el-button>
             <el-button type="primary" size="small" @click="handleAdd">
               <el-icon><Plus /></el-icon>
@@ -44,11 +53,17 @@
 
       <!-- 搜索筛选 -->
       <el-form :inline="true" class="search-form">
-        <el-form-item label="状态">
-          <el-select v-model="queryParams.status" placeholder="全部" clearable style="width: 120px">
+        <el-form-item label="角色状态">
+          <el-select v-model="queryParams.roleStatus" placeholder="全部" clearable style="width: 130px">
             <el-option label="正常" value="normal" />
             <el-option label="待审核" value="pending_audit" />
             <el-option label="已停用" value="suspended" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="激活状态">
+          <el-select v-model="queryParams.status" placeholder="全部" clearable style="width: 130px">
+            <el-option label="正常" value="normal" />
+            <el-option label="待激活" value="pending_activation" />
           </el-select>
         </el-form-item>
         <el-form-item label="关键词">
@@ -60,11 +75,13 @@
           />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="handleQuery">
-            <el-icon><Search /></el-icon>
-            查询
-          </el-button>
-          <el-button @click="handleReset">重置</el-button>
+          <div class="form-actions">
+            <el-button type="primary" @click="handleQuery">
+              <el-icon><Search /></el-icon>
+              查询
+            </el-button>
+            <el-button @click="handleReset">重置</el-button>
+          </div>
         </el-form-item>
       </el-form>
 
@@ -93,10 +110,17 @@
           </template>
         </el-table-column>
         <el-table-column prop="age" label="年龄" width="80" />
-        <el-table-column label="状态" width="100" align="center">
+        <el-table-column label="激活状态" width="100" align="center">
           <template #default="{ row }">
-            <el-tag :type="getStatusType(row.role?.status)">
-              {{ getStatusText(row.role?.status) }}
+            <el-tag :type="getActivationStatusType(row.status)">
+              {{ getActivationStatusText(row.status) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="角色状态" width="100" align="center">
+          <template #default="{ row }">
+            <el-tag :type="getRoleStatusType(row.role?.status)">
+              {{ getRoleStatusText(row.role?.status) }}
             </el-tag>
           </template>
         </el-table-column>
@@ -198,36 +222,17 @@
       width="700px"
     >
       <div class="batch-import-content">
-        <!-- 步骤说明 -->
-        <el-steps :active="batchStep" align-center style="margin-bottom: 30px">
-          <el-step title="下载模板" />
-          <el-step title="上传文件" />
-          <el-step title="导入完成" />
-        </el-steps>
+        <!-- 未显示结果时显示上传界面 -->
+        <div v-if="!importResult.message" class="upload-section">
+          <!-- 顶部操作栏 -->
+          <div class="upload-header">
+            <el-button type="primary" link @click="downloadTemplate" :loading="downloading">
+              <el-icon><Download /></el-icon>
+              下载 Excel 模板
+            </el-button>
+          </div>
 
-        <!-- 步骤1: 下载模板 -->
-        <div v-if="batchStep === 0" class="step-content">
-          <el-alert
-            title="导入说明"
-            type="info"
-            :closable="false"
-            style="margin-bottom: 20px"
-          >
-            <ul>
-              <li>请先下载 Excel 模板，按照模板格式填写司机信息</li>
-              <li>姓名、手机号为必填项</li>
-              <li>关联车辆可填写车牌号，多个车牌号用逗号分隔</li>
-              <li>支持导入最多 1000 条数据</li>
-            </ul>
-          </el-alert>
-          <el-button type="primary" @click="downloadTemplate" :loading="downloading">
-            <el-icon><Download /></el-icon>
-            下载 Excel 模板
-          </el-button>
-        </div>
-
-        <!-- 步骤2: 上传文件 -->
-        <div v-if="batchStep === 1" class="step-content">
+          <!-- 上传区域 -->
           <el-upload
             ref="uploadRef"
             class="upload-area"
@@ -249,16 +254,38 @@
               </div>
             </template>
           </el-upload>
-          <div style="text-align: right; margin-top: 20px">
-            <el-button @click="batchStep = 0">上一步</el-button>
+
+          <!-- 字段说明 -->
+          <div class="field-info">
+            <el-divider content-position="left">
+              <el-icon><InfoFilled /></el-icon>
+              字段说明
+            </el-divider>
+            <el-descriptions :column="2" border size="small">
+              <el-descriptions-item label="必填字段" label-class-name="required-field">
+                姓名、手机号
+              </el-descriptions-item>
+              <el-descriptions-item label="选填字段">
+                年龄、OpenID（微信）、关联车辆（可填车牌号，多个用逗号分隔）
+              </el-descriptions-item>
+              <el-descriptions-item label="数据限制" :span="2">
+                最多导入 1000 条数据
+              </el-descriptions-item>
+            </el-descriptions>
+          </div>
+
+          <!-- 底部按钮 -->
+          <div class="upload-footer">
+            <el-button @click="batchDialogVisible = false">取消</el-button>
             <el-button type="primary" @click="startImport" :loading="importing" :disabled="!uploadFile">
+              <el-icon><Upload /></el-icon>
               开始导入
             </el-button>
           </div>
         </div>
 
-        <!-- 步骤3: 导入结果 -->
-        <div v-if="batchStep === 2" class="step-content">
+        <!-- 导入结果 -->
+        <div v-else class="result-section">
           <el-result
             :icon="importResult.successCount > 0 ? 'success' : 'error'"
             :title="importResult.message"
@@ -284,7 +311,8 @@
               </div>
               <div style="margin-top: 20px">
                 <el-button @click="batchDialogVisible = false">关闭</el-button>
-                <el-button v-if="importResult.failedCount > 0" type="primary" @click="batchStep = 1; uploadFile = null">
+                <el-button v-if="importResult.failedCount > 0" type="primary" @click="resetImport">
+                  <el-icon><Refresh /></el-icon>
                   重新导入
                 </el-button>
               </div>
@@ -299,10 +327,13 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Download, Upload, UploadFilled, Plus, Search, ArrowDown, Delete } from '@element-plus/icons-vue'
+import { Download, Upload, UploadFilled, Plus, Search, ArrowDown, Delete, InfoFilled, Refresh } from '@element-plus/icons-vue'
 import request from '@/utils/request'
 import { getFleetVehicles } from '@/api/fleetVehicle'
 import dayjs from 'dayjs'
+
+// 获取用户角色
+const userRole = localStorage.getItem('role') || ''
 
 const loading = ref(false)
 const saving = ref(false)
@@ -312,7 +343,8 @@ const total = ref(0)
 const stats = ref({
   total: 0,
   normal: 0,
-  pending: 0,
+  pending_activation: 0,
+  pending_audit: 0,
   suspended: 0
 })
 
@@ -320,6 +352,7 @@ const queryParams = ref({
   page: 1,
   limit: 20,
   status: '',
+  roleStatus: '',
   keyword: ''
 })
 
@@ -348,7 +381,6 @@ const formRules = {
 
 // 批量导入相关
 const batchDialogVisible = ref(false)
-const batchStep = ref(0)
 const importing = ref(false)
 const downloading = ref(false)
 const uploadFile = ref(null)
@@ -414,6 +446,7 @@ const handleReset = () => {
     page: 1,
     limit: 20,
     status: '',
+    roleStatus: '',
     keyword: ''
   }
   fetchDrivers()
@@ -527,7 +560,6 @@ const handleDelete = async (row) => {
 
 // 打开批量导入对话框
 const handleBatchImport = () => {
-  batchStep.value = 0
   uploadFile.value = null
   importResult.value = {
     message: '',
@@ -537,6 +569,18 @@ const handleBatchImport = () => {
     errors: []
   }
   batchDialogVisible.value = true
+}
+
+// 重置导入状态
+const resetImport = () => {
+  uploadFile.value = null
+  importResult.value = {
+    message: '',
+    total: 0,
+    successCount: 0,
+    failedCount: 0,
+    errors: []
+  }
 }
 
 // 下载模板
@@ -558,7 +602,6 @@ const downloadTemplate = async () => {
     window.URL.revokeObjectURL(url)
 
     ElMessage.success('模板下载成功')
-    batchStep.value = 1
   } catch (error) {
     console.error('下载模板失败:', error)
     ElMessage.error('下载模板失败')
@@ -607,8 +650,6 @@ const startImport = async () => {
       errors: res.data.errors || []
     }
 
-    batchStep.value = 2
-
     // 如果有成功的，刷新列表
     if (res.data.success > 0) {
       fetchDrivers()
@@ -623,7 +664,6 @@ const startImport = async () => {
       failedCount: 0,
       errors: []
     }
-    batchStep.value = 2
   } finally {
     importing.value = false
   }
@@ -647,6 +687,96 @@ const getStatusText = (status) => {
     'suspended': '已停用'
   }
   return textMap[status] || status
+}
+
+// 获取激活状态类型
+const getActivationStatusType = (status) => {
+  const typeMap = {
+    'normal': 'success',
+    'pending_activation': 'info',
+    'suspended': 'danger'
+  }
+  return typeMap[status] || ''
+}
+
+// 获取激活状态文本
+const getActivationStatusText = (status) => {
+  const textMap = {
+    'normal': '正常',
+    'pending_activation': '待激活',
+    'suspended': '已停用'
+  }
+  return textMap[status] || status
+}
+
+// 获取角色状态类型
+const getRoleStatusType = (status) => {
+  const typeMap = {
+    'normal': 'success',
+    'pending_audit': 'warning',
+    'suspended': 'danger'
+  }
+  return typeMap[status] || ''
+}
+
+// 获取角色状态文本
+const getRoleStatusText = (status) => {
+  const textMap = {
+    'normal': '正常',
+    'pending_audit': '待审核',
+    'suspended': '已停用'
+  }
+  return textMap[status] || status
+}
+
+// 批量导出
+const handleBatchExport = async () => {
+  try {
+    // 获取所有司机数据
+    const res = await request({
+      url: '/fleet/drivers',
+      method: 'get',
+      params: { limit: 10000, ...queryParams.value }
+    })
+
+    const drivers = res.data.drivers || []
+    if (drivers.length === 0) {
+      ElMessage.warning('暂无数据可导出')
+      return
+    }
+
+    // 准备导出数据
+    const exportData = drivers.map(driver => ({
+      '姓名': driver.name || '',
+      '手机号': driver.phone || '',
+      '年龄': driver.age || '',
+      '关联车辆': (driver.vehicles || []).map(v => v.plateNumber || v).join('、'),
+      '激活状态': getActivationStatusText(driver.status),
+      '角色状态': getRoleStatusText(driver.role?.status),
+      '创建时间': formatDate(driver.createdAt)
+    }))
+
+    // 使用简单的CSV导出
+    const csvContent = [
+      Object.keys(exportData[0]).join(','),
+      ...exportData.map(row => Object.values(row).map(v => `"${v}"`).join(','))
+    ].join('\n')
+
+    // 添加BOM头以支持中文
+    const BOM = '\uFEFF'
+    const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `司机列表_${dayjs().format('YYYYMMDD_HHmmss')}.csv`
+    link.click()
+    URL.revokeObjectURL(url)
+
+    ElMessage.success(`成功导出 ${drivers.length} 条司机数据`)
+  } catch (error) {
+    console.error('导出失败:', error)
+    ElMessage.error('导出失败')
+  }
 }
 
 // 格式化日期
@@ -675,6 +805,10 @@ onMounted(() => {
       color: #67c23a;
     }
 
+    &.stat-card-info :deep(.el-statistic__number) {
+      color: #909399;
+    }
+
     &.stat-card-warning :deep(.el-statistic__number) {
       color: #e6a23c;
     }
@@ -690,11 +824,18 @@ onMounted(() => {
     justify-content: space-between;
     font-weight: 600;
     color: #2c3e50;
+  }
 
-    > div {
-      display: flex;
-      gap: 10px;
-    }
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .form-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
   }
 
   .search-form {
@@ -702,15 +843,47 @@ onMounted(() => {
   }
 
   .batch-import-content {
-    .step-content {
-      min-height: 300px;
-      padding: 20px;
+    .upload-section {
+      padding: 10px 0;
+    }
+
+    .upload-header {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 20px;
     }
 
     .upload-area {
+      margin-bottom: 30px;
+
       :deep(.el-upload-dragger) {
         padding: 40px;
       }
+    }
+
+    .field-info {
+      margin-bottom: 30px;
+
+      :deep(.required-field) {
+        font-weight: 600;
+        color: #f56c6c;
+      }
+
+      :deep(.el-descriptions__label) {
+        width: 100px;
+      }
+    }
+
+    .upload-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding-top: 20px;
+      border-top: 1px solid #ebeef5;
+    }
+
+    .result-section {
+      padding: 20px 0;
     }
 
     .result-stats {

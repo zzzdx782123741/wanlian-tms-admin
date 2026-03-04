@@ -2,10 +2,29 @@
   <div class="store-orders">
     <div class="page-header">
       <h2>门店订单</h2>
+      <el-dropdown split-button type="warning" size="small" @click="handleExport('filtered')" :loading="exporting">
+        <el-icon><Download /></el-icon>
+        导出数据
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item @click="handleExport('filtered')">
+              导出当前页 ({{ orders.length }} 条)
+            </el-dropdown-item>
+            <el-dropdown-item @click="handleExport('all')">
+              导出全部
+            </el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
     </div>
 
     <!-- 统计卡片 -->
     <el-row :gutter="20" class="stats-row">
+      <el-col :span="6">
+        <el-card class="stat-card stat-card-info">
+          <el-statistic title="待确认时间" :value="stats.awaiting_time_confirmation" />
+        </el-card>
+      </el-col>
       <el-col :span="6">
         <el-card class="stat-card">
           <el-statistic title="待接车" :value="stats.pending_assessment" />
@@ -21,19 +40,15 @@
           <el-statistic title="维修中" :value="stats.in_repair" />
         </el-card>
       </el-col>
-      <el-col :span="6">
-        <el-card class="stat-card stat-card-success">
-          <el-statistic title="本月完成" :value="stats.completed_this_month" />
-        </el-card>
-      </el-col>
     </el-row>
 
     <!-- 筛选条件 -->
     <el-card class="filter-card">
       <el-form :inline="true" :model="filters">
         <el-form-item label="订单状态">
-          <el-select v-model="filters.status" placeholder="全部状态" clearable @change="loadOrders">
+          <el-select v-model="filters.status" placeholder="全部状态" clearable @change="loadOrders" style="width: 180px">
             <el-option label="全部状态" value=""></el-option>
+            <el-option label="待确认时间" value="awaiting_time_confirmation"></el-option>
             <el-option label="待接车" value="pending_assessment"></el-option>
             <el-option label="待报价" value="awaiting_approval"></el-option>
             <el-option label="维修中" value="in_repair"></el-option>
@@ -43,7 +58,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="订单类型">
-          <el-select v-model="filters.type" placeholder="全部类型" clearable @change="loadOrders">
+          <el-select v-model="filters.type" placeholder="全部类型" clearable @change="loadOrders" style="width: 150px">
             <el-option label="全部类型" value=""></el-option>
             <el-option label="维修订单" value="repair"></el-option>
             <el-option label="保养订单" value="maintenance"></el-option>
@@ -61,8 +76,10 @@
           />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="loadOrders">查询</el-button>
-          <el-button @click="resetFilters">重置</el-button>
+          <div class="form-actions">
+            <el-button type="primary" @click="loadOrders">查询</el-button>
+            <el-button @click="resetFilters">重置</el-button>
+          </div>
         </el-form-item>
       </el-form>
     </el-card>
@@ -113,6 +130,15 @@
         <el-table-column label="操作" width="150" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" size="small" @click="viewDetail(row)">详情</el-button>
+            <el-button
+              v-if="row.status === 'awaiting_time_confirmation'"
+              link
+              type="warning"
+              size="small"
+              @click="openConfirmTimeDialog(row)"
+            >
+              确认时间
+            </el-button>
             <el-button
               v-if="row.status === 'pending_assessment'"
               link
@@ -190,19 +216,389 @@
         </el-descriptions-item>
       </el-descriptions>
     </el-dialog>
+
+    <!-- 确认时间对话框 -->
+    <el-dialog v-model="confirmTimeDialogVisible" title="确认到店时间" width="500px">
+      <el-form v-if="currentOrder" :model="confirmTimeForm" label-width="100px">
+        <el-form-item label="订单号">
+          <el-input :value="currentOrder.orderNumber" disabled />
+        </el-form-item>
+
+        <el-form-item label="期望时间">
+          <div class="expected-time">
+            {{ currentOrder.appointment?.expectedDate ? dayjs(currentOrder.appointment.expectedDate).format('YYYY-MM-DD') : '-' }}
+            {{ currentOrder.appointment?.expectedTimeSlot || '-' }}
+          </div>
+        </el-form-item>
+
+        <el-form-item label="确认日期" required>
+          <el-date-picker
+            v-model="confirmTimeForm.confirmedDate"
+            type="date"
+            placeholder="选择日期"
+            style="width: 100%"
+            value-format="YYYY-MM-DD"
+          />
+        </el-form-item>
+
+        <el-form-item label="时间段" required>
+          <el-select
+            v-model="confirmTimeForm.confirmedTimeSlot"
+            placeholder="选择时间段"
+            style="width: 100%"
+          >
+            <el-option
+              v-for="slot in timeSlotOptions"
+              :key="slot.value"
+              :label="slot.label"
+              :value="slot.value"
+            />
+          </el-select>
+        </el-form-item>
+
+        <el-form-item label="是否调整">
+          <el-switch
+            v-model="confirmTimeForm.adjusted"
+            active-text="已调整时间"
+            inactive-text="按原时间"
+          />
+          <div class="form-tip" style="margin-top: 8px;">
+            如调整了司机期望的时间，请开启此选项
+          </div>
+        </el-form-item>
+
+        <el-form-item label="备注">
+          <el-input
+            v-model="confirmTimeForm.remark"
+            type="textarea"
+            :rows="3"
+            placeholder="如有调整请说明原因（会发送给司机）"
+            maxlength="200"
+            show-word-limit
+          />
+        </el-form-item>
+      </el-form>
+
+      <template #footer>
+        <el-button @click="confirmTimeDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleConfirmTime" :loading="confirming">
+          确认
+        </el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 接车检查对话框 -->
+    <el-dialog v-model="receiveDialogVisible" title="接车检查" width="900px" :close-on-click-modal="false">
+      <div v-if="currentOrder">
+        <!-- 订单基本信息 -->
+        <el-descriptions :column="2" border style="margin-bottom: 20px">
+          <el-descriptions-item label="订单号">{{ currentOrder.orderNumber }}</el-descriptions-item>
+          <el-descriptions-item label="车牌号">{{ currentOrder.vehicleId?.plateNumber }}</el-descriptions-item>
+          <el-descriptions-item label="报修里程">{{ currentOrder.milestone }} 公里</el-descriptions-item>
+          <el-descriptions-item label="故障描述">{{ currentOrder.faultDescription }}</el-descriptions-item>
+        </el-descriptions>
+
+        <el-form :model="receiveForm" label-width="120px" ref="receiveFormRef">
+          <!-- 当前里程 -->
+          <el-form-item label="当前里程" required>
+            <el-input-number
+              v-model="receiveForm.mileage"
+              :min="0"
+              :max="1000000"
+              :step="1"
+              placeholder="请输入当前里程"
+              style="width: 200px"
+            />
+            <span style="margin-left: 10px">公里</span>
+          </el-form-item>
+
+          <!-- 故障诊断 -->
+          <el-form-item label="故障诊断" required>
+            <el-input
+              v-model="receiveForm.diagnosis"
+              type="textarea"
+              :rows="3"
+              placeholder="请详细描述故障诊断结果"
+              maxlength="500"
+              show-word-limit
+            />
+          </el-form-item>
+
+          <!-- 接车照片 -->
+          <el-form-item label="接车照片" required>
+            <el-upload
+              v-model:file-list="receiveForm.checkinPhotos"
+              action="#"
+              list-type="picture-card"
+              :auto-upload="false"
+              :limit="9"
+              accept="image/*"
+              :on-change="handleCheckinPhotoChange"
+              :on-preview="handlePreviewImage"
+              :on-remove="handleRemoveCheckinPhoto"
+            >
+              <el-icon><Plus /></el-icon>
+            </el-upload>
+            <div class="upload-tip">至少上传一张接车照片</div>
+          </el-form-item>
+
+          <!-- 报价商品 -->
+          <el-form-item label="报价商品" required>
+            <el-button type="primary" size="small" @click="showProductSelectDialog">
+              <el-icon><Plus /></el-icon>
+              添加商品
+            </el-button>
+            <div class="selected-items">
+              <div v-if="receiveForm.selectedItems.length === 0" class="empty-tip">暂未选择商品</div>
+              <el-table v-else :data="receiveForm.selectedItems" style="width: 100%; margin-top: 10px" size="small">
+                <el-table-column prop="name" label="商品名称" width="200" />
+                <el-table-column prop="category" label="分类" width="100" />
+                <el-table-column prop="price" label="单价" width="100">
+                  <template #default="{ row }">¥{{ row.price }}</template>
+                </el-table-column>
+                <el-table-column prop="quantity" label="数量" width="150">
+                  <template #default="{ row, $index }">
+                    <el-input-number
+                      v-model="row.quantity"
+                      :min="1"
+                      :max="99"
+                      size="small"
+                      @change="updateItemTotal"
+                    />
+                  </template>
+                </el-table-column>
+                <el-table-column label="小计" width="100">
+                  <template #default="{ row }">¥{{ (row.price * row.quantity).toFixed(2) }}</template>
+                </el-table-column>
+                <el-table-column label="操作" width="80">
+                  <template #default="{ row, $index }">
+                    <el-button type="danger" link size="small" @click="removeSelectedItem($index)">
+                      删除
+                    </el-button>
+                  </template>
+                </el-table-column>
+              </el-table>
+            </div>
+          </el-form-item>
+
+          <!-- 报价总额 -->
+          <el-form-item label="报价总额">
+            <div class="total-amount">
+              <span class="amount">¥{{ receiveForm.totalAmount }}</span>
+            </div>
+          </el-form-item>
+
+          <!-- 报价说明 -->
+          <el-form-item label="报价说明">
+            <el-input
+              v-model="receiveForm.description"
+              type="textarea"
+              :rows="3"
+              placeholder="请填写报价说明（选填）"
+              maxlength="500"
+              show-word-limit
+            />
+          </el-form-item>
+
+          <!-- 报价图片 -->
+          <el-form-item label="报价图片">
+            <el-upload
+              v-model:file-list="receiveForm.quoteImages"
+              action="#"
+              list-type="picture-card"
+              :auto-upload="false"
+              :limit="9"
+              accept="image/*"
+              :on-change="handleQuotePhotoChange"
+              :on-preview="handlePreviewImage"
+              :on-remove="handleRemoveQuotePhoto"
+            >
+              <el-icon><Plus /></el-icon>
+            </el-upload>
+            <div class="upload-tip">可选：上传报价单、检测报告等图片</div>
+          </el-form-item>
+        </el-form>
+      </div>
+
+      <template #footer>
+        <el-button @click="receiveDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleSubmitQuote" :loading="receiving">
+          提交报价
+        </el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 商品选择对话框 -->
+    <el-dialog v-model="productSelectDialogVisible" title="选择商品" width="800px">
+      <el-input
+        v-model="productSearchKeyword"
+        placeholder="搜索商品名称或编码"
+        clearable
+        style="margin-bottom: 15px"
+        @input="handleProductSearch"
+      >
+        <template #prefix>
+          <el-icon><Search /></el-icon>
+        </template>
+      </el-input>
+
+      <el-table
+        v-loading="loadingProducts"
+        :data="productList"
+        style="width: 100%; height: 400px"
+        @selection-change="handleProductSelectionChange"
+      >
+        <el-table-column type="selection" width="55" />
+        <el-table-column prop="name" label="商品名称" width="200" />
+        <el-table-column prop="code" label="编码" width="120" />
+        <el-table-column prop="category" label="分类" width="100" />
+        <el-table-column prop="salePrice" label="销售价格" width="100">
+          <template #default="{ row }">¥{{ row.salePrice }}</template>
+        </el-table-column>
+        <el-table-column prop="stock" label="库存" width="80" />
+        <el-table-column prop="unit" label="单位" width="60" />
+      </el-table>
+
+      <el-pagination
+        v-model:current-page="productPagination.page"
+        v-model:page-size="productPagination.limit"
+        :total="productPagination.total"
+        :page-sizes="[10, 20, 50]"
+        layout="total, sizes, prev, pager, next"
+        style="margin-top: 15px"
+        @size-change="loadProducts"
+        @current-change="loadProducts"
+      />
+
+      <template #footer>
+        <el-button @click="productSelectDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="confirmProductSelection" :disabled="selectedProducts.length === 0">
+          确定添加（{{ selectedProducts.length }}）
+        </el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 图片预览对话框 -->
+    <el-dialog v-model="imagePreviewVisible" title="图片预览" width="600px">
+      <img :src="previewImageUrl" style="width: 100%" />
+    </el-dialog>
+
+    <!-- 完工对话框 -->
+    <el-dialog v-model="completeDialogVisible" title="维修完工" width="600px">
+      <el-form v-if="currentOrder" :model="completeForm" label-width="120px" ref="completeFormRef">
+        <el-form-item label="订单号">
+          <el-input :value="currentOrder.orderNumber" disabled />
+        </el-form-item>
+
+        <el-form-item label="车牌号">
+          <el-input :value="currentOrder.vehicleId?.plateNumber" disabled />
+        </el-form-item>
+
+        <el-form-item label="维修项目">
+          <div v-if="currentOrder.quote && currentOrder.quote.items" style="margin-bottom: 10px">
+            <div v-for="(item, index) in currentOrder.quote.items" :key="index" style="padding: 5px 0; border-bottom: 1px solid #eee;">
+              {{ item.name }} - ¥{{ item.price }} x {{ item.quantity }}{{ item.unit }}
+            </div>
+          </div>
+          <div v-else>无</div>
+        </el-form-item>
+
+        <el-form-item label="完工里程" required>
+          <el-input-number
+            v-model="completeForm.completionMileage"
+            :min="0"
+            :max="1000000"
+            :step="1"
+            placeholder="请输入完工里程"
+            style="width: 200px"
+          />
+          <span style="margin-left: 10px">公里</span>
+        </el-form-item>
+
+        <el-form-item label="维修说明" required>
+          <el-input
+            v-model="completeForm.workDescription"
+            type="textarea"
+            :rows="4"
+            placeholder="请详细说明维修内容和完成情况"
+            maxlength="500"
+            show-word-limit
+          />
+        </el-form-item>
+
+        <el-form-item label="注意事项">
+          <el-input
+            v-model="completeForm.notes"
+            type="textarea"
+            :rows="2"
+            placeholder="填写需要司机注意的事项（选填）"
+            maxlength="300"
+            show-word-limit
+          />
+        </el-form-item>
+      </el-form>
+
+      <template #footer>
+        <el-button @click="completeDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleSubmitComplete" :loading="completing">
+          提交完工
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ref, reactive, onMounted, computed } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { Plus, Search, Download } from '@element-plus/icons-vue'
 import request from '@/utils/request'
+import { getProducts } from '@/api/product'
 import dayjs from 'dayjs'
 
 const loading = ref(false)
+const exporting = ref(false)
 const orders = ref([])
 const detailVisible = ref(false)
 const currentOrder = ref(null)
+
+// 接车检查对话框相关
+const receiveDialogVisible = ref(false)
+const receiving = ref(false)
+const receiveForm = ref({
+  mileage: null,
+  diagnosis: '',
+  checkinPhotos: [],
+  selectedItems: [],
+  totalAmount: '0.00',
+  description: '',
+  quoteImages: []
+})
+
+// 商品选择相关
+const productSelectDialogVisible = ref(false)
+const loadingProducts = ref(false)
+const productList = ref([])
+const selectedProducts = ref([])
+const productSearchKeyword = ref('')
+const productPagination = reactive({
+  page: 1,
+  limit: 20,
+  total: 0
+})
+
+// 图片预览
+const imagePreviewVisible = ref(false)
+const previewImageUrl = ref('')
+
+// 完工对话框相关
+const completeDialogVisible = ref(false)
+const completing = ref(false)
+const completeForm = ref({
+  completionMileage: null,
+  workDescription: '',
+  notes: ''
+})
 
 const filters = reactive({
   status: '',
@@ -220,11 +616,31 @@ const pagination = reactive({
 })
 
 const stats = reactive({
+  awaiting_time_confirmation: 0,
   pending_assessment: 0,
   awaiting_approval: 0,
   in_repair: 0,
   completed_this_month: 0
 })
+
+// 确认时间对话框相关
+const confirmTimeDialogVisible = ref(false)
+const confirming = ref(false)
+const confirmTimeForm = ref({
+  confirmedDate: '',
+  confirmedTimeSlot: '',
+  adjusted: false,
+  remark: ''
+})
+
+// 时间段选项
+const timeSlotOptions = [
+  { label: '上午 08:00-10:00', value: '08:00-10:00' },
+  { label: '上午 10:00-12:00', value: '10:00-12:00' },
+  { label: '下午 14:00-16:00', value: '14:00-16:00' },
+  { label: '下午 16:00-18:00', value: '16:00-18:00' },
+  { label: '晚上 18:00-20:00', value: '18:00-20:00' }
+]
 
 onMounted(() => {
   loadOrders()
@@ -274,6 +690,48 @@ function resetFilters() {
   loadOrders()
 }
 
+// 导出订单列表
+async function handleExport(type = 'all') {
+  exporting.value = true
+  try {
+    const params = {}
+    if (type === 'filtered') {
+      // 导出当前页数据（支持筛选）
+      if (filters.status) params.status = filters.status
+      if (filters.type) params.type = filters.type
+      params.limit = orders.value.length
+    } else {
+      // 导出全部数据（支持筛选）
+      if (filters.status) params.status = filters.status
+      if (filters.type) params.type = filters.type
+      params.all = 'true'
+    }
+
+    const response = await request({
+      url: '/orders/export',
+      method: 'get',
+      params,
+      responseType: 'blob',
+      timeout: 60000
+    })
+
+    const blob = new Blob([response], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `订单列表_${dayjs().format('YYYYMMDD_HHmmss')}.xlsx`
+    link.click()
+    window.URL.revokeObjectURL(url)
+    ElMessage.success('导出成功')
+  } catch (error) {
+    ElMessage.error(error.response?.data?.message || '导出失败')
+  } finally {
+    exporting.value = false
+  }
+}
+
 // 查看详情
 function viewDetail(row) {
   currentOrder.value = row
@@ -282,19 +740,284 @@ function viewDetail(row) {
 
 // 接车检查
 function handleReceive(row) {
-  // 跳转到接车检查页面或打开接车对话框
-  ElMessage.info('接车检查功能开发中')
+  currentOrder.value = row
+  // 初始化表单，如果有之前的检查数据则回填
+  receiveForm.value = {
+    mileage: row.receiveCheck?.mileage || row.milestone || null,
+    diagnosis: row.receiveCheck?.diagnosis || '',
+    checkinPhotos: [],
+    selectedItems: [],
+    totalAmount: '0.00',
+    description: '',
+    quoteImages: []
+  }
+  receiveDialogVisible.value = true
+}
+
+// 显示商品选择对话框
+async function showProductSelectDialog() {
+  productSelectDialogVisible.value = true
+  productSearchKeyword.value = ''
+  selectedProducts.value = []
+  await loadProducts()
+}
+
+// 加载商品列表
+async function loadProducts() {
+  loadingProducts.value = true
+  try {
+    const params = {
+      page: productPagination.page,
+      limit: productPagination.limit,
+      status: 'approved' // 只显示已审核通过的商品
+    }
+
+    if (productSearchKeyword.value) {
+      params.keyword = productSearchKeyword.value
+    }
+
+    const res = await getProducts(params)
+    productList.value = res.data.products || []
+    productPagination.total = res.data.total || 0
+  } catch (error) {
+    ElMessage.error('加载商品列表失败')
+  } finally {
+    loadingProducts.value = false
+  }
+}
+
+// 搜索商品
+async function handleProductSearch() {
+  productPagination.page = 1
+  await loadProducts()
+}
+
+// 商品选择变化
+function handleProductSelectionChange(selection) {
+  selectedProducts.value = selection
+}
+
+// 确认商品选择
+function confirmProductSelection() {
+  if (selectedProducts.value.length === 0) {
+    ElMessage.warning('请至少选择一个商品')
+    return
+  }
+
+  // 添加到已选商品列表
+  selectedProducts.value.forEach(product => {
+    // 检查是否已存在
+    const existingIndex = receiveForm.value.selectedItems.findIndex(item => item.id === product._id)
+
+    if (existingIndex >= 0) {
+      // 已存在，数量+1
+      receiveForm.value.selectedItems[existingIndex].quantity += 1
+    } else {
+      // 不存在，添加新商品
+      receiveForm.value.selectedItems.push({
+        id: product._id,
+        name: product.name,
+        code: product.code,
+        category: product.category,
+        price: product.salePrice,
+        quantity: 1,
+        unit: product.unit
+      })
+    }
+  })
+
+  updateTotal()
+  productSelectDialogVisible.value = false
+  ElMessage.success(`成功添加 ${selectedProducts.value.length} 个商品`)
+}
+
+// 移除已选商品
+function removeSelectedItem(index) {
+  receiveForm.value.selectedItems.splice(index, 1)
+  updateTotal()
+}
+
+// 更新单项总价
+function updateItemTotal() {
+  updateTotal()
+}
+
+// 计算并更新总价
+function updateTotal() {
+  const total = receiveForm.value.selectedItems.reduce((sum, item) => {
+    return sum + (parseFloat(item.price) || 0) * (item.quantity || 1)
+  }, 0)
+  receiveForm.value.totalAmount = total.toFixed(2)
+}
+
+// 接车照片变化
+function handleCheckinPhotoChange(file, fileList) {
+  receiveForm.value.checkinPhotos = fileList
+}
+
+// 移除接车照片
+function handleRemoveCheckinPhoto(file, fileList) {
+  receiveForm.value.checkinPhotos = fileList
+}
+
+// 报价照片变化
+function handleQuotePhotoChange(file, fileList) {
+  receiveForm.value.quoteImages = fileList
+}
+
+// 移除报价照片
+function handleRemoveQuotePhoto(file, fileList) {
+  receiveForm.value.quoteImages = fileList
+}
+
+// 预览图片
+function handlePreviewImage(file) {
+  previewImageUrl.value = file.url
+  imagePreviewVisible.value = true
+}
+
+// 提交报价
+async function handleSubmitQuote() {
+  // 验证表单
+  if (!receiveForm.value.mileage) {
+    ElMessage.warning('请输入当前里程')
+    return
+  }
+  if (!receiveForm.value.diagnosis) {
+    ElMessage.warning('请填写故障诊断')
+    return
+  }
+  if (receiveForm.value.checkinPhotos.length === 0) {
+    ElMessage.warning('请至少上传一张接车照片')
+    return
+  }
+  if (receiveForm.value.selectedItems.length === 0) {
+    ElMessage.warning('请至少选择一个商品')
+    return
+  }
+
+  const total = parseFloat(receiveForm.value.totalAmount)
+  if (total <= 0) {
+    ElMessage.warning('报价金额必须大于0')
+    return
+  }
+
+  receiving.value = true
+  try {
+    // 上传接车照片
+    const uploadedCheckinPhotos = []
+    for (let i = 0; i < receiveForm.value.checkinPhotos.length; i++) {
+      const file = receiveForm.value.checkinPhotos[i]
+      if (file.raw) {
+        const formData = new FormData()
+        formData.append('file', file.raw)
+        const uploadRes = await request({
+          url: '/upload',
+          method: 'POST',
+          data: formData,
+          headers: { 'Content-Type': 'multipart/form-data' }
+        })
+        uploadedCheckinPhotos.push(uploadRes.url)
+      } else if (file.url) {
+        uploadedCheckinPhotos.push(file.url)
+      }
+    }
+
+    // 上传报价图片
+    const uploadedQuoteImages = []
+    for (let i = 0; i < receiveForm.value.quoteImages.length; i++) {
+      const file = receiveForm.value.quoteImages[i]
+      if (file.raw) {
+        const formData = new FormData()
+        formData.append('file', file.raw)
+        const uploadRes = await request({
+          url: '/upload',
+          method: 'POST',
+          data: formData,
+          headers: { 'Content-Type': 'multipart/form-data' }
+        })
+        uploadedQuoteImages.push(uploadRes.url)
+      } else if (file.url) {
+        uploadedQuoteImages.push(file.url)
+      }
+    }
+
+    // 构建报价数据
+    const quoteData = {
+      mileage: receiveForm.value.mileage,
+      diagnosis: receiveForm.value.diagnosis,
+      checkinPhotos: uploadedCheckinPhotos,
+      quoteItems: receiveForm.value.selectedItems.map(item => ({
+        item: item.name,
+        price: parseFloat(item.price),
+        quantity: item.quantity,
+        productId: item.id,
+        category: item.category
+      })),
+      description: receiveForm.value.description,
+      quoteImages: uploadedQuoteImages
+    }
+
+    await request({
+      url: `/orders/${currentOrder.value._id}/quote`,
+      method: 'POST',
+      data: quoteData
+    })
+
+    ElMessage.success('报价提交成功')
+    receiveDialogVisible.value = false
+    loadOrders()
+  } catch (error) {
+    ElMessage.error(error.message || '提交失败')
+  } finally {
+    receiving.value = false
+  }
 }
 
 // 完工
 function handleComplete(row) {
-  // 跳转到完工页面或打开完工对话框
-  ElMessage.info('完工功能开发中')
+  currentOrder.value = row
+  completeForm.value = {
+    completionMileage: row.receiveCheck?.mileage || null,
+    workDescription: '',
+    notes: ''
+  }
+  completeDialogVisible.value = true
+}
+
+// 提交完工
+async function handleSubmitComplete() {
+  // 验证表单
+  if (!completeForm.value.completionMileage) {
+    ElMessage.warning('请输入完工里程')
+    return
+  }
+  if (!completeForm.value.workDescription) {
+    ElMessage.warning('请填写维修说明')
+    return
+  }
+
+  completing.value = true
+  try {
+    await request({
+      url: `/store/orders/${currentOrder.value._id}/complete`,
+      method: 'POST',
+      data: completeForm.value
+    })
+    ElMessage.success('维修完工提交成功')
+    completeDialogVisible.value = false
+    loadOrders()
+  } catch (error) {
+    ElMessage.error(error.message || '提交失败')
+  } finally {
+    completing.value = false
+  }
 }
 
 // 辅助函数
 function getStatusText(status) {
   const map = {
+    awaiting_time_confirmation: '待确认时间',
     pending_assessment: '待接车',
     awaiting_approval: '待报价',
     in_repair: '维修中',
@@ -308,6 +1031,7 @@ function getStatusText(status) {
 
 function getStatusColor(status) {
   const map = {
+    awaiting_time_confirmation: 'info',
     pending_assessment: 'warning',
     awaiting_approval: '',
     in_repair: 'primary',
@@ -330,6 +1054,55 @@ function formatAmount(amount) {
 function formatDate(dateStr) {
   if (!dateStr) return '-'
   return dayjs(dateStr).format('YYYY-MM-DD HH:mm')
+}
+
+// 打开确认时间对话框
+function openConfirmTimeDialog(order) {
+  currentOrder.value = order
+
+  // 默认填充司机期望的时间
+  const expectedDate = order.appointment?.expectedDate
+    ? dayjs(order.appointment.expectedDate).format('YYYY-MM-DD')
+    : dayjs().format('YYYY-MM-DD')
+
+  confirmTimeForm.value = {
+    confirmedDate: expectedDate,
+    confirmedTimeSlot: order.appointment?.expectedTimeSlot || '09:00-11:00',
+    adjusted: false,
+    remark: ''
+  }
+
+  confirmTimeDialogVisible.value = true
+}
+
+// 确认时间
+async function handleConfirmTime() {
+  if (!confirmTimeForm.value.confirmedDate) {
+    ElMessage.warning('请选择确认日期')
+    return
+  }
+  if (!confirmTimeForm.value.confirmedTimeSlot) {
+    ElMessage.warning('请选择确认时间段')
+    return
+  }
+
+  confirming.value = true
+  try {
+    await request({
+      url: `/api/orders/${currentOrder.value._id}/confirm-time`,
+      method: 'put',
+      data: confirmTimeForm.value
+    })
+
+    ElMessage.success(confirmTimeForm.value.adjusted ? '已调整到店时间' : '已确认到店时间')
+    confirmTimeDialogVisible.value = false
+    loadOrders() // 刷新订单列表
+  } catch (error) {
+    console.error('确认时间失败:', error)
+    ElMessage.error(error.message || '确认时间失败')
+  } finally {
+    confirming.value = false
+  }
 }
 </script>
 
@@ -388,15 +1161,35 @@ function formatDate(dateStr) {
   font-weight: 600;
 }
 
-.total-amount {
-  color: #F56C6C;
-  font-size: 18px;
-  font-weight: bold;
-}
-
 .pagination {
   margin-top: 20px;
   display: flex;
   justify-content: flex-end;
+}
+
+/* 接车检查相关样式 */
+.upload-tip {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 5px;
+}
+
+.selected-items {
+  margin-top: 10px;
+}
+
+.empty-tip {
+  color: #909399;
+  font-size: 14px;
+  text-align: center;
+  padding: 20px;
+  background: #f5f7fa;
+  border-radius: 4px;
+}
+
+.total-amount {
+  color: #f56c6c;
+  font-size: 20px;
+  font-weight: bold;
 }
 </style>

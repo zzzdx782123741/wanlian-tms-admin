@@ -29,10 +29,16 @@
       <template #header>
         <div class="card-header">
           <span>门店列表</span>
-          <el-button type="primary" size="small" @click="handleRefresh">
-            <el-icon><Refresh /></el-icon>
-            刷新
-          </el-button>
+          <div class="header-actions">
+            <el-button type="success" size="small" @click="handleRegister">
+              <el-icon><Plus /></el-icon>
+              注册门店
+            </el-button>
+            <el-button type="primary" size="small" @click="handleRefresh">
+              <el-icon><Refresh /></el-icon>
+              刷新
+            </el-button>
+          </div>
         </div>
       </template>
 
@@ -54,11 +60,13 @@
           />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="handleQuery">
-            <el-icon><Search /></el-icon>
-            查询
-          </el-button>
-          <el-button @click="handleReset">重置</el-button>
+          <div class="form-actions">
+            <el-button type="primary" @click="handleQuery">
+              <el-icon><Search /></el-icon>
+              查询
+            </el-button>
+            <el-button @click="handleReset">重置</el-button>
+          </div>
         </el-form-item>
       </el-form>
 
@@ -271,9 +279,12 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getStores, getStoreDetail, approveStore, updateStoreStatus, deleteStore, getStoreStats } from '@/api/store'
 import dayjs from 'dayjs'
+
+const router = useRouter()
 
 const loading = ref(false)
 const storeList = ref([])
@@ -345,6 +356,11 @@ const handleReset = () => {
 const handleRefresh = () => {
   fetchStores()
   fetchStats()
+}
+
+// 注册门店
+const handleRegister = () => {
+  router.push('/store-register')
 }
 
 // 查看详情
@@ -485,10 +501,22 @@ onMounted(() => {
     justify-content: space-between;
     font-weight: 600;
     color: #2c3e50;
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
   }
 
   .search-form {
     margin-bottom: 20px;
+
+    .form-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
   }
 }
 </style>

@@ -73,3 +73,13 @@ export function updateFleetStoreConfig(id, data) {
     data
   })
 }
+
+/**
+ * 获取车队配置信息
+ */
+export function getFleetConfig(id) {
+  return request({
+    url: `/fleets/${id}`,
+    method: 'get'
+  })
+}

@@ -48,7 +48,7 @@ export function confirmOrder(id) {
 export function fleetApproveOrder(id, data) {
   return request({
     url: `/orders/${id}/fleet-approve`,
-    method: 'put',
+    method: 'post',
     data
   })
 }
@@ -59,7 +59,7 @@ export function fleetApproveOrder(id, data) {
 export function fleetRejectOrder(id, data) {
   return request({
     url: `/orders/${id}/fleet-reject`,
-    method: 'put',
+    method: 'post',
     data
   })
 }
@@ -71,5 +71,19 @@ export function resubmitOrder(id) {
   return request({
     url: `/orders/${id}/resubmit`,
     method: 'put'
+  })
+}
+
+/**
+ * 导出订单列表
+ * @param {Object} params - 查询参数 { status, keyword, all }
+ */
+export function exportOrders(params) {
+  return request({
+    url: '/orders/export',
+    method: 'get',
+    params,
+    responseType: 'blob',
+    timeout: 60000
   })
 }

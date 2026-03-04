@@ -39,10 +39,26 @@
       <template #header>
         <div class="card-header">
           <span>全平台订单监控</span>
-          <el-button type="primary" size="small" @click="handleRefresh">
-            <el-icon><Refresh /></el-icon>
-            刷新
-          </el-button>
+          <div class="header-actions">
+            <el-dropdown split-button type="warning" size="small" @click="handleExport('filtered')" :loading="exporting">
+              <el-icon><Download /></el-icon>
+              导出数据
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item @click="handleExport('filtered')">
+                    导出当前页 ({{ orderList.length }} 条)
+                  </el-dropdown-item>
+                  <el-dropdown-item @click="handleExport('all')">
+                    导出全部
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+            <el-button type="primary" size="small" @click="handleRefresh">
+              <el-icon><Refresh /></el-icon>
+              刷新
+            </el-button>
+          </div>
         </div>
       </template>
 
@@ -67,11 +83,13 @@
           />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="handleQuery">
-            <el-icon><Search /></el-icon>
-            查询
-          </el-button>
-          <el-button @click="handleReset">重置</el-button>
+          <div class="form-actions">
+            <el-button type="primary" @click="handleQuery">
+              <el-icon><Search /></el-icon>
+              查询
+            </el-button>
+            <el-button @click="handleReset">重置</el-button>
+          </div>
         </el-form-item>
       </el-form>
 
@@ -300,10 +318,12 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { getOrders, getOrderDetail, approveQuote } from '@/api/order'
+import { Download, Refresh } from '@element-plus/icons-vue'
+import { getOrders, getOrderDetail, approveQuote, exportOrders } from '@/api/order'
 import dayjs from 'dayjs'
 
 const loading = ref(false)
+const exporting = ref(false)
 const orderList = ref([])
 const total = ref(0)
 const stats = ref({
@@ -384,6 +404,41 @@ const handleReset = () => {
 // 刷新
 const handleRefresh = () => {
   fetchOrders()
+}
+
+// 导出订单列表
+const handleExport = async (type = 'all') => {
+  exporting.value = true
+  try {
+    const params = {}
+    if (type === 'filtered') {
+      // 导出当前页数据（支持筛选）
+      if (queryParams.value.status) params.status = queryParams.value.status
+      if (queryParams.value.keyword) params.keyword = queryParams.value.keyword
+      params.limit = orderList.value.length
+    } else {
+      // 导出全部数据（支持筛选）
+      if (queryParams.value.status) params.status = queryParams.value.status
+      if (queryParams.value.keyword) params.keyword = queryParams.value.keyword
+      params.all = 'true'
+    }
+
+    const response = await exportOrders(params)
+    const blob = new Blob([response], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `订单列表_${dayjs().format('YYYYMMDD_HHmmss')}.xlsx`
+    link.click()
+    window.URL.revokeObjectURL(url)
+    ElMessage.success('导出成功')
+  } catch (error) {
+    ElMessage.error(error.response?.data?.message || '导出失败')
+  } finally {
+    exporting.value = false
+  }
 }
 
 // 查看详情
@@ -501,10 +556,22 @@ onMounted(() => {
     justify-content: space-between;
     font-weight: 600;
     color: #2c3e50;
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
   }
 
   .search-form {
     margin-bottom: 20px;
+
+    .form-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
   }
 }
 </style>

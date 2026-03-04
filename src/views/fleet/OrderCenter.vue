@@ -39,7 +39,7 @@
     <!-- 筛选条件 -->
     <el-card class="filter-card">
       <el-form :inline="true" :model="filters" label-width="80px">
-        <el-form-item label="车辆">
+        <el-form-item label="车牌号">
           <el-select v-model="filters.vehicleId" placeholder="全部车辆" clearable filterable @change="loadOrders">
             <el-option
               v-for="vehicle in vehicles"
@@ -50,18 +50,20 @@
           </el-select>
         </el-form-item>
         <el-form-item label="订单类型">
-          <el-select v-model="filters.orderType" placeholder="全部类型" clearable @change="loadOrders">
+          <el-select v-model="filters.orderType" placeholder="全部类型" clearable @change="loadOrders" style="width: 150px">
             <el-option label="全部类型" value=""></el-option>
             <el-option label="维修订单" value="repair"></el-option>
             <el-option label="保养订单" value="maintenance"></el-option>
           </el-select>
         </el-form-item>
         <el-form-item label="订单状态">
-          <el-select v-model="filters.status" placeholder="全部状态" clearable @change="loadOrders">
+          <el-select v-model="filters.status" placeholder="全部状态" clearable @change="loadOrders" style="width: 180px">
             <el-option label="全部状态" value=""></el-option>
-            <el-option label="待评估" value="pending_assessment"></el-option>
-            <el-option label="待审批" value="awaiting_approval"></el-option>
+            <el-option label="待车队审批" value="awaiting_fleet_approval"></el-option>
+            <el-option label="待接车检查" value="pending_assessment"></el-option>
+            <el-option label="待审批报价" value="awaiting_approval"></el-option>
             <el-option label="维修中" value="in_repair"></el-option>
+            <el-option label="增项待审批" value="awaiting_addon_approval"></el-option>
             <el-option label="待确认" value="completed"></el-option>
             <el-option label="已拒绝" value="rejected"></el-option>
           </el-select>
@@ -266,7 +268,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Download } from '@element-plus/icons-vue'
-import request from '@/api/orderCenter'
+import { getOrderCenter, exportOrderCenter } from '@/api/orderCenter'
 
 // 响应式数据
 const loading = ref(false)
@@ -324,7 +326,7 @@ async function loadOrders() {
       params.endDate = dateRange.value[1]
     }
 
-    const res = await request.getOrderCenter(params)
+    const res = await getOrderCenter(params)
     orders.value = res.data.list || []
     vehicles.value = res.data.vehicles || []
     stores.value = res.data.stores || []
@@ -372,7 +374,7 @@ async function exportExcel() {
       params.endDate = dateRange.value[1]
     }
 
-    const blob = await request.exportOrderCenter(params, {
+    const blob = await exportOrderCenter(params, {
       responseType: 'blob'
     })
 
@@ -413,8 +415,9 @@ function getOrderTypeColor(type) {
 
 function getStatusText(status) {
   const map = {
-    pending_assessment: '待评估',
-    awaiting_approval: '待审批',
+    awaiting_fleet_approval: '待车队审批',
+    pending_assessment: '待接车检查',
+    awaiting_approval: '待审批报价',
     in_repair: '维修中',
     awaiting_addon_approval: '增项待审批',
     completed: '待确认',
@@ -426,8 +429,9 @@ function getStatusText(status) {
 
 function getStatusColor(status) {
   const map = {
-    pending_assessment: 'warning',
-    awaiting_approval: '',
+    awaiting_fleet_approval: 'warning',
+    pending_assessment: 'info',
+    awaiting_approval: 'warning',
     in_repair: 'primary',
     awaiting_addon_approval: 'warning',
     completed: 'success',

@@ -1,9 +1,34 @@
 <template>
-  <div class="fleet-orders">
-    <el-card>
+  <div class="repair-approval">
+    <!-- 统计卡片 -->
+    <el-row :gutter="20">
+      <el-col :span="6">
+        <el-card class="stat-card">
+          <el-statistic title="待审批" :value="stats.pending" />
+        </el-card>
+      </el-col>
+      <el-col :span="6">
+        <el-card class="stat-card stat-card-success">
+          <el-statistic title="今日已审批" :value="stats.approvedToday" />
+        </el-card>
+      </el-col>
+      <el-col :span="6">
+        <el-card class="stat-card stat-card-warning">
+          <el-statistic title="今日已拒绝" :value="stats.rejectedToday" />
+        </el-card>
+      </el-col>
+      <el-col :span="6">
+        <el-card class="stat-card stat-card-info">
+          <el-statistic title="本月累计" :value="stats.monthTotal" />
+        </el-card>
+      </el-col>
+    </el-row>
+
+    <!-- 申请列表 -->
+    <el-card style="margin-top: 20px">
       <template #header>
         <div class="card-header">
-          <span>订单管理</span>
+          <span>待审批维修申请</span>
           <el-button type="primary" size="small" @click="fetchOrders">
             <el-icon><Refresh /></el-icon>
             刷新
@@ -13,62 +38,46 @@
 
       <!-- 搜索筛选 -->
       <el-form :inline="true" class="search-form">
-        <el-form-item label="订单类型">
-          <el-select v-model="queryParams.type" placeholder="全部类型" clearable style="width: 150px">
-            <el-option label="全部类型" value="" />
-            <el-option label="维修订单" value="repair" />
-            <el-option label="保养订单" value="maintenance" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="订单状态">
-          <el-select v-model="queryParams.status" placeholder="全部状态" clearable style="width: 180px">
-            <el-option label="全部状态" value="" />
-            <el-option label="待车队审批" value="awaiting_fleet_approval" />
-            <el-option label="待接车检查" value="pending_assessment" />
-            <el-option label="待审批报价" value="awaiting_approval" />
-            <el-option label="维修中" value="in_repair" />
-            <el-option label="增项待审批" value="awaiting_addon_approval" />
-            <el-option label="待确认" value="completed" />
+        <el-form-item label="状态">
+          <el-select v-model="queryParams.status" placeholder="全部" clearable style="width: 140px">
+            <el-option label="待审批" value="awaiting_fleet_approval" />
+            <el-option label="已审批" value="pending_assessment" />
             <el-option label="已拒绝" value="rejected" />
           </el-select>
         </el-form-item>
         <el-form-item label="关键词">
-          <el-input v-model="queryParams.keyword" placeholder="车牌号/订单号" clearable style="width: 200px" />
+          <el-input
+            v-model="queryParams.keyword"
+            placeholder="车牌号/订单号"
+            clearable
+            style="width: 200px"
+          />
         </el-form-item>
         <el-form-item>
-          <div class="form-actions">
-            <el-button type="primary" @click="handleQuery">查询</el-button>
-            <el-button @click="handleReset">重置</el-button>
-          </div>
+          <el-button type="primary" @click="handleQuery">
+            <el-icon><Search /></el-icon>
+            查询
+          </el-button>
+          <el-button @click="handleReset">重置</el-button>
         </el-form-item>
       </el-form>
 
-      <!-- 订单列表 -->
+      <!-- 表格 -->
       <el-table
         v-loading="loading"
-        :data="orderList"
+        :data="orders"
         stripe
         style="width: 100%"
       >
         <el-table-column prop="orderNumber" label="订单号" width="180" />
-        <el-table-column label="类型" width="80">
-          <template #default="{ row }">
-            <el-tag :type="row.type === 'maintenance' ? 'success' : 'primary'" size="small">
-              {{ row.type === 'maintenance' ? '保养' : '维修' }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="车牌号" width="110">
+        <el-table-column label="车辆" width="150">
           <template #default="{ row }">
             {{ row.vehicleId?.plateNumber || '-' }}
           </template>
         </el-table-column>
-        <el-table-column label="品牌/车型" width="150">
-          <template #default="{ row }">
-            {{ row.vehicleId?.brand }} {{ row.vehicleId?.model }}
-          </template>
-        </el-table-column>
-        <el-table-column label="故障描述" min-width="180" show-overflow-tooltip>
+        <el-table-column prop="vehicleId.brand" label="品牌" width="100" />
+        <el-table-column prop="vehicleId.model" label="车型" width="120" />
+        <el-table-column label="故障描述" width="200" show-overflow-tooltip>
           <template #default="{ row }">
             {{ row.faultDescription || '-' }}
           </template>
@@ -78,28 +87,24 @@
             {{ row.milestone || '-' }} km
           </template>
         </el-table-column>
-        <el-table-column label="报价金额" width="110" align="right">
+        <el-table-column label="报修人" width="100">
           <template #default="{ row }">
-            <span v-if="row.quote?.total" class="amount">¥{{ formatAmount(row.quote.total) }}</span>
-            <span v-else>-</span>
+            {{ row.reporterId?.name || '-' }}
           </template>
         </el-table-column>
-        <el-table-column label="状态" width="110">
+        <el-table-column label="联系电话" width="130">
           <template #default="{ row }">
-            <el-tag :type="getStatusType(row.status)" size="small">
-              {{ getStatusText(row.status) }}
-            </el-tag>
+            {{ row.reporterId?.phone || '-' }}
           </template>
         </el-table-column>
-        <el-table-column label="创建时间" width="160">
+        <el-table-column label="提交时间" width="110">
           <template #default="{ row }">
-            {{ formatDate(row.createdAt) }}
+            {{ formatDateTime(row.createdAt) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="240" fixed="right">
+        <el-table-column label="操作" width="180" fixed="right">
           <template #default="{ row }">
             <el-button
-              v-if="row.status === 'awaiting_fleet_approval'"
               type="primary"
               size="small"
               link
@@ -108,10 +113,17 @@
               审批
             </el-button>
             <el-button
-              type="info"
+              type="danger"
               size="small"
               link
-              @click="handleViewDetail(row)"
+              @click="handleReject(row)"
+            >
+              拒绝
+            </el-button>
+            <el-button
+              size="small"
+              link
+              @click="viewDetail(row)"
             >
               详情
             </el-button>
@@ -135,7 +147,7 @@
     <!-- 审批对话框 -->
     <el-dialog
       v-model="approveDialogVisible"
-      title="订单审批"
+      title="审批维修申请"
       width="700px"
     >
       <div v-if="currentOrder">
@@ -153,10 +165,10 @@
             {{ currentOrder.milestone || '-' }} km
           </el-descriptions-item>
           <el-descriptions-item label="报修人">
-            {{ currentOrder.reporterId?.name || '-' }}
+            {{ currentOrder.reporterId?.name }}
           </el-descriptions-item>
           <el-descriptions-item label="联系电话">
-            {{ currentOrder.reporterId?.phone || '-' }}
+            {{ currentOrder.reporterId?.phone }}
           </el-descriptions-item>
           <el-descriptions-item label="提交时间">
             {{ formatDateTime(currentOrder.createdAt) }}
@@ -225,7 +237,7 @@
               <el-option
                 v-for="store in storeList"
                 :key="store._id"
-                :label="`${store.name}（${formatStoreAddress(store.address)}）`"
+                :label="`${store.name}（${store.address}）`"
                 :value="store._id"
               />
             </el-select>
@@ -244,8 +256,35 @@
       </div>
       <template #footer>
         <el-button @click="approveDialogVisible = false">取消</el-button>
-        <el-button type="danger" @click="confirmReject">拒绝</el-button>
-        <el-button type="primary" @click="confirmApprove" :disabled="!canApprove">确认审批</el-button>
+        <el-button type="primary" @click="confirmApprove" :loading="approving" :disabled="!canApprove">
+          确认审批
+        </el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 拒绝对话框 -->
+    <el-dialog
+      v-model="rejectDialogVisible"
+      title="拒绝维修申请"
+      width="500px"
+    >
+      <el-form :model="rejectForm" label-width="100px">
+        <el-form-item label="拒绝原因" required>
+          <el-input
+            v-model="rejectForm.reason"
+            type="textarea"
+            :rows="4"
+            placeholder="请输入拒绝原因"
+            maxlength="500"
+            show-word-limit
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="rejectDialogVisible = false">取消</el-button>
+        <el-button type="danger" @click="confirmReject" :loading="rejecting" :disabled="!rejectForm.reason.trim()">
+          确认拒绝
+        </el-button>
       </template>
     </el-dialog>
 
@@ -263,20 +302,15 @@
               {{ getStatusText(currentOrder.status) }}
             </el-tag>
           </el-descriptions-item>
-          <el-descriptions-item label="订单类型">
-            <el-tag :type="currentOrder.type === 'maintenance' ? 'success' : 'primary'">
-              {{ currentOrder.type === 'maintenance' ? '保养订单' : '维修订单' }}
-            </el-tag>
-          </el-descriptions-item>
           <el-descriptions-item label="车牌号">{{ currentOrder.vehicleId?.plateNumber }}</el-descriptions-item>
-          <el-descriptions-item label="品牌型号" :span="2">
+          <el-descriptions-item label="品牌型号">
             {{ currentOrder.vehicleId?.brand }} {{ currentOrder.vehicleId?.model }}
           </el-descriptions-item>
-          <el-descriptions-item label="车辆类型" :span="2" v-if="currentOrder.vehicleId?.vehicleType">
-            {{ currentOrder.vehicleId.vehicleType }}
+          <el-descriptions-item label="车辆类型" :span="2">
+            {{ currentOrder.vehicleId?.vehicleType || '-' }}
           </el-descriptions-item>
-          <el-descriptions-item label="VIN码" :span="2" v-if="currentOrder.vehicleId?.vin">
-            {{ currentOrder.vehicleId.vin }}
+          <el-descriptions-item label="VIN码" :span="2">
+            {{ currentOrder.vehicleId?.vin || '-' }}
           </el-descriptions-item>
           <el-descriptions-item label="故障描述" :span="2">
             {{ currentOrder.faultDescription }}
@@ -285,15 +319,12 @@
             {{ currentOrder.milestone || '-' }} km
           </el-descriptions-item>
           <el-descriptions-item label="报修人">
-            {{ currentOrder.reporterId?.name || '-' }}
+            {{ currentOrder.reporterId?.name }}
           </el-descriptions-item>
           <el-descriptions-item label="联系电话">
-            {{ currentOrder.reporterId?.phone || '-' }}
+            {{ currentOrder.reporterId?.phone }}
           </el-descriptions-item>
-          <el-descriptions-item label="维修门店">
-            {{ currentOrder.storeId?.name || '-' }}
-          </el-descriptions-item>
-          <el-descriptions-item label="创建时间">
+          <el-descriptions-item label="提交时间">
             {{ formatDateTime(currentOrder.createdAt) }}
           </el-descriptions-item>
           <el-descriptions-item label="里程照片" :span="2" v-if="currentOrder.milestonePhotos?.length > 0">
@@ -302,8 +333,7 @@
               :key="idx"
               :src="img"
               :preview-src-list="currentOrder.milestonePhotos"
-              :initial-index="idx"
-              style="width: 80px; height: 80px; margin-right: 8px; border-radius: 4px;"
+              style="width: 80px; height: 80px; margin-right: 8px;"
               fit="cover"
             />
           </el-descriptions-item>
@@ -313,52 +343,7 @@
               :key="idx"
               :src="img"
               :preview-src-list="currentOrder.faultImages"
-              :initial-index="idx"
-              style="width: 80px; height: 80px; margin-right: 8px; border-radius: 4px;"
-              fit="cover"
-            />
-          </el-descriptions-item>
-          <el-descriptions-item label="接车检查" :span="2" v-if="currentOrder.receiveCheck">
-            <div><strong>检查里程：</strong>{{ currentOrder.receiveCheck.mileage || '-' }} 公里</div>
-            <div><strong>诊断结果：</strong>{{ currentOrder.receiveCheck.diagnosis || '-' }}</div>
-            <div v-if="currentOrder.receiveCheck.checkinPhotos?.length > 0"><strong>接车照片：</strong></div>
-            <el-image
-              v-for="(img, idx) in currentOrder.receiveCheck.checkinPhotos || []"
-              :key="idx"
-              :src="img"
-              :preview-src-list="currentOrder.receiveCheck.checkinPhotos || []"
-              :initial-index="idx"
-              style="width: 80px; height: 80px; margin-right: 8px; border-radius: 4px; margin-top: 8px;"
-              fit="cover"
-            />
-          </el-descriptions-item>
-          <el-descriptions-item label="报价信息" :span="2" v-if="currentOrder.quote">
-            <div><strong>报价项目：</strong></div>
-            <el-table :data="currentOrder.quote.items" size="small" border style="margin-top: 8px;">
-              <el-table-column prop="item" label="项目名称" />
-              <el-table-column prop="price" label="单价" width="100">
-                <template #default="{ row }">¥{{ row.price }}</template>
-              </el-table-column>
-              <el-table-column prop="quantity" label="数量" width="80" />
-              <el-table-column label="小计" width="100">
-                <template #default="{ row }">¥{{ (row.price * row.quantity).toFixed(2) }}</template>
-              </el-table-column>
-            </el-table>
-            <div style="margin-top: 10px;">
-              <strong>报价总额：</strong>
-              <span style="color: #f56c6c; font-size: 18px; font-weight: bold;">¥{{ formatAmount(currentOrder.quote.total) }}</span>
-            </div>
-          </el-descriptions-item>
-          <el-descriptions-item label="完工信息" :span="2" v-if="currentOrder.completion">
-            <div><strong>完工说明：</strong>{{ currentOrder.completion.description || '-' }}</div>
-            <div v-if="currentOrder.completion.images?.length > 0"><strong>完工照片：</strong></div>
-            <el-image
-              v-for="(img, idx) in currentOrder.completion.images || []"
-              :key="idx"
-              :src="img"
-              :preview-src-list="currentOrder.completion.images || []"
-              :initial-index="idx"
-              style="width: 80px; height: 80px; margin-right: 8px; border-radius: 4px; margin-top: 8px;"
+              style="width: 80px; height: 80px; margin-right: 8px;"
               fit="cover"
             />
           </el-descriptions-item>
@@ -370,33 +355,46 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
-import { Refresh } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { Refresh, Search } from '@element-plus/icons-vue'
 import request from '@/utils/request'
 import { getStores } from '@/api/store'
 import { getFleetConfig } from '@/api/fleet'
 import dayjs from 'dayjs'
 
 const loading = ref(false)
-const orderList = ref([])
-const total = ref(0)
+const approving = ref(false)
+const rejecting = ref(false)
+const orders = ref([])
 const storeList = ref([])
+const total = ref(0)
+
+const stats = ref({
+  pending: 0,
+  approvedToday: 0,
+  rejectedToday: 0,
+  monthTotal: 0
+})
 
 const queryParams = ref({
   page: 1,
   limit: 20,
-  type: '',
-  status: '',
+  status: 'awaiting_fleet_approval',
   keyword: ''
 })
 
 const approveDialogVisible = ref(false)
+const rejectDialogVisible = ref(false)
 const detailDialogVisible = ref(false)
 const currentOrder = ref(null)
 
 const approveForm = ref({
   storeId: null,
   remark: ''
+})
+
+const rejectForm = ref({
+  reason: ''
 })
 
 const fleetConfig = ref({
@@ -430,23 +428,7 @@ const getStoreName = (storeId) => {
 // 获取门店地址
 const getStoreAddress = (storeId) => {
   const store = storeList.value.find(s => s._id === storeId)
-  if (!store?.address) return '-'
-  // 如果地址是对象，拼接成完整地址
-  if (typeof store.address === 'object') {
-    const addr = store.address
-    const parts = [addr.province, addr.city, addr.district, addr.detail].filter(Boolean)
-    return parts.join('') || '-'
-  }
-  return store.address
-}
-
-// 格式化门店地址（用于下拉选项）
-const formatStoreAddress = (address) => {
-  if (!address) return '-'
-  if (typeof address === 'string') return address
-  const addr = address
-  const parts = [addr.province, addr.city, addr.district, addr.detail].filter(Boolean)
-  return parts.join('') || '-'
+  return store?.address || '-'
 }
 
 // 获取车队配置
@@ -463,39 +445,35 @@ const fetchFleetConfig = async () => {
 const fetchOrders = async () => {
   loading.value = true
   try {
-    const params = {}
+    const params = {
+      status: queryParams.value.status || undefined,
+      page: queryParams.value.page,
+      limit: queryParams.value.limit
+    }
 
-    // 状态筛选
-    if (queryParams.value.status) {
-      params.status = queryParams.value.status
+    if (queryParams.value.keyword) {
+      params.keyword = queryParams.value.keyword
     }
 
     const res = await request({
-      url: '/orders',
+      url: '/orders/fleet/pending',
       method: 'get',
       params
     })
 
-    // 根据订单类型筛选
-    let orders = res.data.orders || []
-    if (queryParams.value.type) {
-      orders = orders.filter(o => o.type === queryParams.value.type)
-    }
+    orders.value = res.data.orders || []
+    total.value = res.data.total || 0
 
-    // 关键词搜索
-    if (queryParams.value.keyword) {
-      const keyword = queryParams.value.keyword.toLowerCase()
-      orders = orders.filter(o =>
-        (o.orderNumber && o.orderNumber.toLowerCase().includes(keyword)) ||
-        (o.vehicleId?.plateNumber && o.vehicleId.plateNumber.toLowerCase().includes(keyword))
-      )
-    }
-
-    // 分页
-    const start = (queryParams.value.page - 1) * queryParams.value.limit
-    const end = start + queryParams.value.limit
-    orderList.value = orders.slice(start, end)
-    total.value = orders.length
+    // 更新统计
+    stats.value.pending = orders.value.filter(o => o.status === 'awaiting_fleet_approval').length
+    stats.value.approvedToday = orders.value.filter(o => {
+      const date = new Date(o.fleetApproval?.approvedAt)
+      return date && dayjs(date).isSame(dayjs(), 'day') && o.status === 'pending_assessment'
+    }).length
+    stats.value.rejectedToday = orders.value.filter(o => {
+      const date = new Date(o.fleetApproval?.rejectedAt)
+      return date && dayjs(date).isSame(dayjs(), 'day') && o.status === 'rejected'
+    }).length
   } catch (error) {
     console.error('获取订单列表失败:', error)
     ElMessage.error('获取订单列表失败')
@@ -525,14 +503,13 @@ const handleReset = () => {
   queryParams.value = {
     page: 1,
     limit: 20,
-    type: '',
-    status: '',
+    status: 'awaiting_fleet_approval',
     keyword: ''
   }
   fetchOrders()
 }
 
-// 车队审批
+// 审批
 const handleApprove = async (order) => {
   currentOrder.value = order
   approveForm.value = {
@@ -553,6 +530,7 @@ const handleApprove = async (order) => {
 
 // 确认审批
 const confirmApprove = async () => {
+  approving.value = true
   try {
     const data = {
       storeId: approveForm.value.storeId,
@@ -571,29 +549,41 @@ const confirmApprove = async () => {
   } catch (error) {
     console.error('审批失败:', error)
     ElMessage.error(error.response?.data?.message || '审批失败')
+  } finally {
+    approving.value = false
   }
 }
 
-// 拒绝订单
+// 拒绝
+const handleReject = async (order) => {
+  currentOrder.value = order
+  rejectForm.value = { reason: '' }
+  rejectDialogVisible.value = true
+}
+
+// 确认拒绝
 const confirmReject = async () => {
+  rejecting.value = true
   try {
     await request({
       url: `/orders/${currentOrder.value._id}/fleet-reject`,
       method: 'post',
-      data: { reason: '车队管理员拒绝' }
+      data: { reason: rejectForm.value.reason }
     })
 
-    ElMessage.success('已拒绝订单')
-    approveDialogVisible.value = false
+    ElMessage.success('已拒绝')
+    rejectDialogVisible.value = false
     fetchOrders()
   } catch (error) {
     console.error('拒绝失败:', error)
     ElMessage.error(error.response?.data?.message || '拒绝失败')
+  } finally {
+    rejecting.value = false
   }
 }
 
 // 查看详情
-const handleViewDetail = (order) => {
+const viewDetail = (order) => {
   currentOrder.value = order
   detailDialogVisible.value = true
 }
@@ -603,11 +593,8 @@ const getStatusType = (status) => {
   const typeMap = {
     'awaiting_fleet_approval': 'warning',
     'pending_assessment': 'info',
-    'awaiting_approval': 'warning',
     'in_repair': 'primary',
-    'awaiting_addon_approval': 'warning',
     'completed': 'success',
-    'refunded': 'info',
     'rejected': 'danger'
   }
   return typeMap[status] || ''
@@ -622,24 +609,9 @@ const getStatusText = (status) => {
     'in_repair': '维修中',
     'awaiting_addon_approval': '增项待审批',
     'completed': '待确认',
-    'refunded': '已退款',
     'rejected': '已拒绝'
   }
   return textMap[status] || status
-}
-
-// 格式化金额
-const formatAmount = (amount) => {
-  if (!amount) return '0.00'
-  return parseFloat(amount).toLocaleString('zh-CN', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  })
-}
-
-// 格式化日期
-const formatDate = (date) => {
-  return dayjs(date).format('YYYY-MM-DD HH:mm')
 }
 
 // 格式化日期时间
@@ -654,7 +626,28 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
-.fleet-orders {
+.repair-approval {
+  .stat-card {
+    margin-bottom: 0;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    &.stat-card-success :deep(.el-statistic__number) {
+      color: #67c23a;
+    }
+
+    &.stat-card-warning :deep(.el-statistic__number) {
+      color: #e6a23c;
+    }
+
+    &.stat-card-info :deep(.el-statistic__number) {
+      color: #409eff;
+    }
+  }
+
   .card-header {
     display: flex;
     align-items: center;
@@ -665,11 +658,6 @@ onMounted(() => {
 
   .search-form {
     margin-bottom: 20px;
-  }
-
-  .amount {
-    color: #f56c6c;
-    font-weight: 600;
   }
 }
 </style>

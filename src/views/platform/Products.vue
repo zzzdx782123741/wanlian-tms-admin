@@ -3,7 +3,7 @@
     <div class="page-header">
       <h2>商品管理</h2>
       <div>
-        <el-button type="success" @click="handleBatchImport">
+        <el-button v-if="['PLATFORM_OPERATOR', 'STORE_TECHNICIAN'].includes(userRole)" type="success" @click="handleBatchImport">
           <el-icon><Upload /></el-icon>
           批量导入
         </el-button>
@@ -46,8 +46,10 @@
           <el-input v-model="filters.keyword" placeholder="商品名称/编码/品牌" clearable @keyup.enter="loadProducts"></el-input>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="loadProducts">搜索</el-button>
-          <el-button @click="resetFilters">重置</el-button>
+          <div class="form-actions">
+            <el-button type="primary" @click="loadProducts">搜索</el-button>
+            <el-button @click="resetFilters">重置</el-button>
+          </div>
         </el-form-item>
       </el-form>
     </el-card>
@@ -252,31 +254,17 @@
     <!-- 批量导入对话框 -->
     <el-dialog v-model="batchVisible" title="批量导入商品" width="700px">
       <div class="batch-import-content">
-        <!-- 步骤说明 -->
-        <el-steps :active="batchStep" align-center style="margin-bottom: 30px">
-          <el-step title="下载模板" />
-          <el-step title="上传文件" />
-          <el-step title="导入完成" />
-        </el-steps>
+        <!-- 未显示结果时显示上传界面 -->
+        <div v-if="!importResult.message" class="upload-section">
+          <!-- 顶部操作栏 -->
+          <div class="upload-header">
+            <el-button type="primary" link @click="downloadTemplate" :loading="downloading">
+              <el-icon><Download /></el-icon>
+              下载 Excel 模板
+            </el-button>
+          </div>
 
-        <!-- 步骤1: 下载模板 -->
-        <div v-if="batchStep === 0" class="step-content">
-          <el-alert title="导入说明" type="info" :closable="false" style="margin-bottom: 20px">
-            <ul>
-              <li>请先下载 Excel 模板，按照模板格式填写商品信息</li>
-              <li>商品名称为必填项，其他字段选填</li>
-              <li>支持导入最多 1000 条数据</li>
-              <li>门店技师导入的商品需要平台审核</li>
-            </ul>
-          </el-alert>
-          <el-button type="primary" @click="downloadTemplate" :loading="downloading">
-            <el-icon><Download /></el-icon>
-            下载 Excel 模板
-          </el-button>
-        </div>
-
-        <!-- 步骤2: 上传文件 -->
-        <div v-if="batchStep === 1" class="step-content">
+          <!-- 上传区域 -->
           <el-upload
             ref="uploadRef"
             class="upload-area"
@@ -298,16 +286,51 @@
               </div>
             </template>
           </el-upload>
-          <div style="text-align: right; margin-top: 20px">
-            <el-button @click="batchStep = 0">上一步</el-button>
+
+          <!-- 字段说明 -->
+          <div class="field-info">
+            <el-divider content-position="left">
+              <el-icon><InfoFilled /></el-icon>
+              字段说明
+            </el-divider>
+            <el-descriptions :column="2" border size="small">
+              <el-descriptions-item label="必填字段" label-class-name="required-field">
+                商品名称、商品分类、销售价格、单位、适配车型
+              </el-descriptions-item>
+              <el-descriptions-item label="选填字段">
+                商品编码、成本价格、品牌、厂家、规格型号、库存、商品描述
+              </el-descriptions-item>
+              <el-descriptions-item label="适配车型说明">
+                通用商品勾选"通用"，非通用商品填写多个车型用顿号（、）分隔
+              </el-descriptions-item>
+              <el-descriptions-item label="数据限制">
+                最多导入 1000 条数据
+              </el-descriptions-item>
+            </el-descriptions>
+          </div>
+
+          <!-- 提示信息 -->
+          <el-alert
+            type="info"
+            :closable="false"
+            show-icon
+            style="margin-bottom: 20px"
+          >
+            门店技师导入的商品需要平台审核后才能使用
+          </el-alert>
+
+          <!-- 底部按钮 -->
+          <div class="upload-footer">
+            <el-button @click="batchVisible = false">取消</el-button>
             <el-button type="primary" @click="startImport" :loading="importing" :disabled="!uploadFile">
+              <el-icon><Upload /></el-icon>
               开始导入
             </el-button>
           </div>
         </div>
 
-        <!-- 步骤3: 导入结果 -->
-        <div v-if="batchStep === 2" class="step-content">
+        <!-- 导入结果 -->
+        <div v-else class="result-section">
           <el-result
             :icon="importResult.successCount > 0 ? 'success' : 'error'"
             :title="importResult.message"
@@ -333,7 +356,8 @@
               </div>
               <div style="margin-top: 20px">
                 <el-button @click="batchVisible = false">关闭</el-button>
-                <el-button v-if="importResult.failedCount > 0" type="primary" @click="batchStep = 1; uploadFile = null">
+                <el-button v-if="importResult.failedCount > 0" type="primary" @click="resetImport">
+                  <el-icon><Refresh /></el-icon>
                   重新导入
                 </el-button>
               </div>
@@ -348,9 +372,12 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Upload, Download, UploadFilled } from '@element-plus/icons-vue'
+import { Plus, Upload, Download, UploadFilled, InfoFilled, Refresh } from '@element-plus/icons-vue'
 import * as productApi from '@/api/product'
 import request from '@/utils/request'
+
+// 获取用户角色
+const userRole = localStorage.getItem('role') || ''
 
 // 响应式数据
 const loading = ref(false)
@@ -416,7 +443,6 @@ const formRef = ref(null)
 
 // 批量导入相关
 const batchVisible = ref(false)
-const batchStep = ref(0)
 const importing = ref(false)
 const downloading = ref(false)
 const uploadFile = ref(null)
@@ -679,7 +705,6 @@ function formatDate(dateStr) {
 
 // 打开批量导入对话框
 function handleBatchImport() {
-  batchStep.value = 0
   uploadFile.value = null
   importResult.value = {
     message: '',
@@ -689,6 +714,18 @@ function handleBatchImport() {
     errors: []
   }
   batchVisible.value = true
+}
+
+// 重置导入状态
+function resetImport() {
+  uploadFile.value = null
+  importResult.value = {
+    message: '',
+    total: 0,
+    successCount: 0,
+    failedCount: 0,
+    errors: []
+  }
 }
 
 // 下载模板
@@ -709,7 +746,6 @@ async function downloadTemplate() {
     window.URL.revokeObjectURL(url)
 
     ElMessage.success('模板下载成功')
-    batchStep.value = 1
   } catch (error) {
     console.error('下载模板失败:', error)
     ElMessage.error('下载模板失败')
@@ -757,8 +793,6 @@ async function startImport() {
       errors: res.data.errors || []
     }
 
-    batchStep.value = 2
-
     if (res.data.success > 0) {
       loadProducts()
     }
@@ -771,7 +805,6 @@ async function startImport() {
       failedCount: 0,
       errors: []
     }
-    batchStep.value = 2
   } finally {
     importing.value = false
   }
@@ -803,6 +836,12 @@ async function startImport() {
 
 .filter-card {
   margin-bottom: 20px;
+
+  .form-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
 }
 
 .table-card {
@@ -821,15 +860,47 @@ async function startImport() {
 }
 
 .batch-import-content {
-  .step-content {
-    min-height: 300px;
-    padding: 20px;
+  .upload-section {
+    padding: 10px 0;
+  }
+
+  .upload-header {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 20px;
   }
 
   .upload-area {
+    margin-bottom: 30px;
+
     :deep(.el-upload-dragger) {
       padding: 40px;
     }
+  }
+
+  .field-info {
+    margin-bottom: 20px;
+
+    :deep(.required-field) {
+      font-weight: 600;
+      color: #f56c6c;
+    }
+
+    :deep(.el-descriptions__label) {
+      width: 110px;
+    }
+  }
+
+  .upload-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding-top: 20px;
+    border-top: 1px solid #ebeef5;
+  }
+
+  .result-section {
+    padding: 20px 0;
   }
 
   .result-stats {

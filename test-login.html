@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Web管理后台测试</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+    }
+    .test-section {
+      margin: 20px 0;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    .test-section h3 {
+      margin-top: 0;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 5px;
+      cursor: pointer;
+    }
+    .success {
+      background-color: #d4edda;
+      color: #155724;
+    }
+    .error {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+    pre {
+      background: #f5f5f5;
+      padding: 10px;
+      border-radius: 3px;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧪 Web管理后台API测试</h1>
+
+  <div class="test-section">
+    <h3>1. 测试登录</h3>
+    <button onclick="testLogin()">登录（平台运营）</button>
+    <div id="login-result"></div>
+  </div>
+
+  <div class="test-section">
+    <h3>2. 测试车队列表</h3>
+    <button onclick="testFleets()">获取车队列表</button>
+    <div id="fleets-result"></div>
+  </div>
+
+  <div class="test-section">
+    <h3>3. 测试门店列表</h3>
+    <button onclick="testStores()">获取门店列表</button>
+    <div id="stores-result"></div>
+  </div>
+
+  <script>
+    const API_BASE = 'http://localhost:3000/api';
+    let token = null;
+
+    async function testLogin() {
+      const resultDiv = document.getElementById('login-result');
+      resultDiv.innerHTML = '<p>正在登录...</p>';
+
+      try {
+        const response = await fetch(`${API_BASE}/auth/test-login`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ openid: 'operator_openid_001' })
+        });
+
+        const data = await response.json();
+
+        if (data.success && data.token) {
+          token = data.token;
+          resultDiv.innerHTML = `
+            <div class="success">
+              <p>✅ 登录成功！</p>
+              <p>Token: ${token.substring(0, 50)}...</p>
+              <p>角色: ${data.user.roleType}</p>
+            </div>
+          `;
+        } else {
+          resultDiv.innerHTML = `<div class="error"><p>❌ 登录失败</p><pre>${JSON.stringify(data, null, 2)}</pre></div>`;
+        }
+      } catch (error) {
+        resultDiv.innerHTML = `<div class="error"><p>❌ 请求错误: ${error.message}</p></div>`;
+      }
+    }
+
+    async function testFleets() {
+      const resultDiv = document.getElementById('fleets-result');
+
+      if (!token) {
+        resultDiv.innerHTML = '<div class="error"><p>❌ 请先登录</p></div>';
+        return;
+      }
+
+      resultDiv.innerHTML = '<p>正在获取车队列表...</p>';
+
+      try {
+        const response = await fetch(`${API_BASE}/fleets?page=1&limit=20`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          resultDiv.innerHTML = `
+            <div class="success">
+              <p>✅ 获取成功！</p>
+              <p>车队数量: ${data.data.fleets.length}</p>
+              <p>总计: ${data.data.total}</p>
+            </div>
+          `;
+        } else {
+          resultDiv.innerHTML = `<div class="error"><p>❌ 获取失败</p><pre>${JSON.stringify(data, null, 2)}</pre></div>`;
+        }
+      } catch (error) {
+        resultDiv.innerHTML = `<div class="error"><p>❌ 请求错误: ${error.message}</p></div>`;
+      }
+    }
+
+    async function testStores() {
+      const resultDiv = document.getElementById('stores-result');
+
+      if (!token) {
+        resultDiv.innerHTML = '<div class="error"><p>❌ 请先登录</p></div>';
+        return;
+      }
+
+      resultDiv.innerHTML = '<p>正在获取门店列表...</p>';
+
+      try {
+        const response = await fetch(`${API_BASE}/stores?page=1&limit=20`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          resultDiv.innerHTML = `
+            <div class="success">
+              <p>✅ 获取成功！</p>
+              <p>门店数量: ${data.data.stores.length}</p>
+              <p>总计: ${data.data.total}</p>
+            </div>
+          `;
+        } else {
+          resultDiv.innerHTML = `<div class="error"><p>❌ 获取失败</p><pre>${JSON.stringify(data, null, 2)}</pre></div>`;
+        }
+      } catch (error) {
+        resultDiv.innerHTML = `<div class="error"><p>❌ 请求错误: ${error.message}</p></div>`;
+      }
+    }
+  </script>
+</body>
+</html>

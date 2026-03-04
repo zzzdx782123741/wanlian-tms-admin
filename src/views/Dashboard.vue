@@ -74,7 +74,7 @@
         <el-card>
           <template #header>
             <div class="card-header">
-              <span>欢迎使用万联驿站TMS管理后台</span>
+              <span>欢迎使用万联驿站2.0管理后台</span>
             </div>
           </template>
           <div class="welcome-content">

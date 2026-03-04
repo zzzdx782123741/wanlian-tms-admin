@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import LayoutIndex from '@/layout/Index.vue'
 
 const routes = [
   {
@@ -9,7 +10,7 @@ const routes = [
   },
   {
     path: '/',
-    component: () => import('@/layout/Index.vue'),
+    component: LayoutIndex,
     redirect: '/dashboard',
     children: [
       {
@@ -26,10 +27,22 @@ const routes = [
         meta: { title: '车队管理', icon: 'OfficeBuilding', roles: ['PLATFORM_OPERATOR'] }
       },
       {
+        path: 'fleet-register',
+        name: 'FleetRegister',
+        component: () => import('@/views/platform/FleetRegister.vue'),
+        meta: { title: '车队注册', icon: 'OfficeBuilding', roles: ['PLATFORM_OPERATOR'], hideInMenu: true }
+      },
+      {
         path: 'stores',
         name: 'Stores',
         component: () => import('@/views/platform/Stores.vue'),
         meta: { title: '门店管理', icon: 'Shop', roles: ['PLATFORM_OPERATOR'] }
+      },
+      {
+        path: 'store-register',
+        name: 'StoreRegister',
+        component: () => import('@/views/platform/StoreRegister.vue'),
+        meta: { title: '门店注册', icon: 'Shop', roles: ['PLATFORM_OPERATOR'], hideInMenu: true }
       },
       {
         path: 'platform-orders',
@@ -50,10 +63,58 @@ const routes = [
         meta: { title: '用户管理', icon: 'User', roles: ['PLATFORM_OPERATOR'] }
       },
       {
+        path: 'recharge-audit',
+        name: 'RechargeAudit',
+        component: () => import('@/views/platform/RechargeAudit.vue'),
+        meta: { title: '充值审核', icon: 'Select', roles: ['PLATFORM_OPERATOR'] }
+      },
+      {
+        path: 'agent-recharge',
+        name: 'AgentRecharge',
+        component: () => import('@/views/platform/AgentRecharge.vue'),
+        meta: { title: '代客充值', icon: 'Money', roles: ['PLATFORM_OPERATOR'] }
+      },
+      {
+        path: 'settlement-management',
+        name: 'SettlementManagement',
+        component: () => import('@/views/platform/SettlementManagement.vue'),
+        meta: { title: '结算管理', icon: 'Money', roles: ['PLATFORM_OPERATOR'] }
+      },
+      {
+        path: 'commission-config',
+        name: 'CommissionConfig',
+        component: () => import('@/views/platform/CommissionConfig.vue'),
+        meta: { title: '佣金配置', icon: 'Setting', roles: ['PLATFORM_OPERATOR'] }
+      },
+      {
+        path: 'commission-bills',
+        name: 'CommissionBills',
+        component: () => import('@/views/platform/CommissionBills.vue'),
+        meta: { title: '佣金账单', icon: 'Ticket', roles: ['PLATFORM_OPERATOR'] }
+      },
+      {
+        path: 'commission-statistics',
+        name: 'CommissionStatistics',
+        component: () => import('@/views/platform/CommissionStatistics.vue'),
+        meta: { title: '佣金统计', icon: 'DataAnalysis', roles: ['PLATFORM_OPERATOR'] }
+      },
+      {
+        path: 'finance-reports',
+        name: 'FinanceReports',
+        component: () => import('@/views/platform/FinanceReports.vue'),
+        meta: { title: '财务报表', icon: 'DataAnalysis', roles: ['PLATFORM_OPERATOR'] }
+      },
+      {
         path: 'products',
         name: 'Products',
         component: () => import('@/views/platform/Products.vue'),
         meta: { title: '商品管理', icon: 'Goods', roles: ['PLATFORM_OPERATOR'] }
+      },
+      {
+        path: 'bank-accounts',
+        name: 'BankAccounts',
+        component: () => import('@/views/platform/BankAccounts.vue'),
+        meta: { title: '收款账户管理', icon: 'Wallet', roles: ['PLATFORM_OPERATOR'] }
       },
       // 门店管理菜单
       {
@@ -81,10 +142,22 @@ const routes = [
         meta: { title: '数据统计', icon: 'DataAnalysis', roles: ['STORE_MANAGER'] }
       },
       {
+        path: 'store-settings',
+        name: 'StoreSettings',
+        component: () => import('@/views/store/Settings.vue'),
+        meta: { title: '门店设置', icon: 'Setting', roles: ['STORE_MANAGER'] }
+      },
+      {
         path: 'store-account',
         name: 'StoreAccount',
-        component: () => import('@/views/fleet/Account.vue'),
+        component: () => import('@/views/store/Account.vue'),
         meta: { title: '账户管理', icon: 'Wallet', roles: ['STORE_MANAGER'] }
+      },
+      {
+        path: 'store-withdrawal',
+        name: 'StoreWithdrawal',
+        component: () => import('@/views/store/Withdrawal.vue'),
+        meta: { title: '提现管理', icon: 'Wallet', roles: ['STORE_MANAGER'] }
       },
       // 车队管理菜单
       {
@@ -106,16 +179,16 @@ const routes = [
         meta: { title: '车队设置', icon: 'Setting', roles: ['FLEET_MANAGER'] }
       },
       {
-        path: 'platform/maintenance-packages',
+        path: 'maintenance-packages',
         name: 'PlatformMaintenancePackages',
         component: () => import('@/views/platform/MaintenancePackages.vue'),
         meta: { title: '保养套餐管理', icon: 'Box', roles: ['PLATFORM_OPERATOR'] }
       },
       {
-        path: 'order-center',
-        name: 'OrderCenter',
+        path: 'fleet-order-center',
+        name: 'FleetOrderCenter',
         component: () => import('@/views/fleet/OrderCenter.vue'),
-        meta: { title: '订单中心', icon: 'Document', roles: ['FLEET_MANAGER'] }
+        meta: { title: '订单中心', icon: 'DataAnalysis', roles: ['FLEET_MANAGER'] }
       },
       {
         path: 'fleet-orders',
@@ -130,10 +203,16 @@ const routes = [
         meta: { title: '账户管理', icon: 'Wallet', roles: ['FLEET_MANAGER'] }
       },
       {
-        path: 'fleet-maintenance-approval',
-        name: 'FleetMaintenanceApproval',
-        component: () => import('@/views/fleet/MaintenanceApproval.vue'),
-        meta: { title: '保养申请审批', icon: 'Document', roles: ['FLEET_MANAGER'] }
+        path: 'fleet-recharge',
+        name: 'FleetRecharge',
+        component: () => import('@/views/fleet/Recharge.vue'),
+        meta: { title: '充值申请', icon: 'Money', roles: ['FLEET_MANAGER'] }
+      },
+      {
+        path: 'fleet-maintenance-packages',
+        name: 'FleetMaintenancePackages',
+        component: () => import('@/views/fleet/MaintenancePackages.vue'),
+        meta: { title: '保养套餐查看', icon: 'Box', roles: ['FLEET_MANAGER'], hideInMenu: true }
       }
     ]
   }
@@ -149,6 +228,14 @@ router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('token')
   const userRole = localStorage.getItem('role')
 
+  // 打印调试信息
+  console.log('路由守卫:', {
+    to: to.path,
+    userRole,
+    requiredRoles: to.meta?.roles,
+    hasToken: !!token
+  })
+
   if (to.path !== '/login') {
     if (!token) {
       next('/login')
@@ -156,13 +243,23 @@ router.beforeEach((to, from, next) => {
     }
 
     // 检查角色权限
-    if (to.meta.roles && !to.meta.roles.includes(userRole)) {
-      next('/')
-      return
+    if (to.meta.roles && to.meta.roles.length > 0) {
+      if (!userRole) {
+        console.error('用户角色为空，重定向到登录页')
+        next('/login')
+        return
+      }
+
+      if (!to.meta.roles.includes(userRole)) {
+        console.warn('角色权限不匹配:', { userRole, required: to.meta.roles })
+        // 重定向到首页而不是next('/')，避免循环
+        next('/dashboard')
+        return
+      }
     }
   }
 
-  document.title = to.meta.title ? `${to.meta.title} - 万联驿站TMS` : '万联驿站TMS'
+  document.title = to.meta.title ? `${to.meta.title} - 万联驿站2.0` : '万联驿站2.0'
   next()
 })
 

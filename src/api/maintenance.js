@@ -12,6 +12,49 @@ export function getRecommendedPackages(params) {
 }
 
 /**
+ * 获取套餐列表
+ */
+export function getPackages(params) {
+  return request({
+    url: '/maintenance/platform/packages',
+    method: 'get',
+    params
+  })
+}
+
+/**
+ * 创建套餐
+ */
+export function createPackage(data) {
+  return request({
+    url: '/maintenance/platform/packages',
+    method: 'post',
+    data
+  })
+}
+
+/**
+ * 更新套餐
+ */
+export function updatePackage(id, data) {
+  return request({
+    url: `/maintenance/platform/packages/${id}`,
+    method: 'put',
+    data
+  })
+}
+
+/**
+ * 删除套餐
+ */
+export function deletePackage(id) {
+  return request({
+    url: `/maintenance/platform/packages/${id}`,
+    method: 'delete'
+  })
+}
+
+/**
  * 提交保养申请
  */
 export function submitMaintenanceApplication(data) {

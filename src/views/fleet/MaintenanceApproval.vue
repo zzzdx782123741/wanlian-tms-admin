@@ -87,6 +87,20 @@
             {{ row.orderId?.milestone || '-' }} km
           </template>
         </el-table-column>
+        <el-table-column label="里程照片" width="100">
+          <template #default="{ row }">
+            <el-button
+              v-if="row.orderId?.milestonePhotos && row.orderId.milestonePhotos.length > 0"
+              type="primary"
+              size="small"
+              link
+              @click="viewMilestonePhotos(row.orderId.milestonePhotos)"
+            >
+              查看({{ row.orderId.milestonePhotos.length }})
+            </el-button>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
         <el-table-column label="操作" width="200" fixed="right">
           <template #default="{ row }">
             <el-button type="primary" size="small" link @click="handleApprove(row)">
@@ -115,7 +129,7 @@
     <!-- 审批对话框 -->
     <el-dialog
       v-model="approveDialogVisible"
-      title="审批保养申请"
+      :title="fleetConfig.allowDriverSelectStore ? '审批保养申请（司机已选择门店）' : '审批保养申请'"
       width="900px"
     >
       <div v-if="currentApplication" class="approve-content">
@@ -129,10 +143,25 @@
             {{ currentApplication.orderId?.serviceLocation?.address || '-' }}
           </el-descriptions-item>
           <el-descriptions-item label="到店时间">
-            {{ currentApplication.preferredTime?.date }} {{ currentApplication.preferredTime?.timeSlot || '-' }}
+            {{ currentApplication.appointment?.expectedDate ? new Date(currentApplication.appointment.expectedDate).toLocaleDateString() : '-' }}
+            {{ currentApplication.appointment?.expectedTimeSlot || '-' }}
           </el-descriptions-item>
           <el-descriptions-item label="司机备注">
             {{ currentApplication.driverRemark || '-' }}
+          </el-descriptions-item>
+          <el-descriptions-item label="里程照片" :span="2">
+            <div v-if="currentApplication.orderId?.milestonePhotos && currentApplication.orderId.milestonePhotos.length > 0" class="milestone-photos">
+              <el-image
+                v-for="(photo, index) in currentApplication.orderId.milestonePhotos"
+                :key="index"
+                :src="photo"
+                :preview-src-list="currentApplication.orderId.milestonePhotos"
+                :initial-index="index"
+                fit="cover"
+                style="width: 80px; height: 80px; margin-right: 8px; border-radius: 4px; cursor: pointer;"
+              />
+            </div>
+            <span v-else>-</span>
           </el-descriptions-item>
         </el-descriptions>
 
@@ -143,11 +172,23 @@
           :closable="false"
           style="margin-bottom: 20px"
         >
-          <div>门店选择：{{ fleetConfig.allowDriverSelectStore ? '司机选择' : '车队选择' }}</div>
-          <div>商品选择：{{ fleetConfig.maintenanceProductPermission === 'driver_select' ? '司机可选' : '车队管理' }}</div>
+          <div>门店选择模式：{{ fleetConfig.allowDriverSelectStore ? '司机自选门店' : '车队分配门店' }}</div>
+          <div>商品选择权限：{{ fleetConfig.maintenanceProductPermission === 'driver_select' ? '司机可选' : '车队管理' }}</div>
         </el-alert>
 
-        <!-- 选择门店 -->
+        <!-- 司机已选择的门店信息 -->
+        <el-alert
+          v-if="fleetConfig.allowDriverSelectStore && currentApplication?.orderId?.storeId"
+          title="司机选择的门店"
+          type="success"
+          :closable="false"
+          style="margin-bottom: 20px"
+        >
+          <div>门店名称：{{ getStoreName(currentApplication.orderId.storeId) }}</div>
+          <div>门店地址：{{ getStoreAddress(currentApplication.orderId.storeId) }}</div>
+        </el-alert>
+
+        <!-- 选择门店（仅当车队分配门店时显示） -->
         <el-form :model="approveForm" label-width="120px" v-if="!fleetConfig.allowDriverSelectStore">
           <el-form-item label="选择门店" required>
             <el-select
@@ -168,47 +209,40 @@
 
         <!-- 套餐调整 -->
         <el-form :model="approveForm" label-width="120px">
-          <el-form-item label="套餐调整">
-            <el-radio-group v-model="approveForm.adjustType">
-              <el-radio label="keep">保持套餐</el-radio>
-              <el-radio label="change">更换套餐</el-radio>
-              <el-radio label="customize">自定义商品</el-radio>
-            </el-radio-group>
-          </el-form-item>
-
-          <!-- 保持或更换套餐 -->
-          <el-form-item v-if="approveForm.adjustType !== 'customize'">
+          <el-form-item label="套餐选择">
             <el-select
               v-model="approveForm.packageId"
               placeholder="请选择套餐"
               style="width: 100%"
               filterable
+              @change="handlePackageChange"
             >
               <el-option
-                v-for="pkg in currentApplication.recommendedPackages"
+                v-for="pkg in availablePackages"
                 :key="pkg._id"
-                :label="`${pkg.name} - ¥${pkg.price}`"
+                :label="`${pkg.name} - ¥${(pkg.price / 100).toFixed(2)}（原价¥${(pkg.originalPrice / 100).toFixed(2)}）`"
                 :value="pkg._id"
               />
             </el-select>
           </el-form-item>
 
-          <!-- 自定义商品 -->
-          <template v-if="approveForm.adjustType === 'customize'">
-            <el-form-item label="选择商品">
-              <el-checkbox-group v-model="approveForm.selectedProductIds">
-                <el-checkbox
-                  v-for="product in allProducts"
-                  :key="product._id"
-                  :label="`${product.name} - ¥${product.price}`"
-                  :value="product._id"
-                />
-              </el-checkbox-group>
-            </el-form-item>
-          </template>
+          <!-- 套餐详情 -->
+          <el-alert
+            v-if="selectedPackage"
+            title="套餐详情"
+            type="info"
+            :closable="false"
+            style="margin-bottom: 16px"
+          >
+            <div>套餐名称：{{ selectedPackage.name }}</div>
+            <div>套餐档次：{{ selectedPackage.tier }}</div>
+            <div>套餐价格：¥{{ (selectedPackage.price / 100).toFixed(2) }}</div>
+            <div>适用里程：{{ selectedPackage.mileageRange?.min }}km - {{ selectedPackage.mileageRange?.max }}km</div>
+            <div>预计工时：{{ selectedPackage.estimatedDuration || '-' }}小时</div>
+          </el-alert>
 
           <!-- 最终金额 -->
-          <el-form-item label="最终金额">
+          <el-form-item label="审批金额" required>
             <el-input-number
               v-model="approveForm.finalAmount"
               :min="0"
@@ -217,18 +251,19 @@
               controls-position="right"
               style="width: 200px"
             />
-            <span style="margin-left: 12px; color: #909399;">元</span>
+            <span style="margin-left: 12px; color: #909399;">元（审批通过后将从车队账户冻结此金额）</span>
           </el-form-item>
 
-          <!-- 超过阈值提示 -->
+          <!-- 资金冻结提示 -->
           <el-alert
-            v-if="finalAmount > fleetConfig.maintenanceBudgetThreshold"
-            title="超出预算阈值"
+            v-if="approveForm.finalAmount > 0"
+            title="资金冻结说明"
             type="warning"
             :closable="false"
-            style="margin-top: 12px"
+            style="margin-bottom: 16px"
           >
-            当前金额 ¥{{ finalAmount }} 超过预算阈值 ¥{{ fleetConfig.maintenanceBudgetThreshold }}
+            <div>审批通过后将从车队账户冻结 <strong>¥{{ approveForm.finalAmount.toFixed(2) }}</strong></div>
+            <div>完工结算时多退少补，剩余资金将自动解冻</div>
           </el-alert>
         </el-form>
 
@@ -276,15 +311,33 @@
         </el-button>
       </template>
     </el-dialog>
+
+    <!-- 里程照片查看对话框 -->
+    <el-dialog
+      v-model="milestonePhotosDialogVisible"
+      title="里程照片"
+      width="800px"
+    >
+      <div class="milestone-photos-dialog">
+        <el-image
+          v-for="(photo, index) in currentMilestonePhotos"
+          :key="index"
+          :src="photo"
+          :preview-src-list="currentMilestonePhotos"
+          :initial-index="index"
+          fit="contain"
+          style="width: 100%; margin-bottom: 12px; border-radius: 4px;"
+        />
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Refresh } from '@element-plus/icons-vue'
-import request from '@/utils/request'
-import { getMaintenanceApplications, approveMaintenanceApplication } from '@/api/maintenance'
+import { Refresh, Search } from '@element-plus/icons-vue'
+import { getMaintenanceApplications, approveMaintenanceApplication, getPackages } from '@/api/maintenance'
 import { getStores } from '@/api/store'
 import { getFleetConfig } from '@/api/fleet'
 import dayjs from 'dayjs'
@@ -294,7 +347,7 @@ const approving = ref(false)
 const rejecting = ref(false)
 const applications = ref([])
 const storeList = ref([])
-const allProducts = ref([])
+const availablePackages = ref([])
 const total = ref(0)
 
 const stats = ref({
@@ -312,14 +365,15 @@ const queryParams = ref({
 
 const approveDialogVisible = ref(false)
 const rejectDialogVisible = ref(false)
+const milestonePhotosDialogVisible = ref(false)
 const currentApplication = ref(null)
+const currentMilestonePhotos = ref([])
 
 const approveForm = ref({
   storeId: null,
-  adjustType: 'keep',
   packageId: null,
-  selectedProductIds: [],
-  finalAmount: 0
+  finalAmount: 0,
+  remark: ''
 })
 
 const rejectForm = ref({
@@ -333,12 +387,14 @@ const fleetConfig = ref({
 })
 
 const userFleetId = computed(() => {
-  const user = JSON.parse(localStorage.getItem('user') || '{}')
-  return user.fleetInfo?.fleetId
+  const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}')
+  return userInfo.fleetInfo?.fleetId
 })
 
-const finalAmount = computed(() => {
-  return approveForm.value.finalAmount || 0
+// 选中的套餐
+const selectedPackage = computed(() => {
+  if (!approveForm.value.packageId) return null
+  return availablePackages.value.find(p => p._id === approveForm.value.packageId)
 })
 
 // 获取车队配置
@@ -380,6 +436,16 @@ const fetchApplications = async () => {
   }
 }
 
+// 获取套餐列表
+const fetchPackages = async () => {
+  try {
+    const res = await getPackages({ enabled: true, limit: 100 })
+    availablePackages.value = res.data.packages || []
+  } catch (error) {
+    console.error('获取套餐列表失败:', error)
+  }
+}
+
 // 获取门店列表
 const fetchStores = async () => {
   try {
@@ -390,15 +456,39 @@ const fetchStores = async () => {
   }
 }
 
+// 套餐变化
+const handlePackageChange = (packageId) => {
+  const pkg = availablePackages.value.find(p => p._id === packageId)
+  if (pkg) {
+    approveForm.value.finalAmount = (pkg.price / 100)
+  }
+}
+
+// 查看里程照片
+const viewMilestonePhotos = (photos) => {
+  currentMilestonePhotos.value = photos
+  milestonePhotosDialogVisible.value = true
+}
+
 // 审批申请
 const handleApprove = async (application) => {
   currentApplication.value = application
   approveForm.value = {
     storeId: null,
-    adjustType: 'keep',
-    packageId: null,
-    selectedProductIds: [],
-    finalAmount: 0
+    packageId: application.packageId || null,
+    finalAmount: 0,
+    remark: ''
+  }
+
+  // 获取套餐列表
+  await fetchPackages()
+
+  // 如果有套餐，自动填充金额
+  if (application.packageId) {
+    const pkg = availablePackages.value.find(p => p._id === application.packageId)
+    if (pkg) {
+      approveForm.value.finalAmount = (pkg.price / 100)
+    }
   }
 
   // 如果需要选择门店
@@ -411,23 +501,51 @@ const handleApprove = async (application) => {
 
 // 确认审批
 const confirmApprove = async () => {
+  // 验证门店：仅当车队分配门店时需要验证
+  if (!fleetConfig.value.allowDriverSelectStore && !approveForm.value.storeId) {
+    ElMessage.warning('请选择门店')
+    return
+  }
+
+  // 验证套餐
+  if (!approveForm.value.packageId) {
+    ElMessage.warning('请选择套餐')
+    return
+  }
+
+  // 验证金额
+  if (!approveForm.value.finalAmount || approveForm.value.finalAmount <= 0) {
+    ElMessage.warning('请输入审批金额')
+    return
+  }
+
   approving.value = true
   try {
+    // 确定门店ID
+    let storeId = approveForm.value.storeId
+    // 如果司机已选择门店，使用司机选择的门店ID
+    if (fleetConfig.value.allowDriverSelectStore && currentApplication.value?.orderId?.storeId) {
+      storeId = currentApplication.value.orderId.storeId
+    }
+
     await approveMaintenanceApplication(currentApplication.value._id, {
-      storeId: approveForm.value.storeId,
+      approved: true,
+      storeId: storeId,
       packageId: approveForm.value.packageId,
-      adjustedProducts: approveForm.value.adjustType === 'customize'
-        ? allProducts.value.filter(p => approveForm.value.selectedProductIds.includes(p._id))
-          : undefined,
-      finalAmount: approveForm.value.finalAmount,
+      finalAmount: Math.round(approveForm.value.finalAmount * 100), // 转换为分
       remark: approveForm.value.remark
     })
 
-    ElMessage.success('审批通过')
+    const successMessage = fleetConfig.value.allowDriverSelectStore
+      ? '审批通过，资金已冻结，订单已发送至司机选择的门店'
+      : '审批通过，资金已冻结，订单已分配门店'
+
+    ElMessage.success(successMessage)
     approveDialogVisible.value = false
     fetchApplications()
   } catch (error) {
     console.error('审批失败:', error)
+    ElMessage.error(error.response?.data?.message || '审批失败')
   } finally {
     approving.value = false
   }
@@ -451,7 +569,7 @@ const confirmReject = async () => {
   try {
     await approveMaintenanceApplication(currentApplication.value._id, {
       approved: false,
-      reason: rejectForm.value.reason
+      remark: rejectForm.value.reason
     })
 
     ElMessage.success('已拒绝申请')
@@ -459,6 +577,7 @@ const confirmReject = async () => {
     fetchApplications()
   } catch (error) {
     console.error('拒绝失败:', error)
+    ElMessage.error(error.response?.data?.message || '拒绝失败')
   } finally {
     rejecting.value = false
   }
@@ -485,9 +604,22 @@ const formatDateTime = (date) => {
   return dayjs(date).format('MM-DD HH:mm')
 }
 
+// 获取门店名称
+const getStoreName = (storeId) => {
+  const store = storeList.value.find(s => s._id === storeId)
+  return store?.name || '未知门店'
+}
+
+// 获取门店地址
+const getStoreAddress = (storeId) => {
+  const store = storeList.value.find(s => s._id === storeId)
+  return store?.address || '未知地址'
+}
+
 onMounted(() => {
   fetchFleetConfig()
   fetchApplications()
+  fetchStores() // 始终加载门店列表，用于显示司机选择的门店信息
 })
 </script>
 
@@ -537,6 +669,18 @@ onMounted(() => {
         font-weight: 500;
       }
     }
+  }
+
+  .milestone-photos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .milestone-photos-dialog {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
   }
 }
 </style>

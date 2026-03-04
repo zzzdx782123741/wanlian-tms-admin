@@ -73,3 +73,17 @@ export function getVehicleStats() {
     method: 'get'
   })
 }
+
+/**
+ * 导出车辆列表
+ * @param {Object} params - 查询参数 { status, keyword, all }
+ */
+export function exportVehicles(params) {
+  return request({
+    url: '/fleet/vehicles/export',
+    method: 'get',
+    params,
+    responseType: 'blob',
+    timeout: 60000
+  })
+}

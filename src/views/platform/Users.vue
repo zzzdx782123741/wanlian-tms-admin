@@ -72,11 +72,13 @@
           />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="handleQuery">
-            <el-icon><Search /></el-icon>
-            查询
-          </el-button>
-          <el-button @click="handleReset">重置</el-button>
+          <div class="form-actions">
+            <el-button type="primary" @click="handleQuery">
+              <el-icon><Search /></el-icon>
+              查询
+            </el-button>
+            <el-button @click="handleReset">重置</el-button>
+          </div>
         </el-form-item>
       </el-form>
 
@@ -437,6 +439,12 @@ onMounted(() => {
 
   .search-form {
     margin-bottom: 20px;
+
+    .form-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
   }
 }
 </style>

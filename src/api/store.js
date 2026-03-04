@@ -73,3 +73,46 @@ export function getNearbyStores(params) {
     params
   })
 }
+
+/**
+ * 门店端 - 获取门店账户
+ */
+export function getStoreAccount() {
+  return request({
+    url: '/store/account',
+    method: 'get'
+  })
+}
+
+/**
+ * 门店端 - 获取收入明细
+ */
+export function getStoreIncome(params) {
+  return request({
+    url: '/store/income',
+    method: 'get',
+    params
+  })
+}
+
+/**
+ * 门店端 - 获取结算记录
+ */
+export function getStoreSettlements(params) {
+  return request({
+    url: '/store/settlements',
+    method: 'get',
+    params
+  })
+}
+
+/**
+ * 门店端 - 获取已完成订单
+ */
+export function getStoreCompletedOrders(params) {
+  return request({
+    url: '/store/orders/completed',
+    method: 'get',
+    params
+  })
+}

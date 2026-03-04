@@ -29,11 +29,25 @@
       <template #header>
         <div class="card-header">
           <span>车队车辆管理</span>
-          <div>
-            <el-button type="success" size="small" @click="handleBatchImport">
+          <div class="header-actions">
+            <el-button v-if="userRole === 'FLEET_MANAGER'" type="success" size="small" @click="handleBatchImport">
               <el-icon><Upload /></el-icon>
               批量导入
             </el-button>
+            <el-dropdown split-button type="warning" size="small" @click="handleExport('filtered')" :loading="exporting">
+              <el-icon><Download /></el-icon>
+              导出数据
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item @click="handleExport('filtered')">
+                    导出当前页 ({{ vehicleList.length }} 条)
+                  </el-dropdown-item>
+                  <el-dropdown-item @click="handleExport('all')">
+                    导出全部 ({{ total }} 条)
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
             <el-button type="primary" size="small" @click="handleAdd">
               <el-icon><Plus /></el-icon>
               添加车辆
@@ -60,11 +74,13 @@
           />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="handleQuery">
-            <el-icon><Search /></el-icon>
-            查询
-          </el-button>
-          <el-button @click="handleReset">重置</el-button>
+          <div class="form-actions">
+            <el-button type="primary" @click="handleQuery">
+              <el-icon><Search /></el-icon>
+              查询
+            </el-button>
+            <el-button @click="handleReset">重置</el-button>
+          </div>
         </el-form-item>
       </el-form>
 
@@ -76,9 +92,12 @@
         style="width: 100%"
       >
         <el-table-column prop="plateNumber" label="车牌号" width="140" fixed="left" />
+        <el-table-column prop="vehicleType" label="车辆类型" width="100" />
         <el-table-column prop="vin" label="VIN码" width="180" />
+        <el-table-column prop="engineNumber" label="发动机号" width="150" />
         <el-table-column prop="brand" label="品牌" width="120" />
         <el-table-column prop="model" label="车型" width="150" />
+        <el-table-column prop="driveType" label="驱动形式" width="100" />
         <el-table-column prop="year" label="年份" width="100" />
         <el-table-column label="当前司机" width="120">
           <template #default="{ row }">
@@ -160,15 +179,48 @@
       :title="isEdit ? '编辑车辆' : '添加车辆'"
       width="600px"
     >
-      <el-form :model="vehicleForm" :rules="formRules" ref="vehicleFormRef" label-width="100px">
+      <el-form :model="vehicleForm" :rules="formRules" ref="vehicleFormRef" label-width="120px">
         <el-form-item label="车牌号" prop="plateNumber">
           <el-input v-model="vehicleForm.plateNumber" placeholder="请输入车牌号" :disabled="isEdit" />
         </el-form-item>
-        <el-form-item label="VIN码">
-          <el-input v-model="vehicleForm.vin" placeholder="请输入VIN码（可选）" />
+        <el-form-item label="车辆类型" prop="vehicleType">
+          <el-select v-model="vehicleForm.vehicleType" placeholder="请选择车辆类型" style="width: 100%" @change="handleVehicleTypeChange">
+            <el-option label="牵引车" value="牵引车" />
+            <el-option label="挂车" value="挂车" />
+            <el-option label="载货车" value="载货车" />
+            <el-option label="轻卡" value="轻卡" />
+            <el-option label="自卸车" value="自卸车" />
+            <el-option label="平板车" value="平板车" />
+            <el-option label="冷藏车" value="冷藏车" />
+            <el-option label="罐车" value="罐车" />
+            <el-option label="其他" value="其他" />
+          </el-select>
+        </el-form-item>
+        <el-form-item
+          v-if="vehicleForm.vehicleType === '其他'"
+          label="自定义车辆类型"
+          prop="vehicleTypeOther"
+        >
+          <el-input
+            v-model="vehicleForm.vehicleTypeOther"
+            placeholder="请输入具体的车辆类型"
+            style="width: 100%"
+          />
+        </el-form-item>
+        <el-form-item label="VIN码" prop="vin">
+          <el-input v-model="vehicleForm.vin" placeholder="请输入17位VIN码（必填）" maxlength="17" />
+        </el-form-item>
+        <el-form-item label="发动机号" prop="engineNumber">
+          <el-input v-model="vehicleForm.engineNumber" placeholder="请输入发动机号（必填）" />
+        </el-form-item>
+        <el-form-item label="发动机品牌" prop="engineBrand">
+          <el-input v-model="vehicleForm.engineBrand" placeholder="请输入发动机品牌（如：潍柴、玉柴）" />
+        </el-form-item>
+        <el-form-item label="发动机型号" prop="engineModel">
+          <el-input v-model="vehicleForm.engineModel" placeholder="请输入发动机型号（如：WP13）" />
         </el-form-item>
         <el-form-item label="品牌" prop="brand">
-          <el-select v-model="vehicleForm.brand" placeholder="请选择品牌" style="width: 100%">
+          <el-select v-model="vehicleForm.brand" placeholder="请选择品牌" style="width: 100%" @change="handleBrandChange">
             <el-option label="东风" value="东风" />
             <el-option label="解放" value="解放" />
             <el-option label="陕汽" value="陕汽" />
@@ -178,8 +230,30 @@
             <el-option label="其他" value="其他" />
           </el-select>
         </el-form-item>
+        <el-form-item
+          v-if="vehicleForm.brand === '其他'"
+          label="自定义品牌"
+          prop="brandOther"
+        >
+          <el-input
+            v-model="vehicleForm.brandOther"
+            placeholder="请输入具体的车辆品牌"
+            style="width: 100%"
+          />
+        </el-form-item>
         <el-form-item label="车型" prop="model">
           <el-input v-model="vehicleForm.model" placeholder="请输入车型" />
+        </el-form-item>
+        <el-form-item label="驱动形式">
+          <el-select v-model="vehicleForm.driveType" placeholder="请选择驱动形式（可选）" clearable style="width: 100%">
+            <el-option label="4x2" value="4x2" />
+            <el-option label="6x2" value="6x2" />
+            <el-option label="6x4" value="6x4" />
+            <el-option label="8x2" value="8x2" />
+            <el-option label="8x4" value="8x4" />
+            <el-option label="10x4" value="10x4" />
+            <el-option label="其他" value="其他" />
+          </el-select>
         </el-form-item>
         <el-form-item label="年份" prop="year">
           <el-date-picker
@@ -214,36 +288,17 @@
       width="700px"
     >
       <div class="batch-import-content">
-        <!-- 步骤说明 -->
-        <el-steps :active="batchStep" align-center style="margin-bottom: 30px">
-          <el-step title="下载模板" />
-          <el-step title="上传文件" />
-          <el-step title="导入完成" />
-        </el-steps>
+        <!-- 未显示结果时显示上传界面 -->
+        <div v-if="!importResult.message" class="upload-section">
+          <!-- 顶部操作栏 -->
+          <div class="upload-header">
+            <el-button type="primary" link @click="downloadTemplate" :loading="downloading">
+              <el-icon><Download /></el-icon>
+              下载 Excel 模板
+            </el-button>
+          </div>
 
-        <!-- 步骤1: 下载模板 -->
-        <div v-if="batchStep === 0" class="step-content">
-          <el-alert
-            title="导入说明"
-            type="info"
-            :closable="false"
-            style="margin-bottom: 20px"
-          >
-            <ul>
-              <li>请先下载 Excel 模板，按照模板格式填写车辆信息</li>
-              <li>车牌号为必填项，其他字段选填</li>
-              <li>当前司机可填写司机姓名或手机号，系统将自动关联</li>
-              <li>支持导入最多 1000 条数据</li>
-            </ul>
-          </el-alert>
-          <el-button type="primary" @click="downloadTemplate" :loading="downloading">
-            <el-icon><Download /></el-icon>
-            下载 Excel 模板
-          </el-button>
-        </div>
-
-        <!-- 步骤2: 上传文件 -->
-        <div v-if="batchStep === 1" class="step-content">
+          <!-- 上传区域 -->
           <el-upload
             ref="uploadRef"
             class="upload-area"
@@ -265,16 +320,38 @@
               </div>
             </template>
           </el-upload>
-          <div style="text-align: right; margin-top: 20px">
-            <el-button @click="batchStep = 0">上一步</el-button>
+
+          <!-- 字段说明 -->
+          <div class="field-info">
+            <el-divider content-position="left">
+              <el-icon><InfoFilled /></el-icon>
+              字段说明
+            </el-divider>
+            <el-descriptions :column="2" border size="small">
+              <el-descriptions-item label="必填字段" label-class-name="required-field">
+                车牌号、车辆类型、VIN码、发动机号、发动机品牌、发动机型号、品牌、车型、年份
+              </el-descriptions-item>
+              <el-descriptions-item label="选填字段">
+                驱动形式、当前司机（可填姓名或手机号）
+              </el-descriptions-item>
+              <el-descriptions-item label="数据限制" :span="2">
+                最多导入 1000 条数据
+              </el-descriptions-item>
+            </el-descriptions>
+          </div>
+
+          <!-- 底部按钮 -->
+          <div class="upload-footer">
+            <el-button @click="batchDialogVisible = false">取消</el-button>
             <el-button type="primary" @click="startImport" :loading="importing" :disabled="!uploadFile">
+              <el-icon><Upload /></el-icon>
               开始导入
             </el-button>
           </div>
         </div>
 
-        <!-- 步骤3: 导入结果 -->
-        <div v-if="batchStep === 2" class="step-content">
+        <!-- 导入结果 -->
+        <div v-else class="result-section">
           <el-result
             :icon="importResult.successCount > 0 ? 'success' : 'error'"
             :title="importResult.message"
@@ -300,7 +377,8 @@
               </div>
               <div style="margin-top: 20px">
                 <el-button @click="batchDialogVisible = false">关闭</el-button>
-                <el-button v-if="importResult.failedCount > 0" type="primary" @click="batchStep = 1; uploadFile = null">
+                <el-button v-if="importResult.failedCount > 0" type="primary" @click="resetImport">
+                  <el-icon><Refresh /></el-icon>
                   重新导入
                 </el-button>
               </div>
@@ -315,7 +393,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Download, Upload, UploadFilled } from '@element-plus/icons-vue'
+import { Download, Upload, UploadFilled, InfoFilled, Refresh, ArrowDown } from '@element-plus/icons-vue'
 import request from '@/utils/request'
 import {
   getFleetVehicles,
@@ -324,9 +402,13 @@ import {
   updateVehicleStatus,
   deleteVehicle,
   getFleetDrivers,
-  getVehicleStats
+  getVehicleStats,
+  exportVehicles
 } from '@/api/fleetVehicle'
 import dayjs from 'dayjs'
+
+// 获取用户角色
+const userRole = localStorage.getItem('role') || ''
 
 const loading = ref(false)
 const saving = ref(false)
@@ -354,9 +436,16 @@ const currentVehicleId = ref('')
 
 const vehicleForm = ref({
   plateNumber: '',
+  vehicleType: '',
+  vehicleTypeOther: '',
   vin: '',
+  engineNumber: '',
+  engineBrand: '',
+  engineModel: '',
   brand: '',
+  brandOther: '',
   model: '',
+  driveType: '',
   year: null,
   currentDriverId: null
 })
@@ -365,8 +454,48 @@ const formRules = {
   plateNumber: [
     { required: true, message: '请输入车牌号', trigger: 'blur' }
   ],
+  vehicleType: [
+    { required: true, message: '请选择车辆类型', trigger: 'change' }
+  ],
+  vehicleTypeOther: [
+    {
+      validator: (rule, value, callback) => {
+        if (vehicleForm.value.vehicleType === '其他' && !value) {
+          callback(new Error('请输入自定义车辆类型'))
+        } else {
+          callback()
+        }
+      },
+      trigger: 'blur'
+    }
+  ],
+  vin: [
+    { required: true, message: '请输入VIN码', trigger: 'blur' },
+    { len: 17, message: 'VIN码必须为17位', trigger: 'blur' }
+  ],
+  engineNumber: [
+    { required: true, message: '请输入发动机号', trigger: 'blur' }
+  ],
+  engineBrand: [
+    { required: true, message: '请输入发动机品牌', trigger: 'blur' }
+  ],
+  engineModel: [
+    { required: true, message: '请输入发动机型号', trigger: 'blur' }
+  ],
   brand: [
     { required: true, message: '请选择品牌', trigger: 'change' }
+  ],
+  brandOther: [
+    {
+      validator: (rule, value, callback) => {
+        if (vehicleForm.value.brand === '其他' && !value) {
+          callback(new Error('请输入自定义品牌'))
+        } else {
+          callback()
+        }
+      },
+      trigger: 'blur'
+    }
   ],
   model: [
     { required: true, message: '请输入车型', trigger: 'blur' }
@@ -378,12 +507,9 @@ const formRules = {
 
 // 批量导入相关
 const batchDialogVisible = ref(false)
-const batchStep = ref(0)
-const uploading = ref(false)
 const importing = ref(false)
 const downloading = ref(false)
 const uploadFile = ref(null)
-const uploadRef = ref()
 const importResult = ref({
   message: '',
   total: 0,
@@ -449,9 +575,16 @@ const handleAdd = () => {
   currentVehicleId.value = ''
   vehicleForm.value = {
     plateNumber: '',
+    vehicleType: '',
+    vehicleTypeOther: '',
     vin: '',
+    engineNumber: '',
+    engineBrand: '',
+    engineModel: '',
     brand: '',
+    brandOther: '',
     model: '',
+    driveType: '',
     year: null,
     currentDriverId: null
   }
@@ -462,15 +595,48 @@ const handleAdd = () => {
 const handleEdit = (row) => {
   isEdit.value = true
   currentVehicleId.value = row._id
+
+  // 检查车辆类型是否在预定义列表中
+  const predefinedVehicleTypes = ['牵引车', '挂车', '载货车', '轻卡', '自卸车', '平板车', '冷藏车', '罐车']
+  const vehicleType = row.vehicleType || ''
+  const vehicleTypeOther = predefinedVehicleTypes.includes(vehicleType) ? '' : vehicleType
+
+  // 检查品牌是否在预定义列表中
+  const predefinedBrands = ['东风', '解放', '陕汽', '重汽', '江淮', '福田']
+  const brand = row.brand || ''
+  const brandOther = predefinedBrands.includes(brand) ? '' : brand
+
   vehicleForm.value = {
     plateNumber: row.plateNumber,
+    vehicleType: vehicleTypeOther ? '其他' : vehicleType,
+    vehicleTypeOther,
     vin: row.vin || '',
-    brand: row.brand || '',
+    engineNumber: row.engineNumber || '',
+    engineBrand: row.engineBrand || '',
+    engineModel: row.engineModel || '',
+    brand: brandOther ? '其他' : brand,
+    brandOther,
     model: row.model || '',
-    year: row.year || null,
+    driveType: row.driveType || '',
+    // 将数字格式的年份转换为字符串，以匹配 el-date-picker 的 value-format="YYYY"
+    year: row.year ? String(row.year) : null,
     currentDriverId: row.currentDriverId?._id || null
   }
   formDialogVisible.value = true
+}
+
+// 处理车辆类型变化
+const handleVehicleTypeChange = (value) => {
+  if (value !== '其他') {
+    vehicleForm.value.vehicleTypeOther = ''
+  }
+}
+
+// 处理品牌变化
+const handleBrandChange = (value) => {
+  if (value !== '其他') {
+    vehicleForm.value.brandOther = ''
+  }
 }
 
 // 确认保存
@@ -480,18 +646,39 @@ const confirmSave = async () => {
 
   saving.value = true
   try {
+    // 准备提交的数据，如果选择了"其他"，使用自定义的值
+    const submitData = { ...vehicleForm.value }
+    if (submitData.vehicleType === '其他' && submitData.vehicleTypeOther) {
+      submitData.vehicleType = submitData.vehicleTypeOther
+    }
+    if (submitData.brand === '其他' && submitData.brandOther) {
+      submitData.brand = submitData.brandOther
+    }
+    // 删除临时字段
+    delete submitData.vehicleTypeOther
+    delete submitData.brandOther
+
     if (isEdit.value) {
-      await updateVehicle(currentVehicleId.value, vehicleForm.value)
+      await updateVehicle(currentVehicleId.value, submitData)
       ElMessage.success('更新成功')
     } else {
-      await addVehicle(vehicleForm.value)
+      await addVehicle(submitData)
       ElMessage.success('添加成功')
     }
     formDialogVisible.value = false
     fetchVehicles()
     fetchStats()
   } catch (error) {
+    // 错误消息已经在 request.js 的响应拦截器中显示
+    // 这里只需要处理特殊情况
     console.error('保存失败:', error)
+
+    // 如果需要，可以显示更详细的错误信息
+    const errorMsg = error.response?.data?.message || error.message || '保存失败'
+    ElMessage.error({
+      message: errorMsg,
+      duration: 5000
+    })
   } finally {
     saving.value = false
   }
@@ -563,7 +750,6 @@ const formatDate = (date) => {
 
 // 打开批量导入对话框
 const handleBatchImport = () => {
-  batchStep.value = 0
   uploadFile.value = null
   importResult.value = {
     message: '',
@@ -573,6 +759,55 @@ const handleBatchImport = () => {
     errors: []
   }
   batchDialogVisible.value = true
+}
+
+// 重置导入状态
+const resetImport = () => {
+  uploadFile.value = null
+  importResult.value = {
+    message: '',
+    total: 0,
+    successCount: 0,
+    failedCount: 0,
+    errors: []
+  }
+}
+
+// 导出车辆列表
+const exporting = ref(false)
+
+const handleExport = async (type = 'all') => {
+  exporting.value = true
+  try {
+    const params = {}
+    if (type === 'filtered') {
+      // 导出当前页数据（支持筛选）
+      if (queryParams.value.status) params.status = queryParams.value.status
+      if (queryParams.value.keyword) params.keyword = queryParams.value.keyword
+      params.limit = vehicleList.value.length
+    } else {
+      // 导出全部数据（支持筛选）
+      if (queryParams.value.status) params.status = queryParams.value.status
+      if (queryParams.value.keyword) params.keyword = queryParams.value.keyword
+      params.all = 'true'
+    }
+
+    const response = await exportVehicles(params)
+    const blob = new Blob([response], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `车辆列表_${dayjs().format('YYYYMMDD_HHmmss')}.xlsx`
+    link.click()
+    window.URL.revokeObjectURL(url)
+    ElMessage.success('导出成功')
+  } catch (error) {
+    ElMessage.error(error.response?.data?.message || '导出失败')
+  } finally {
+    exporting.value = false
+  }
 }
 
 // 下载模板
@@ -594,7 +829,6 @@ const downloadTemplate = async () => {
     window.URL.revokeObjectURL(url)
 
     ElMessage.success('模板下载成功')
-    batchStep.value = 1
   } catch (error) {
     console.error('下载模板失败:', error)
     ElMessage.error('下载模板失败')
@@ -643,8 +877,6 @@ const startImport = async () => {
       errors: res.data.errors || []
     }
 
-    batchStep.value = 2
-
     // 如果有成功的，刷新列表
     if (res.data.success > 0) {
       fetchVehicles()
@@ -659,7 +891,6 @@ const startImport = async () => {
       failedCount: 0,
       errors: []
     }
-    batchStep.value = 2
   } finally {
     importing.value = false
   }
@@ -701,11 +932,18 @@ onMounted(() => {
     justify-content: space-between;
     font-weight: 600;
     color: #2c3e50;
+  }
 
-    > div {
-      display: flex;
-      gap: 10px;
-    }
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .form-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
   }
 
   .search-form {
@@ -713,15 +951,47 @@ onMounted(() => {
   }
 
   .batch-import-content {
-    .step-content {
-      min-height: 300px;
-      padding: 20px;
+    .upload-section {
+      padding: 10px 0;
+    }
+
+    .upload-header {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 20px;
     }
 
     .upload-area {
+      margin-bottom: 30px;
+
       :deep(.el-upload-dragger) {
         padding: 40px;
       }
+    }
+
+    .field-info {
+      margin-bottom: 30px;
+
+      :deep(.required-field) {
+        font-weight: 600;
+        color: #f56c6c;
+      }
+
+      :deep(.el-descriptions__label) {
+        width: 100px;
+      }
+    }
+
+    .upload-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding-top: 20px;
+      border-top: 1px solid #ebeef5;
+    }
+
+    .result-section {
+      padding: 20px 0;
     }
 
     .result-stats {

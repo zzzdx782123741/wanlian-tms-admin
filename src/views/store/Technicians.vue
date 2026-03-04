@@ -2,10 +2,16 @@
   <div class="store-technicians">
     <div class="page-header">
       <h2>门店技师</h2>
-      <el-button type="primary" @click="handleAdd">
-        <el-icon><Plus /></el-icon>
-        添加技师
-      </el-button>
+      <div class="header-actions">
+        <el-button type="success" @click="handleBatchImport">
+          <el-icon><Upload /></el-icon>
+          批量导入
+        </el-button>
+        <el-button type="primary" @click="handleAdd">
+          <el-icon><Plus /></el-icon>
+          添加技师
+        </el-button>
+      </div>
     </div>
 
     <!-- 统计卡片 -->
@@ -139,6 +145,112 @@
         <el-button @click="formDialogVisible = false">取消</el-button>
         <el-button type="primary" @click="confirmSave" :loading="saving">确定</el-button>
       </template>
+    </el-dialog>
+
+    <!-- 批量导入对话框 -->
+    <el-dialog v-model="batchDialogVisible" title="批量导入技师" width="700px">
+      <div class="batch-import-content">
+        <!-- 未显示结果时显示上传界面 -->
+        <div v-if="!importResult.message" class="upload-section">
+          <!-- 顶部操作栏 -->
+          <div class="upload-header">
+            <el-button type="primary" link @click="downloadTemplate" :loading="downloading">
+              <el-icon><Download /></el-icon>
+              下载 Excel 模板
+            </el-button>
+          </div>
+
+          <!-- 上传区域 -->
+          <el-upload
+            ref="uploadRef"
+            class="upload-area"
+            drag
+            action="#"
+            :auto-upload="false"
+            :limit="1"
+            accept=".xlsx,.xls"
+            :on-change="handleFileChange"
+            :on-exceed="handleExceed"
+          >
+            <el-icon class="el-icon--upload"><UploadFilled /></el-icon>
+            <div class="el-upload__text">
+              拖拽 Excel 文件到此处，或<em>点击上传</em>
+            </div>
+            <template #tip>
+              <div class="el-upload__tip">
+                只支持 .xlsx 或 .xls 格式，文件大小不超过 5MB
+              </div>
+            </template>
+          </el-upload>
+
+          <!-- 字段说明 -->
+          <div class="field-info">
+            <el-divider content-position="left">
+              <el-icon><InfoFilled /></el-icon>
+              字段说明
+            </el-divider>
+            <el-descriptions :column="2" border size="small">
+              <el-descriptions-item label="必填字段" label-class-name="required-field">
+                姓名、手机号
+              </el-descriptions-item>
+              <el-descriptions-item label="选填字段">
+                OpenID（微信）、权限配置（多个用逗号分隔）
+              </el-descriptions-item>
+              <el-descriptions-item label="数据限制" :span="2">
+                最多导入 1000 条数据
+              </el-descriptions-item>
+              <el-descriptions-item label="权限选项" :span="2">
+                receive_order、diagnosis、quote、repair、complete、manage_products
+              </el-descriptions-item>
+            </el-descriptions>
+          </div>
+
+          <!-- 底部按钮 -->
+          <div class="upload-footer">
+            <el-button @click="batchDialogVisible = false">取消</el-button>
+            <el-button type="primary" @click="startImport" :loading="importing" :disabled="!uploadFile">
+              <el-icon><Upload /></el-icon>
+              开始导入
+            </el-button>
+          </div>
+        </div>
+
+        <!-- 导入结果 -->
+        <div v-else class="result-section">
+          <el-result
+            :icon="importResult.successCount > 0 ? 'success' : 'error'"
+            :title="importResult.message"
+          >
+            <template #sub-title>
+              <div class="result-stats">
+                <p>总计: {{ importResult.total }} 条</p>
+                <p style="color: #67c23a">成功: {{ importResult.successCount }} 条</p>
+                <p style="color: #f56c6c">失败: {{ importResult.failedCount }} 条</p>
+              </div>
+            </template>
+            <template #extra>
+              <div v-if="importResult.errors && importResult.errors.length > 0" class="error-list">
+                <el-divider content-position="left">错误详情</el-divider>
+                <el-scrollbar height="200px">
+                  <div v-for="(error, index) in importResult.errors.slice(0, 50)" :key="index" class="error-item">
+                    第 {{ error.row }} 行: {{ error.error }}
+                  </div>
+                  <div v-if="importResult.errors.length > 50" class="error-item">
+                    还有 {{ importResult.errors.length - 50 }} 条错误...
+                  </div>
+                </el-scrollbar>
+              </div>
+              <div style="margin-top: 20px">
+                <el-button @click="batchDialogVisible = false">关闭</el-button>
+                <el-button v-if="importResult.failedCount > 0" type="primary" @click="resetImport">
+                  <el-icon><Refresh /></el-icon>
+                  重新导入
+                </el-button>
+              </div>
+            </template>
+          </el-result>
+        </div>
+      </div>
     </el-dialog>
   </div>
 </template>

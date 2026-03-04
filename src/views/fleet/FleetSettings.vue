@@ -89,10 +89,12 @@
       <template #header>
         <div class="card-header">
           <span>待审批订单</span>
-          <el-button type="primary" size="small" @click="fetchPendingOrders">
-            <el-icon><Refresh /></el-icon>
-            刷新
-          </el-button>
+          <div class="header-actions">
+            <el-button type="primary" size="small" @click="fetchPendingOrders">
+              <el-icon><Refresh /></el-icon>
+              刷新
+            </el-button>
+          </div>
         </div>
       </template>
 
@@ -199,7 +201,7 @@
               <el-option
                 v-for="store in storeList"
                 :key="store._id"
-                :label="`${store.name}（${store.address}）`"
+                :label="`${store.name}（${formatAddress(store.address)}）`"
                 :value="store._id"
               />
             </el-select>
@@ -219,9 +221,9 @@
                 @click="approveForm.storeId = store._id"
               >
                 <div class="store-name">{{ store.name }}</div>
-                <div class="store-address">{{ store.address }}</div>
+                <div class="store-address">{{ formatAddress(store.address) }}</div>
                 <div class="store-distance">
-                  <el-tag size="small" type="success">{{ store.distance }}km</el-tag>
+                  <el-tag size="small" type="success">{{ store.distance }}公里</el-tag>
                 </div>
               </div>
             </div>
@@ -236,7 +238,7 @@
           :closable="false"
           style="margin-top: 10px"
         >
-          {{ currentOrder.storeId?.name }}（{{ currentOrder.storeId?.address }}）
+          {{ currentOrder.storeId?.name }}（{{ formatAddress(currentOrder.storeId?.address) }}）
         </el-alert>
       </div>
 
@@ -325,7 +327,7 @@ const rejectForm = ref({
 
 // 获取用户所属车队ID
 const userFleetId = computed(() => {
-  const user = JSON.parse(localStorage.getItem('user') || '{}')
+  const user = JSON.parse(localStorage.getItem('userInfo') || '{}')
   return user.fleetInfo?.fleetId
 })
 
@@ -369,7 +371,7 @@ const openMaintenanceApproval = () => {
 
 // 打开保养套餐管理页面
 const openPackageManagement = () => {
-  router.push('/platform/maintenance-packages')
+  router.push('/fleet-maintenance-packages')
 }
 
 // 获取待审批订单
@@ -377,7 +379,7 @@ const fetchPendingOrders = async () => {
   loading.value = true
   try {
     const res = await getOrders({ status: 'awaiting_fleet_approval' })
-    pendingOrders.value = res.data || []
+    pendingOrders.value = res.data?.orders || []
     stats.value.pending = pendingOrders.value.length
   } catch (error) {
     console.error('获取待审批订单失败:', error)
@@ -475,6 +477,15 @@ const confirmReject = async () => {
   }
 }
 
+// 格式化地址
+const formatAddress = (address) => {
+  if (!address) return '-'
+  if (typeof address === 'string') return address
+  // 如果是对象，拼接省份、城市、区、详细地址
+  const parts = [address.province, address.city, address.district, address.detail].filter(Boolean)
+  return parts.join('') || '-'
+}
+
 // 格式化日期时间
 const formatDateTime = (date) => {
   return dayjs(date).format('MM-DD HH:mm')
@@ -500,6 +511,12 @@ onMounted(() => {
     justify-content: space-between;
     font-weight: 600;
     color: #2c3e50;
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
   }
 
   .form-item-tip {

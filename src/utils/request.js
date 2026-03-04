@@ -35,8 +35,15 @@ service.interceptors.response.use(
   },
   error => {
     console.error('响应错误:', error)
+    const status = error.response?.status
+    const requestUrl = error.config?.url || ''
+    const isAuthLoginRequest = [
+      '/auth/test-login',
+      '/auth/web-login',
+      '/auth/login'
+    ].some(path => requestUrl.includes(path))
 
-    if (error.response?.status === 401) {
+    if (status === 401 && !isAuthLoginRequest) {
       ElMessage.error('登录已过期，请重新登录')
       localStorage.removeItem('token')
       localStorage.removeItem('userInfo')
