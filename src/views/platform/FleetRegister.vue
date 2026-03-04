@@ -146,6 +146,7 @@
                 :before-upload="beforeUpload"
                 :show-file-list="false"
                 accept="image/*"
+                name="file"
               >
                 <el-button type="primary" :loading="uploading">
                   <el-icon><Upload /></el-icon>
@@ -190,6 +191,7 @@
                 :before-upload="beforeUpload"
                 :show-file-list="false"
                 accept="image/*"
+                name="file"
               >
                 <el-button type="primary" :loading="uploading">
                   <el-icon><Upload /></el-icon>

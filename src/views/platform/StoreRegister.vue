@@ -107,6 +107,7 @@
                 :before-upload="beforeUpload"
                 :show-file-list="false"
                 accept="image/*"
+                name="file"
               >
                 <el-button type="primary">点击上传</el-button>
                 <template #tip>

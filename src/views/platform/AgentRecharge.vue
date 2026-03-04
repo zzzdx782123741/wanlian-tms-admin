@@ -111,6 +111,7 @@
             :disabled="submitting"
             accept="image/*,.pdf"
             list-type="picture-card"
+            name="file"
           >
             <el-icon><Plus /></el-icon>
           </el-upload>
