@@ -56,3 +56,18 @@ export function batchImportProducts(data) {
     }
   })
 }
+
+/**
+ * 批量导入门店套餐
+ * @param {FormData} data - 包含 file 字段的 FormData
+ */
+export function batchImportStorePackages(data) {
+  return request({
+    url: '/batch/store-packages',
+    method: 'post',
+    data,
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+}

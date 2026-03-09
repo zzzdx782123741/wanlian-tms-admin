@@ -4,22 +4,40 @@
     <el-row :gutter="20">
       <el-col :span="6">
         <el-card class="stat-card">
-          <el-statistic title="账户余额" :value="account.balance" :precision="2" prefix="¥" />
+          <el-statistic
+            title="账户余额"
+            :value="account.balance"
+            :precision="2"
+            prefix="¥"
+          />
         </el-card>
       </el-col>
       <el-col :span="6">
         <el-card class="stat-card stat-card-success">
-          <el-statistic title="本月收入" :value="stats.monthlyIncome" :precision="2" prefix="¥" />
+          <el-statistic
+            title="本月收入"
+            :value="stats.monthlyIncome"
+            :precision="2"
+            prefix="¥"
+          />
         </el-card>
       </el-col>
       <el-col :span="6">
         <el-card class="stat-card stat-card-warning">
-          <el-statistic title="待结算金额" :value="stats.pendingSettlement" :precision="2" prefix="¥" />
+          <el-statistic
+            title="待结算金额"
+            :value="stats.pendingSettlement"
+            :precision="2"
+            prefix="¥"
+          />
         </el-card>
       </el-col>
       <el-col :span="6">
         <el-card class="stat-card stat-card-info">
-          <el-statistic title="本月订单数" :value="stats.monthlyOrders" />
+          <el-statistic
+            title="本月订单数"
+            :value="stats.monthlyOrders"
+          />
         </el-card>
       </el-col>
     </el-row>
@@ -30,7 +48,11 @@
         <div class="card-header">
           <span>服务收入明细</span>
           <div class="header-actions">
-            <el-button type="primary" size="small" @click="handleRefresh">
+            <el-button
+              type="primary"
+              size="small"
+              @click="handleRefresh"
+            >
               <el-icon><Refresh /></el-icon>
               刷新
             </el-button>
@@ -39,7 +61,10 @@
       </template>
 
       <!-- 搜索筛选 -->
-      <el-form :inline="true" class="search-form">
+      <el-form
+        :inline="true"
+        class="search-form"
+      >
         <el-form-item label="时间范围">
           <el-date-picker
             v-model="dateRange"
@@ -53,11 +78,16 @@
         </el-form-item>
         <el-form-item>
           <div class="form-actions">
-            <el-button type="primary" @click="handleSearch">
+            <el-button
+              type="primary"
+              @click="handleSearch"
+            >
               <el-icon><Search /></el-icon>
               查询
             </el-button>
-            <el-button @click="handleReset">重置</el-button>
+            <el-button @click="handleReset">
+              重置
+            </el-button>
           </div>
         </el-form-item>
       </el-form>
@@ -69,41 +99,75 @@
         stripe
         style="width: 100%"
       >
-        <el-table-column prop="orderNumber" label="订单号" width="180" />
-        <el-table-column label="服务类型" width="150">
+        <el-table-column
+          prop="orderNumber"
+          label="订单号"
+          width="180"
+        />
+        <el-table-column
+          label="服务类型"
+          width="150"
+        >
           <template #default="{ row }">
-            <el-tag size="small">{{ row.serviceType }}</el-tag>
+            <el-tag size="small">
+              {{ row.serviceType }}
+            </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="amount" label="收入金额" width="120" align="right">
+        <el-table-column
+          prop="amount"
+          label="收入金额"
+          width="120"
+          align="right"
+        >
           <template #default="{ row }">
             <span style="color: #67c23a; font-weight: 600">
               ¥{{ row.amount.toFixed(2) }}
             </span>
           </template>
         </el-table-column>
-        <el-table-column prop="platformFee" label="平台费" width="120" align="right">
+        <el-table-column
+          prop="platformFee"
+          label="平台费"
+          width="120"
+          align="right"
+        >
           <template #default="{ row }">
             <span style="color: #f56c6c">
               -¥{{ row.platformFee.toFixed(2) }}
             </span>
           </template>
         </el-table-column>
-        <el-table-column prop="actualAmount" label="实际到账" width="120" align="right">
+        <el-table-column
+          prop="actualAmount"
+          label="实际到账"
+          width="120"
+          align="right"
+        >
           <template #default="{ row }">
             <span style="color: #67c23a; font-weight: 600">
               ¥{{ row.actualAmount.toFixed(2) }}
             </span>
           </template>
         </el-table-column>
-        <el-table-column prop="status" label="结算状态" width="100">
+        <el-table-column
+          prop="status"
+          label="结算状态"
+          width="100"
+        >
           <template #default="{ row }">
-            <el-tag :type="getSettlementStatusType(row.status)" size="small">
+            <el-tag
+              :type="getSettlementStatusType(row.status)"
+              size="small"
+            >
               {{ getSettlementStatusText(row.status) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="结算日期" width="120">
+        <el-table-column
+          label="结算日期"
+          width="120"
+        >
           <template #default="{ row }">
             {{ row.settlementDate ? formatDate(row.settlementDate) : '-' }}
           </template>
@@ -129,7 +193,11 @@
         <div class="card-header">
           <span>结算记录</span>
           <div class="header-actions">
-            <el-button type="primary" size="small" @click="fetchSettlements">
+            <el-button
+              type="primary"
+              size="small"
+              @click="fetchSettlements"
+            >
               <el-icon><Refresh /></el-icon>
               刷新
             </el-button>
@@ -143,43 +211,84 @@
         stripe
         style="width: 100%"
       >
-        <el-table-column prop="settlementNumber" label="结算批次号" width="180" />
-        <el-table-column label="结算周期" width="150">
+        <el-table-column
+          prop="settlementNumber"
+          label="结算批次号"
+          width="180"
+        />
+        <el-table-column
+          label="结算周期"
+          width="150"
+        >
           <template #default="{ row }">
             {{ row.startDate }} 至 {{ row.endDate }}
           </template>
         </el-table-column>
-        <el-table-column prop="orderCount" label="订单数量" width="100" align="center" />
-        <el-table-column prop="totalAmount" label="总金额" width="120" align="right">
+        <el-table-column
+          prop="orderCount"
+          label="订单数量"
+          width="100"
+          align="center"
+        />
+        <el-table-column
+          prop="totalAmount"
+          label="总金额"
+          width="120"
+          align="right"
+        >
           <template #default="{ row }">
             ¥{{ row.totalAmount.toFixed(2) }}
           </template>
         </el-table-column>
-        <el-table-column prop="platformFee" label="平台费" width="120" align="right">
+        <el-table-column
+          prop="platformFee"
+          label="平台费"
+          width="120"
+          align="right"
+        >
           <template #default="{ row }">
             ¥{{ row.platformFee.toFixed(2) }}
           </template>
         </el-table-column>
-        <el-table-column prop="storeIncome" label="门店收入" width="120" align="right">
+        <el-table-column
+          prop="storeIncome"
+          label="门店收入"
+          width="120"
+          align="right"
+        >
           <template #default="{ row }">
             <span style="color: #67c23a; font-weight: 600">
               ¥{{ row.storeIncome.toFixed(2) }}
             </span>
           </template>
         </el-table-column>
-        <el-table-column prop="status" label="状态" width="100">
+        <el-table-column
+          prop="status"
+          label="状态"
+          width="100"
+        >
           <template #default="{ row }">
-            <el-tag :type="getSettlementStatusType(row.status)" size="small">
+            <el-tag
+              :type="getSettlementStatusType(row.status)"
+              size="small"
+            >
               {{ getSettlementStatusText(row.status) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="结算日期" width="120">
+        <el-table-column
+          label="结算日期"
+          width="120"
+        >
           <template #default="{ row }">
             {{ row.settlementDate ? formatDate(row.settlementDate) : '-' }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="100" fixed="right">
+        <el-table-column
+          label="操作"
+          width="100"
+          fixed="right"
+        >
           <template #default="{ row }">
             <el-button
               size="small"

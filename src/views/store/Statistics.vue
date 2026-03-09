@@ -14,16 +14,31 @@
     </div>
 
     <!-- 核心指标 -->
-    <el-row :gutter="20" class="metrics-row">
+    <el-row
+      :gutter="20"
+      class="metrics-row"
+    >
       <el-col :span="6">
         <el-card class="metric-card">
           <div class="metric-content">
-            <div class="metric-icon" style="background: #ecf5ff">
-              <el-icon :size="32" color="#409EFF"><Document /></el-icon>
+            <div
+              class="metric-icon"
+              style="background: #ecf5ff"
+            >
+              <el-icon
+                :size="32"
+                color="#409EFF"
+              >
+                <Document />
+              </el-icon>
             </div>
             <div class="metric-data">
-              <div class="metric-value">{{ statistics.totalOrders || 0 }}</div>
-              <div class="metric-label">总订单数</div>
+              <div class="metric-value">
+                {{ statistics.totalOrders || 0 }}
+              </div>
+              <div class="metric-label">
+                总订单数
+              </div>
             </div>
           </div>
         </el-card>
@@ -31,12 +46,24 @@
       <el-col :span="6">
         <el-card class="metric-card">
           <div class="metric-content">
-            <div class="metric-icon" style="background: #f0f9ff">
-              <el-icon :size="32" color="#67C23A"><CircleCheck /></el-icon>
+            <div
+              class="metric-icon"
+              style="background: #f0f9ff"
+            >
+              <el-icon
+                :size="32"
+                color="#67C23A"
+              >
+                <CircleCheck />
+              </el-icon>
             </div>
             <div class="metric-data">
-              <div class="metric-value">{{ statistics.completedOrders || 0 }}</div>
-              <div class="metric-label">完成订单</div>
+              <div class="metric-value">
+                {{ statistics.completedOrders || 0 }}
+              </div>
+              <div class="metric-label">
+                完成订单
+              </div>
             </div>
           </div>
         </el-card>
@@ -44,12 +71,24 @@
       <el-col :span="6">
         <el-card class="metric-card">
           <div class="metric-content">
-            <div class="metric-icon" style="background: #fef0f0">
-              <el-icon :size="32" color="#F56C6C"><Money /></el-icon>
+            <div
+              class="metric-icon"
+              style="background: #fef0f0"
+            >
+              <el-icon
+                :size="32"
+                color="#F56C6C"
+              >
+                <Money />
+              </el-icon>
             </div>
             <div class="metric-data">
-              <div class="metric-value">¥{{ formatAmount(statistics.totalRevenue || 0) }}</div>
-              <div class="metric-label">总营收</div>
+              <div class="metric-value">
+                ¥{{ formatAmount(statistics.totalRevenue || 0) }}
+              </div>
+              <div class="metric-label">
+                总营收
+              </div>
             </div>
           </div>
         </el-card>
@@ -57,12 +96,24 @@
       <el-col :span="6">
         <el-card class="metric-card">
           <div class="metric-content">
-            <div class="metric-icon" style="background: #fdf6ec">
-              <el-icon :size="32" color="#E6A23C"><Star /></el-icon>
+            <div
+              class="metric-icon"
+              style="background: #fdf6ec"
+            >
+              <el-icon
+                :size="32"
+                color="#E6A23C"
+              >
+                <Star />
+              </el-icon>
             </div>
             <div class="metric-data">
-              <div class="metric-value">{{ statistics.avgScore || '-' }}</div>
-              <div class="metric-label">平均评分</div>
+              <div class="metric-value">
+                {{ statistics.avgScore || '-' }}
+              </div>
+              <div class="metric-label">
+                平均评分
+              </div>
             </div>
           </div>
         </el-card>
@@ -70,13 +121,19 @@
     </el-row>
 
     <!-- 图表区域 -->
-    <el-row :gutter="20" class="charts-row">
+    <el-row
+      :gutter="20"
+      class="charts-row"
+    >
       <el-col :span="12">
         <el-card>
           <template #header>
             <span>订单趋势</span>
           </template>
-          <div ref="orderTrendRef" style="height: 300px"></div>
+          <div
+            ref="orderTrendRef"
+            style="height: 300px"
+          />
         </el-card>
       </el-col>
       <el-col :span="12">
@@ -84,31 +141,55 @@
           <template #header>
             <span>营收趋势</span>
           </template>
-          <div ref="revenueTrendRef" style="height: 300px"></div>
+          <div
+            ref="revenueTrendRef"
+            style="height: 300px"
+          />
         </el-card>
       </el-col>
     </el-row>
 
     <!-- 详细数据 -->
-    <el-row :gutter="20" class="detail-row">
+    <el-row
+      :gutter="20"
+      class="detail-row"
+    >
       <el-col :span="12">
         <el-card>
           <template #header>
             <span>订单类型分布</span>
           </template>
-          <el-table :data="orderTypeData" stripe>
-            <el-table-column prop="type" label="类型" width="120">
+          <el-table
+            :data="orderTypeData"
+            stripe
+          >
+            <el-table-column
+              prop="type"
+              label="类型"
+              width="120"
+            >
               <template #default="{ row }">
                 {{ row.type === 'repair' ? '维修订单' : '保养订单' }}
               </template>
             </el-table-column>
-            <el-table-column prop="count" label="订单数" width="100" />
-            <el-table-column prop="amount" label="金额">
+            <el-table-column
+              prop="count"
+              label="订单数"
+              width="100"
+            />
+            <el-table-column
+              prop="amount"
+              label="金额"
+            >
               <template #default="{ row }">
                 ¥{{ formatAmount(row.amount) }}
               </template>
             </el-table-column>
-            <el-table-column prop="percentage" label="占比" width="100">
+            <el-table-column
+              prop="percentage"
+              label="占比"
+              width="100"
+            >
               <template #default="{ row }">
                 {{ row.percentage }}%
               </template>
@@ -121,17 +202,40 @@
           <template #header>
             <span>技师工作量</span>
           </template>
-          <el-table :data="technicianWorkData" stripe>
-            <el-table-column prop="name" label="技师姓名" width="120" />
-            <el-table-column prop="completedOrders" label="完成订单" width="100" />
-            <el-table-column prop="revenue" label="创收">
+          <el-table
+            :data="technicianWorkData"
+            stripe
+          >
+            <el-table-column
+              prop="name"
+              label="技师姓名"
+              width="120"
+            />
+            <el-table-column
+              prop="completedOrders"
+              label="完成订单"
+              width="100"
+            />
+            <el-table-column
+              prop="revenue"
+              label="创收"
+            >
               <template #default="{ row }">
                 ¥{{ formatAmount(row.revenue) }}
               </template>
             </el-table-column>
-            <el-table-column prop="avgRating" label="平均评分" width="100">
+            <el-table-column
+              prop="avgRating"
+              label="平均评分"
+              width="100"
+            >
               <template #default="{ row }">
-                <el-rate v-model="row.avgRating" disabled show-score :score-template="`${row.avgRating} 分`" />
+                <el-rate
+                  v-model="row.avgRating"
+                  disabled
+                  show-score
+                  :score-template="`${row.avgRating} 分`"
+                />
               </template>
             </el-table-column>
           </el-table>
@@ -162,6 +266,10 @@ const statistics = reactive({
 const orderTypeData = ref([])
 const technicianWorkData = ref([])
 
+function fenToYuan(amount) {
+  return Number(amount || 0) / 100
+}
+
 onMounted(async () => {
   // 设置默认日期范围（最近6个月）
   const endDate = new Date()
@@ -191,14 +299,26 @@ async function loadStatistics() {
       params: { startMonth, endMonth }
     })
 
-    Object.assign(statistics, res.data.summary || {})
-    orderTypeData.value = res.data.orderTypes || []
-    technicianWorkData.value = res.data.technicianWork || []
+    Object.assign(statistics, {
+      ...res.data.summary,
+      totalRevenue: fenToYuan(res.data.summary?.totalRevenue)
+    })
+    orderTypeData.value = (res.data.orderTypes || []).map(item => ({
+      ...item,
+      amount: fenToYuan(item.amount)
+    }))
+    technicianWorkData.value = (res.data.technicianWork || []).map(item => ({
+      ...item,
+      revenue: fenToYuan(item.revenue)
+    }))
 
     // 渲染图表
     await nextTick()
     renderOrderTrend(res.data.orderTrend || [])
-    renderRevenueTrend(res.data.revenueTrend || [])
+    renderRevenueTrend((res.data.revenueTrend || []).map(item => ({
+      ...item,
+      amount: fenToYuan(item.amount)
+    })))
 
   } catch (error) {
     ElMessage.error(error.message || '加载统计数据失败')
@@ -286,8 +406,8 @@ function renderRevenueTrend(data) {
 function formatAmount(amount) {
   if (!amount) return '0'
   return parseFloat(amount).toLocaleString('zh-CN', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
   })
 }
 </script>

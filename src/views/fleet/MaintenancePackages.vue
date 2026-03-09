@@ -2,7 +2,10 @@
   <div class="fleet-maintenance-packages">
     <!-- 页面标题 -->
     <div class="page-header">
-      <el-page-header @back="goBack" content="保养套餐查看" />
+      <el-page-header
+        content="保养套餐查看"
+        @back="goBack"
+      />
       <el-alert
         title="温馨提示"
         type="info"
@@ -17,26 +20,77 @@
     <el-card style="margin-bottom: 20px">
       <el-row :gutter="20">
         <el-col :span="6">
-          <el-select v-model="filters.vehicleGroup" placeholder="车型分组" clearable style="width: 100%" @change="fetchPackages">
-            <el-option label="牵引车" value="牵引车" />
-            <el-option label="载货车" value="载货车" />
-            <el-option label="轻卡" value="轻卡" />
-            <el-option label="自卸" value="自卸" />
-            <el-option label="全部" value="ALL" />
+          <el-select
+            v-model="filters.vehicleGroup"
+            placeholder="车型分组"
+            clearable
+            style="width: 100%"
+            @change="fetchPackages"
+          >
+            <el-option
+              label="牵引车"
+              value="牵引车"
+            />
+            <el-option
+              label="载货车"
+              value="载货车"
+            />
+            <el-option
+              label="轻卡"
+              value="轻卡"
+            />
+            <el-option
+              label="自卸"
+              value="自卸"
+            />
+            <el-option
+              label="全部"
+              value="ALL"
+            />
           </el-select>
         </el-col>
         <el-col :span="6">
-          <el-select v-model="filters.tier" placeholder="套餐档位" clearable style="width: 100%" @change="fetchPackages">
-            <el-option label="基础" value="基础" />
-            <el-option label="标准" value="标准" />
-            <el-option label="高级" value="高级" />
-            <el-option label="尊享" value="尊享" />
+          <el-select
+            v-model="filters.tier"
+            placeholder="套餐档位"
+            clearable
+            style="width: 100%"
+            @change="fetchPackages"
+          >
+            <el-option
+              label="基础"
+              value="基础"
+            />
+            <el-option
+              label="标准"
+              value="标准"
+            />
+            <el-option
+              label="高级"
+              value="高级"
+            />
+            <el-option
+              label="尊享"
+              value="尊享"
+            />
           </el-select>
         </el-col>
         <el-col :span="6">
-          <el-select v-model="filters.enabled" placeholder="状态" clearable style="width: 100%" @change="fetchPackages">
-            <el-option label="已启用" :value="true" />
-            <el-option label="已停用" :value="false" />
+          <el-select
+            v-model="filters.enabled"
+            placeholder="状态"
+            clearable
+            style="width: 100%"
+            @change="fetchPackages"
+          >
+            <el-option
+              label="已启用"
+              :value="true"
+            />
+            <el-option
+              label="已停用"
+              :value="false"
+            />
           </el-select>
         </el-col>
         <el-col :span="6">
@@ -48,7 +102,10 @@
             @keyup.enter="fetchPackages"
           >
             <template #append>
-              <el-button :icon="Search" @click="fetchPackages" />
+              <el-button
+                :icon="Search"
+                @click="fetchPackages"
+              />
             </template>
           </el-input>
         </el-col>
@@ -56,21 +113,30 @@
     </el-card>
 
     <!-- 套餐列表（卡片视图） -->
-    <div v-loading="loading" class="packages-grid">
+    <div
+      v-loading="loading"
+      class="packages-grid"
+    >
       <el-empty
         v-if="!loading && packages.length === 0"
         description="暂无保养套餐"
         :image-size="150"
       />
 
-      <el-row :gutter="20" v-else>
+      <el-row
+        v-else
+        :gutter="20"
+      >
         <el-col
           v-for="pkg in packages"
           :key="pkg._id"
           :span="8"
           style="margin-bottom: 20px"
         >
-          <el-card :body-style="{ padding: '0px' }" class="package-card">
+          <el-card
+            :body-style="{ padding: '0px' }"
+            class="package-card"
+          >
             <!-- 套餐头部 -->
             <div class="package-header">
               <div class="package-title">
@@ -116,54 +182,87 @@
 
             <!-- 套餐信息 -->
             <div class="package-info">
-              <el-descriptions :column="2" size="small" border>
+              <el-descriptions
+                :column="2"
+                size="small"
+                border
+              >
                 <el-descriptions-item label="套餐编码">
                   {{ pkg.code }}
                 </el-descriptions-item>
                 <el-descriptions-item label="套餐档位">
-                  <el-tag :type="getTierType(pkg.tier)" size="small">
+                  <el-tag
+                    :type="getTierType(pkg.tier)"
+                    size="small"
+                  >
                     {{ pkg.tier }}
                   </el-tag>
                 </el-descriptions-item>
                 <el-descriptions-item label="车型分组">
-                  <el-tag :type="getVehicleGroupType(pkg.vehicleGroup)" size="small">
+                  <el-tag
+                    :type="getVehicleGroupType(pkg.vehicleGroup)"
+                    size="small"
+                  >
                     {{ getVehicleGroupLabel(pkg.vehicleGroup) }}
                   </el-tag>
                 </el-descriptions-item>
                 <el-descriptions-item label="预估时长">
                   {{ pkg.estimatedDuration }} 小时
                 </el-descriptions-item>
-                <el-descriptions-item label="里程范围" :span="2">
+                <el-descriptions-item
+                  label="里程范围"
+                  :span="2"
+                >
                   {{ pkg.mileageRange?.min || 0 }}-{{ pkg.mileageRange?.max || 999999 }} km
                 </el-descriptions-item>
               </el-descriptions>
 
               <!-- 服务项目列表 -->
-              <div v-if="pkg.serviceItems && pkg.serviceItems.length > 0" class="service-items">
-                <div class="service-items-title">服务项目：</div>
+              <div
+                v-if="pkg.serviceItems && pkg.serviceItems.length > 0"
+                class="service-items"
+              >
+                <div class="service-items-title">
+                  服务项目：
+                </div>
                 <div class="service-items-list">
                   <div
                     v-for="(item, index) in pkg.serviceItems"
                     :key="index"
                     class="service-item"
                   >
-                    <span v-if="item.icon" class="service-icon">{{ item.icon }}</span>
+                    <span
+                      v-if="item.icon"
+                      class="service-icon"
+                    >{{ item.icon }}</span>
                     <span class="service-name">{{ item.name }}</span>
-                    <span v-if="item.description" class="service-desc">{{ item.description }}</span>
+                    <span
+                      v-if="item.description"
+                      class="service-desc"
+                    >{{ item.description }}</span>
                   </div>
                 </div>
               </div>
 
               <!-- 商品数量 -->
               <div class="products-count">
-                <el-text type="info" size="small">
+                <el-text
+                  type="info"
+                  size="small"
+                >
                   包含 {{ pkg.products?.length || 0 }} 种商品
                 </el-text>
               </div>
 
               <!-- 套餐描述 -->
-              <div v-if="pkg.description" class="package-description">
-                <el-text type="info" size="small">
+              <div
+                v-if="pkg.description"
+                class="package-description"
+              >
+                <el-text
+                  type="info"
+                  size="small"
+                >
                   {{ pkg.description }}
                 </el-text>
               </div>
@@ -171,7 +270,11 @@
 
             <!-- 套餐底部 -->
             <div class="package-footer">
-              <el-button type="primary" link @click="handleViewDetail(pkg)">
+              <el-button
+                type="primary"
+                link
+                @click="handleViewDetail(pkg)"
+              >
                 查看详情
               </el-button>
             </div>
@@ -199,8 +302,14 @@
       title="套餐详情"
       width="800px"
     >
-      <div v-if="currentPackage" class="package-detail">
-        <el-descriptions :column="2" border>
+      <div
+        v-if="currentPackage"
+        class="package-detail"
+      >
+        <el-descriptions
+          :column="2"
+          border
+        >
           <el-descriptions-item label="套餐名称">
             {{ currentPackage.name }}
           </el-descriptions-item>
@@ -239,46 +348,109 @@
           <el-descriptions-item label="预估时长">
             {{ currentPackage.estimatedDuration }} 小时
           </el-descriptions-item>
-          <el-descriptions-item label="里程范围" :span="2">
+          <el-descriptions-item
+            label="里程范围"
+            :span="2"
+          >
             {{ currentPackage.mileageRange?.min || 0 }}-{{ currentPackage.mileageRange?.max || 999999 }} km
           </el-descriptions-item>
-          <el-descriptions-item label="套餐描述" :span="2">
+          <el-descriptions-item
+            label="套餐描述"
+            :span="2"
+          >
             {{ currentPackage.description || '-' }}
           </el-descriptions-item>
-          <el-descriptions-item label="状态" :span="2">
-            <el-tag v-if="currentPackage.enabled" type="success">已启用</el-tag>
-            <el-tag v-else type="info">已停用</el-tag>
-            <el-tag v-if="currentPackage.isFeatured" type="danger" style="margin-left: 8px">热门</el-tag>
+          <el-descriptions-item
+            label="状态"
+            :span="2"
+          >
+            <el-tag
+              v-if="currentPackage.enabled"
+              type="success"
+            >
+              已启用
+            </el-tag>
+            <el-tag
+              v-else
+              type="info"
+            >
+              已停用
+            </el-tag>
+            <el-tag
+              v-if="currentPackage.isFeatured"
+              type="danger"
+              style="margin-left: 8px"
+            >
+              热门
+            </el-tag>
           </el-descriptions-item>
         </el-descriptions>
 
         <!-- 服务项目 -->
-        <div v-if="currentPackage.serviceItems && currentPackage.serviceItems.length > 0" style="margin-top: 20px">
+        <div
+          v-if="currentPackage.serviceItems && currentPackage.serviceItems.length > 0"
+          style="margin-top: 20px"
+        >
           <h4>服务项目</h4>
-          <el-table :data="currentPackage.serviceItems" size="small">
-            <el-table-column prop="icon" label="图标" width="60" />
-            <el-table-column prop="name" label="服务名称" />
-            <el-table-column prop="description" label="描述" />
+          <el-table
+            :data="currentPackage.serviceItems"
+            size="small"
+          >
+            <el-table-column
+              prop="icon"
+              label="图标"
+              width="60"
+            />
+            <el-table-column
+              prop="name"
+              label="服务名称"
+            />
+            <el-table-column
+              prop="description"
+              label="描述"
+            />
           </el-table>
         </div>
 
         <!-- 商品清单 -->
-        <div v-if="currentPackage.products && currentPackage.products.length > 0" style="margin-top: 20px">
+        <div
+          v-if="currentPackage.products && currentPackage.products.length > 0"
+          style="margin-top: 20px"
+        >
           <h4>商品清单</h4>
-          <el-table :data="currentPackage.products" size="small">
-            <el-table-column prop="productName" label="商品名称" />
-            <el-table-column prop="price" label="单价" width="100">
+          <el-table
+            :data="currentPackage.products"
+            size="small"
+          >
+            <el-table-column
+              prop="productName"
+              label="商品名称"
+            />
+            <el-table-column
+              prop="price"
+              label="单价"
+              width="100"
+            >
               <template #default="{ row }">
                 ¥{{ row.price }}
               </template>
             </el-table-column>
-            <el-table-column prop="quantity" label="数量" width="80" />
+            <el-table-column
+              prop="quantity"
+              label="数量"
+              width="80"
+            />
           </el-table>
         </div>
       </div>
 
       <template #footer>
-        <el-button type="primary" @click="detailDialogVisible = false">关闭</el-button>
+        <el-button
+          type="primary"
+          @click="detailDialogVisible = false"
+        >
+          关闭
+        </el-button>
       </template>
     </el-dialog>
   </div>

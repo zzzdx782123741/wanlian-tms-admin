@@ -4,27 +4,42 @@
     <el-row :gutter="20">
       <el-col :span="5">
         <el-card class="stat-card">
-          <el-statistic title="司机总数" :value="stats.total" />
+          <el-statistic
+            title="司机总数"
+            :value="stats.total"
+          />
         </el-card>
       </el-col>
       <el-col :span="5">
         <el-card class="stat-card stat-card-success">
-          <el-statistic title="正常" :value="stats.normal" />
+          <el-statistic
+            title="正常"
+            :value="stats.normal"
+          />
         </el-card>
       </el-col>
       <el-col :span="4">
         <el-card class="stat-card stat-card-info">
-          <el-statistic title="待激活" :value="stats.pending_activation" />
+          <el-statistic
+            title="待激活"
+            :value="stats.pending_activation"
+          />
         </el-card>
       </el-col>
       <el-col :span="5">
         <el-card class="stat-card stat-card-warning">
-          <el-statistic title="待审核" :value="stats.pending_audit" />
+          <el-statistic
+            title="待审核"
+            :value="stats.pending_audit"
+          />
         </el-card>
       </el-col>
       <el-col :span="5">
         <el-card class="stat-card stat-card-danger">
-          <el-statistic title="已停用" :value="stats.suspended" />
+          <el-statistic
+            title="已停用"
+            :value="stats.suspended"
+          />
         </el-card>
       </el-col>
     </el-row>
@@ -35,15 +50,28 @@
         <div class="card-header">
           <span>车队司机管理</span>
           <div class="header-actions">
-            <el-button v-if="userRole === 'FLEET_MANAGER'" type="success" size="small" @click="handleBatchImport">
+            <el-button
+              v-if="userRole === 'FLEET_MANAGER'"
+              type="success"
+              size="small"
+              @click="handleBatchImport"
+            >
               <el-icon><Upload /></el-icon>
               批量导入
             </el-button>
-            <el-button type="warning" size="small" @click="handleBatchExport">
+            <el-button
+              type="warning"
+              size="small"
+              @click="handleBatchExport"
+            >
               <el-icon><Download /></el-icon>
               批量导出
             </el-button>
-            <el-button type="primary" size="small" @click="handleAdd">
+            <el-button
+              type="primary"
+              size="small"
+              @click="handleAdd"
+            >
               <el-icon><Plus /></el-icon>
               添加司机
             </el-button>
@@ -52,18 +80,46 @@
       </template>
 
       <!-- 搜索筛选 -->
-      <el-form :inline="true" class="search-form">
+      <el-form
+        :inline="true"
+        class="search-form"
+      >
         <el-form-item label="角色状态">
-          <el-select v-model="queryParams.roleStatus" placeholder="全部" clearable style="width: 130px">
-            <el-option label="正常" value="normal" />
-            <el-option label="待审核" value="pending_audit" />
-            <el-option label="已停用" value="suspended" />
+          <el-select
+            v-model="queryParams.roleStatus"
+            placeholder="全部"
+            clearable
+            style="width: 140px"
+          >
+            <el-option
+              label="正常"
+              value="normal"
+            />
+            <el-option
+              label="待审核"
+              value="pending_audit"
+            />
+            <el-option
+              label="已停用"
+              value="suspended"
+            />
           </el-select>
         </el-form-item>
         <el-form-item label="激活状态">
-          <el-select v-model="queryParams.status" placeholder="全部" clearable style="width: 130px">
-            <el-option label="正常" value="normal" />
-            <el-option label="待激活" value="pending_activation" />
+          <el-select
+            v-model="queryParams.status"
+            placeholder="全部"
+            clearable
+            style="width: 140px"
+          >
+            <el-option
+              label="正常"
+              value="normal"
+            />
+            <el-option
+              label="待激活"
+              value="pending_activation"
+            />
           </el-select>
         </el-form-item>
         <el-form-item label="关键词">
@@ -76,11 +132,16 @@
         </el-form-item>
         <el-form-item>
           <div class="form-actions">
-            <el-button type="primary" @click="handleQuery">
+            <el-button
+              type="primary"
+              @click="handleQuery"
+            >
               <el-icon><Search /></el-icon>
               查询
             </el-button>
-            <el-button @click="handleReset">重置</el-button>
+            <el-button @click="handleReset">
+              重置
+            </el-button>
           </div>
         </el-form-item>
       </el-form>
@@ -92,9 +153,20 @@
         stripe
         style="width: 100%"
       >
-        <el-table-column prop="name" label="姓名" width="120" />
-        <el-table-column prop="phone" label="手机号" width="140" />
-        <el-table-column label="关联车辆" min-width="200">
+        <el-table-column
+          prop="name"
+          label="姓名"
+          width="120"
+        />
+        <el-table-column
+          prop="phone"
+          label="手机号"
+          width="140"
+        />
+        <el-table-column
+          label="关联车辆"
+          min-width="200"
+        >
           <template #default="{ row }">
             <div v-if="row.vehicles && row.vehicles.length > 0">
               <el-tag
@@ -109,46 +181,89 @@
             <span v-else>-</span>
           </template>
         </el-table-column>
-        <el-table-column prop="age" label="年龄" width="80" />
-        <el-table-column label="激活状态" width="100" align="center">
+        <el-table-column
+          prop="age"
+          label="年龄"
+          width="80"
+        />
+        <el-table-column
+          label="激活状态"
+          width="100"
+          align="center"
+        >
           <template #default="{ row }">
             <el-tag :type="getActivationStatusType(row.status)">
               {{ getActivationStatusText(row.status) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="角色状态" width="100" align="center">
+        <el-table-column
+          label="角色状态"
+          width="100"
+          align="center"
+        >
           <template #default="{ row }">
             <el-tag :type="getRoleStatusType(row.role?.status)">
               {{ getRoleStatusText(row.role?.status) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="创建时间" width="110">
+        <el-table-column
+          label="创建时间"
+          width="110"
+        >
           <template #default="{ row }">
             {{ formatDate(row.createdAt) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="240" fixed="right">
+        <el-table-column
+          label="操作"
+          width="240"
+          fixed="right"
+        >
           <template #default="{ row }">
-            <el-button type="primary" size="small" link @click="handleEdit(row)">
+            <el-button
+              type="primary"
+              size="small"
+              link
+              @click="handleEdit(row)"
+            >
               编辑
             </el-button>
             <el-dropdown style="margin-left: 10px">
-              <el-button type="primary" size="small" link>
+              <el-button
+                type="primary"
+                size="small"
+                link
+              >
                 更多<el-icon><ArrowDown /></el-icon>
               </el-button>
               <template #dropdown>
                 <el-dropdown-menu>
                   <el-dropdown-item @click="handleUpdateStatus(row, 'normal')">
-                    <el-tag size="small" type="success" style="margin-right: 8px">正常</el-tag>
+                    <el-tag
+                      size="small"
+                      type="success"
+                      style="margin-right: 8px"
+                    >
+                      正常
+                    </el-tag>
                     设为正常
                   </el-dropdown-item>
                   <el-dropdown-item @click="handleUpdateStatus(row, 'suspended')">
-                    <el-tag size="small" type="danger" style="margin-right: 8px">停用</el-tag>
+                    <el-tag
+                      size="small"
+                      type="danger"
+                      style="margin-right: 8px"
+                    >
+                      停用
+                    </el-tag>
                     设为停用
                   </el-dropdown-item>
-                  <el-dropdown-item divided @click="handleDelete(row)">
+                  <el-dropdown-item
+                    divided
+                    @click="handleDelete(row)"
+                  >
                     <el-icon><Delete /></el-icon>
                     删除司机
                   </el-dropdown-item>
@@ -178,18 +293,44 @@
       :title="isEdit ? '编辑司机' : '添加司机'"
       width="600px"
     >
-      <el-form :model="driverForm" :rules="formRules" ref="driverFormRef" label-width="100px">
-        <el-form-item label="姓名" prop="name">
-          <el-input v-model="driverForm.name" placeholder="请输入姓名" />
+      <el-form
+        ref="driverFormRef"
+        :model="driverForm"
+        :rules="formRules"
+        label-width="100px"
+      >
+        <el-form-item
+          label="姓名"
+          prop="name"
+        >
+          <el-input
+            v-model="driverForm.name"
+            placeholder="请输入姓名"
+          />
         </el-form-item>
-        <el-form-item label="手机号" prop="phone">
-          <el-input v-model="driverForm.phone" placeholder="请输入手机号" :disabled="isEdit" />
+        <el-form-item
+          label="手机号"
+          prop="phone"
+        >
+          <el-input
+            v-model="driverForm.phone"
+            placeholder="请输入手机号"
+            :disabled="isEdit"
+          />
         </el-form-item>
         <el-form-item label="OpenID">
-          <el-input v-model="driverForm.openid" placeholder="微信OpenID（可选）" />
+          <el-input
+            v-model="driverForm.openid"
+            placeholder="微信OpenID（可选）"
+          />
         </el-form-item>
         <el-form-item label="年龄">
-          <el-input-number v-model="driverForm.age" :min="18" :max="65" placeholder="年龄" />
+          <el-input-number
+            v-model="driverForm.age"
+            :min="18"
+            :max="65"
+            placeholder="年龄"
+          />
         </el-form-item>
         <el-form-item label="关联车辆">
           <el-select
@@ -210,8 +351,16 @@
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="formDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="confirmSave" :loading="saving">确定</el-button>
+        <el-button @click="formDialogVisible = false">
+          取消
+        </el-button>
+        <el-button
+          type="primary"
+          :loading="saving"
+          @click="confirmSave"
+        >
+          确定
+        </el-button>
       </template>
     </el-dialog>
 
@@ -223,10 +372,18 @@
     >
       <div class="batch-import-content">
         <!-- 未显示结果时显示上传界面 -->
-        <div v-if="!importResult.message" class="upload-section">
+        <div
+          v-if="!importResult.message"
+          class="upload-section"
+        >
           <!-- 顶部操作栏 -->
           <div class="upload-header">
-            <el-button type="primary" link @click="downloadTemplate" :loading="downloading">
+            <el-button
+              type="primary"
+              link
+              :loading="downloading"
+              @click="downloadTemplate"
+            >
               <el-icon><Download /></el-icon>
               下载 Excel 模板
             </el-button>
@@ -244,7 +401,9 @@
             :on-change="handleFileChange"
             :on-exceed="handleExceed"
           >
-            <el-icon class="el-icon--upload"><UploadFilled /></el-icon>
+            <el-icon class="el-icon--upload">
+              <UploadFilled />
+            </el-icon>
             <div class="el-upload__text">
               拖拽 Excel 文件到此处，或<em>点击上传</em>
             </div>
@@ -261,14 +420,24 @@
               <el-icon><InfoFilled /></el-icon>
               字段说明
             </el-divider>
-            <el-descriptions :column="2" border size="small">
-              <el-descriptions-item label="必填字段" label-class-name="required-field">
+            <el-descriptions
+              :column="2"
+              border
+              size="small"
+            >
+              <el-descriptions-item
+                label="必填字段"
+                label-class-name="required-field"
+              >
                 姓名、手机号
               </el-descriptions-item>
               <el-descriptions-item label="选填字段">
                 年龄、OpenID（微信）、关联车辆（可填车牌号，多个用逗号分隔）
               </el-descriptions-item>
-              <el-descriptions-item label="数据限制" :span="2">
+              <el-descriptions-item
+                label="数据限制"
+                :span="2"
+              >
                 最多导入 1000 条数据
               </el-descriptions-item>
             </el-descriptions>
@@ -276,8 +445,15 @@
 
           <!-- 底部按钮 -->
           <div class="upload-footer">
-            <el-button @click="batchDialogVisible = false">取消</el-button>
-            <el-button type="primary" @click="startImport" :loading="importing" :disabled="!uploadFile">
+            <el-button @click="batchDialogVisible = false">
+              取消
+            </el-button>
+            <el-button
+              type="primary"
+              :loading="importing"
+              :disabled="!uploadFile"
+              @click="startImport"
+            >
               <el-icon><Upload /></el-icon>
               开始导入
             </el-button>
@@ -285,7 +461,10 @@
         </div>
 
         <!-- 导入结果 -->
-        <div v-else class="result-section">
+        <div
+          v-else
+          class="result-section"
+        >
           <el-result
             :icon="importResult.successCount > 0 ? 'success' : 'error'"
             :title="importResult.message"
@@ -293,25 +472,47 @@
             <template #sub-title>
               <div class="result-stats">
                 <p>总计: {{ importResult.total }} 条</p>
-                <p style="color: #67c23a">成功: {{ importResult.successCount }} 条</p>
-                <p style="color: #f56c6c">失败: {{ importResult.failedCount }} 条</p>
+                <p style="color: #67c23a">
+                  成功: {{ importResult.successCount }} 条
+                </p>
+                <p style="color: #f56c6c">
+                  失败: {{ importResult.failedCount }} 条
+                </p>
               </div>
             </template>
             <template #extra>
-              <div v-if="importResult.errors && importResult.errors.length > 0" class="error-list">
-                <el-divider content-position="left">错误详情</el-divider>
+              <div
+                v-if="importResult.errors && importResult.errors.length > 0"
+                class="error-list"
+              >
+                <el-divider content-position="left">
+                  错误详情
+                </el-divider>
                 <el-scrollbar height="200px">
-                  <div v-for="(error, index) in importResult.errors.slice(0, 50)" :key="index" class="error-item">
+                  <div
+                    v-for="(error, index) in importResult.errors.slice(0, 50)"
+                    :key="index"
+                    class="error-item"
+                  >
                     第 {{ error.row }} 行: {{ error.error }}
                   </div>
-                  <div v-if="importResult.errors.length > 50" class="error-item">
+                  <div
+                    v-if="importResult.errors.length > 50"
+                    class="error-item"
+                  >
                     还有 {{ importResult.errors.length - 50 }} 条错误...
                   </div>
                 </el-scrollbar>
               </div>
               <div style="margin-top: 20px">
-                <el-button @click="batchDialogVisible = false">关闭</el-button>
-                <el-button v-if="importResult.failedCount > 0" type="primary" @click="resetImport">
+                <el-button @click="batchDialogVisible = false">
+                  关闭
+                </el-button>
+                <el-button
+                  v-if="importResult.failedCount > 0"
+                  type="primary"
+                  @click="resetImport"
+                >
                   <el-icon><Refresh /></el-icon>
                   重新导入
                 </el-button>
@@ -806,7 +1007,7 @@ onMounted(() => {
     }
 
     &.stat-card-info :deep(.el-statistic__number) {
-      color: #909399;
+      color: #409eff;
     }
 
     &.stat-card-warning :deep(.el-statistic__number) {

@@ -4,22 +4,34 @@
     <el-row :gutter="20">
       <el-col :span="6">
         <el-card class="stat-card">
-          <el-statistic title="总车队数" :value="stats.totalFleets" />
+          <el-statistic
+            title="总车队数"
+            :value="stats.totalFleets"
+          />
         </el-card>
       </el-col>
       <el-col :span="6">
         <el-card class="stat-card stat-card-warning">
-          <el-statistic title="待审核" :value="stats.pendingFleets" />
+          <el-statistic
+            title="待审核"
+            :value="stats.pendingFleets"
+          />
         </el-card>
       </el-col>
       <el-col :span="6">
         <el-card class="stat-card stat-card-success">
-          <el-statistic title="正常运营" :value="stats.normalFleets" />
+          <el-statistic
+            title="正常运营"
+            :value="stats.normalFleets"
+          />
         </el-card>
       </el-col>
       <el-col :span="6">
         <el-card class="stat-card stat-card-info">
-          <el-statistic title="本月新增" :value="stats.newFleets" />
+          <el-statistic
+            title="本月新增"
+            :value="stats.newFleets"
+          />
         </el-card>
       </el-col>
     </el-row>
@@ -30,11 +42,19 @@
         <div class="card-header">
           <span>车队列表</span>
           <div class="header-actions">
-            <el-button type="success" size="small" @click="handleRegister">
+            <el-button
+              type="success"
+              size="small"
+              @click="handleRegister"
+            >
               <el-icon><Plus /></el-icon>
               注册车队
             </el-button>
-            <el-button type="primary" size="small" @click="handleRefresh">
+            <el-button
+              type="primary"
+              size="small"
+              @click="handleRefresh"
+            >
               <el-icon><Refresh /></el-icon>
               刷新
             </el-button>
@@ -43,12 +63,29 @@
       </template>
 
       <!-- 搜索筛选 -->
-      <el-form :inline="true" class="search-form">
+      <el-form
+        :inline="true"
+        class="search-form"
+      >
         <el-form-item label="状态">
-          <el-select v-model="queryParams.status" placeholder="全部" clearable style="width: 150px">
-            <el-option label="待审核" value="pending_audit" />
-            <el-option label="正常" value="normal" />
-            <el-option label="已停用" value="suspended" />
+          <el-select
+            v-model="queryParams.status"
+            placeholder="全部"
+            clearable
+            style="width: 160px"
+          >
+            <el-option
+              label="待审核"
+              value="pending_audit"
+            />
+            <el-option
+              label="正常"
+              value="normal"
+            />
+            <el-option
+              label="已停用"
+              value="suspended"
+            />
           </el-select>
         </el-form-item>
         <el-form-item label="关键词">
@@ -61,11 +98,16 @@
         </el-form-item>
         <el-form-item>
           <div class="form-actions">
-            <el-button type="primary" @click="handleQuery">
+            <el-button
+              type="primary"
+              @click="handleQuery"
+            >
               <el-icon><Search /></el-icon>
               查询
             </el-button>
-            <el-button @click="handleReset">重置</el-button>
+            <el-button @click="handleReset">
+              重置
+            </el-button>
           </div>
         </el-form-item>
       </el-form>
@@ -77,52 +119,89 @@
         stripe
         style="width: 100%"
       >
-        <el-table-column prop="name" label="车队名称" min-width="180" />
-        <el-table-column label="规模" width="100" align="center">
+        <el-table-column
+          prop="name"
+          label="车队名称"
+          min-width="180"
+        />
+        <el-table-column
+          label="规模"
+          width="100"
+          align="center"
+        >
           <template #default="{ row }">
             {{ row.scale }} 辆
           </template>
         </el-table-column>
-        <el-table-column label="联系人" width="120">
+        <el-table-column
+          label="联系人"
+          width="120"
+        >
           <template #default="{ row }">
             {{ row.contact?.name || '-' }}
           </template>
         </el-table-column>
-        <el-table-column label="联系电话" width="140">
+        <el-table-column
+          label="联系电话"
+          width="140"
+        >
           <template #default="{ row }">
             {{ row.contact?.phone || '-' }}
           </template>
         </el-table-column>
-        <el-table-column label="账户余额" width="120" align="right">
+        <el-table-column
+          label="账户余额"
+          width="120"
+          align="right"
+        >
           <template #default="{ row }">
             <span style="color: #67c23a; font-weight: 600">
               ¥{{ row.accountBalance?.toLocaleString() || 0 }}
             </span>
           </template>
         </el-table-column>
-        <el-table-column label="车辆数" width="80" align="center">
+        <el-table-column
+          label="车辆数"
+          width="80"
+          align="center"
+        >
           <template #default="{ row }">
             {{ row.vehicleCount || 0 }}
           </template>
         </el-table-column>
-        <el-table-column label="管理员" width="80" align="center">
+        <el-table-column
+          label="管理员"
+          width="80"
+          align="center"
+        >
           <template #default="{ row }">
             {{ row.managerCount || 0 }}
           </template>
         </el-table-column>
-        <el-table-column label="状态" width="100" align="center">
+        <el-table-column
+          label="状态"
+          width="100"
+          align="center"
+        >
           <template #default="{ row }">
             <el-tag :type="getStatusType(row.status)">
               {{ getStatusText(row.status) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="创建时间" width="110">
+        <el-table-column
+          label="创建时间"
+          width="110"
+        >
           <template #default="{ row }">
             {{ formatDate(row.createdAt) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="240" fixed="right">
+        <el-table-column
+          label="操作"
+          width="240"
+          fixed="right"
+        >
           <template #default="{ row }">
             <el-button
               type="primary"
@@ -141,8 +220,15 @@
             >
               审核
             </el-button>
-            <el-dropdown v-if="row.status !== 'pending_audit'" style="margin-left: 10px">
-              <el-button type="primary" size="small" link>
+            <el-dropdown
+              v-if="row.status !== 'pending_audit'"
+              style="margin-left: 10px"
+            >
+              <el-button
+                type="primary"
+                size="small"
+                link
+              >
                 更多<el-icon><ArrowDown /></el-icon>
               </el-button>
               <template #dropdown>
@@ -161,7 +247,10 @@
                     <el-icon><Unlock /></el-icon>
                     启用
                   </el-dropdown-item>
-                  <el-dropdown-item divided @click="handleDelete(row)">
+                  <el-dropdown-item
+                    divided
+                    @click="handleDelete(row)"
+                  >
                     <el-icon><Delete /></el-icon>
                     删除
                   </el-dropdown-item>
@@ -191,8 +280,15 @@
       title="车队详情"
       width="800px"
     >
-      <el-descriptions v-if="currentFleet._id" :column="2" border>
-        <el-descriptions-item label="车队名称" :span="2">
+      <el-descriptions
+        v-if="currentFleet._id"
+        :column="2"
+        border
+      >
+        <el-descriptions-item
+          label="车队名称"
+          :span="2"
+        >
           {{ currentFleet.name }}
         </el-descriptions-item>
         <el-descriptions-item label="车队规模">
@@ -209,10 +305,16 @@
         <el-descriptions-item label="联系电话">
           {{ currentFleet.contact?.phone || '-' }}
         </el-descriptions-item>
-        <el-descriptions-item label="邮箱" :span="2">
+        <el-descriptions-item
+          label="邮箱"
+          :span="2"
+        >
           {{ currentFleet.contact?.email || '-' }}
         </el-descriptions-item>
-        <el-descriptions-item label="地址" :span="2">
+        <el-descriptions-item
+          label="地址"
+          :span="2"
+        >
           {{ currentFleet.address?.province }}{{ currentFleet.address?.city }}{{ currentFleet.address?.district }}{{ currentFleet.address?.detail }}
         </el-descriptions-item>
         <el-descriptions-item label="账户余额">
@@ -225,21 +327,42 @@
           维修中: {{ currentFleet.vehicleStats?.repairing || 0 }} |
           报废: {{ currentFleet.vehicleStats?.scrapped || 0 }}
         </el-descriptions-item>
-        <el-descriptions-item label="创建时间" :span="2">
+        <el-descriptions-item
+          label="创建时间"
+          :span="2"
+        >
           {{ formatDateTime(currentFleet.createdAt) }}
         </el-descriptions-item>
       </el-descriptions>
 
       <!-- 管理员列表 -->
       <template v-if="currentFleet.managers && currentFleet.managers.length">
-        <el-divider content-position="left">车队管理员</el-divider>
-        <el-table :data="currentFleet.managers" size="small" max-height="200">
-          <el-table-column prop="nickname" label="昵称" />
-          <el-table-column prop="name" label="姓名" />
-          <el-table-column prop="phone" label="电话" />
+        <el-divider content-position="left">
+          车队管理员
+        </el-divider>
+        <el-table
+          :data="currentFleet.managers"
+          size="small"
+          max-height="200"
+        >
+          <el-table-column
+            prop="nickname"
+            label="昵称"
+          />
+          <el-table-column
+            prop="name"
+            label="姓名"
+          />
+          <el-table-column
+            prop="phone"
+            label="电话"
+          />
           <el-table-column label="状态">
             <template #default="{ row }">
-              <el-tag :type="row.role?.status === 'normal' ? 'success' : 'danger'" size="small">
+              <el-tag
+                :type="row.role?.status === 'normal' ? 'success' : 'danger'"
+                size="small"
+              >
                 {{ row.role?.status === 'normal' ? '正常' : '停用' }}
               </el-tag>
             </template>
@@ -249,14 +372,32 @@
 
       <!-- 车辆列表 -->
       <template v-if="currentFleet.vehicles && currentFleet.vehicles.length">
-        <el-divider content-position="left">车队车辆</el-divider>
-        <el-table :data="currentFleet.vehicles" size="small" max-height="200">
-          <el-table-column prop="plateNumber" label="车牌号" />
-          <el-table-column prop="brand" label="品牌" />
-          <el-table-column prop="model" label="车型" />
+        <el-divider content-position="left">
+          车队车辆
+        </el-divider>
+        <el-table
+          :data="currentFleet.vehicles"
+          size="small"
+          max-height="200"
+        >
+          <el-table-column
+            prop="plateNumber"
+            label="车牌号"
+          />
+          <el-table-column
+            prop="brand"
+            label="品牌"
+          />
+          <el-table-column
+            prop="model"
+            label="车型"
+          />
           <el-table-column label="状态">
             <template #default="{ row }">
-              <el-tag :type="getVehicleStatusType(row.status)" size="small">
+              <el-tag
+                :type="getVehicleStatusType(row.status)"
+                size="small"
+              >
                 {{ getVehicleStatusText(row.status) }}
               </el-tag>
             </template>
@@ -271,20 +412,36 @@
       title="车队审核"
       width="500px"
     >
-      <el-form :model="approveForm" label-width="80px">
+      <el-form
+        :model="approveForm"
+        label-width="80px"
+      >
         <el-form-item label="车队名称">
-          <el-input :value="currentFleet.name" disabled />
+          <el-input
+            :value="currentFleet.name"
+            disabled
+          />
         </el-form-item>
         <el-form-item label="联系人">
-          <el-input :value="currentFleet.contact?.name" disabled />
+          <el-input
+            :value="currentFleet.contact?.name"
+            disabled
+          />
         </el-form-item>
         <el-form-item label="联系电话">
-          <el-input :value="currentFleet.contact?.phone" disabled />
+          <el-input
+            :value="currentFleet.contact?.phone"
+            disabled
+          />
         </el-form-item>
         <el-form-item label="审核结果">
           <el-radio-group v-model="approveForm.approved">
-            <el-radio :label="true">通过</el-radio>
-            <el-radio :label="false">拒绝</el-radio>
+            <el-radio :label="true">
+              通过
+            </el-radio>
+            <el-radio :label="false">
+              拒绝
+            </el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="备注">
@@ -297,8 +454,15 @@
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="approveDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="confirmApprove">确定</el-button>
+        <el-button @click="approveDialogVisible = false">
+          取消
+        </el-button>
+        <el-button
+          type="primary"
+          @click="confirmApprove"
+        >
+          确定
+        </el-button>
       </template>
     </el-dialog>
   </div>

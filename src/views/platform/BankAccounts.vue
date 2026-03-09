@@ -4,7 +4,10 @@
       <template #header>
         <div class="card-header">
           <span>平台收款账户管理</span>
-          <el-button type="primary" @click="handleAdd">
+          <el-button
+            type="primary"
+            @click="handleAdd"
+          >
             <el-icon><Plus /></el-icon>
             添加收款账户
           </el-button>
@@ -13,76 +16,170 @@
 
       <!-- 筛选条件 -->
       <div class="filter-section">
-        <el-form :inline="true" :model="filters">
+        <el-form
+          :inline="true"
+          :model="filters"
+        >
           <el-form-item label="支付方式">
-            <el-select v-model="filters.paymentMethod" placeholder="全部支付方式" clearable @change="loadAccounts">
-              <el-option label="全部方式" value="" />
-              <el-option label="银行对公账户" value="bank" />
-              <el-option label="支付宝企业账户" value="alipay" />
-              <el-option label="微信商户号" value="wechat" />
-              <el-option label="聚合支付" value="aggregation" />
-              <el-option label="易宝支付" value="yopay" />
-              <el-option label="江苏银行电子钱包" value="jsbank_wallet" />
+            <el-select
+              v-model="filters.paymentMethod"
+              placeholder="全部支付方式"
+              clearable
+              style="width: 220px"
+              @change="loadAccounts"
+            >
+              <el-option
+                label="全部方式"
+                value=""
+              />
+              <el-option
+                label="银行对公账户"
+                value="bank"
+              />
+              <el-option
+                label="支付宝企业账户"
+                value="alipay"
+              />
+              <el-option
+                label="微信商户号"
+                value="wechat"
+              />
+              <el-option
+                label="聚合支付"
+                value="aggregation"
+              />
+              <el-option
+                label="易宝支付"
+                value="yopay"
+              />
+              <el-option
+                label="江苏银行电子钱包"
+                value="jsbank_wallet"
+              />
             </el-select>
           </el-form-item>
           <el-form-item label="账户状态">
-            <el-select v-model="filters.status" placeholder="全部状态" clearable @change="loadAccounts">
-              <el-option label="全部状态" value="" />
-              <el-option label="启用" value="active" />
-              <el-option label="冻结" value="frozen" />
-              <el-option label="停用" value="closed" />
+            <el-select
+              v-model="filters.status"
+              placeholder="全部状态"
+              clearable
+              style="width: 180px"
+              @change="loadAccounts"
+            >
+              <el-option
+                label="全部状态"
+                value=""
+              />
+              <el-option
+                label="启用"
+                value="active"
+              />
+              <el-option
+                label="冻结"
+                value="frozen"
+              />
+              <el-option
+                label="停用"
+                value="closed"
+              />
             </el-select>
           </el-form-item>
         </el-form>
       </div>
 
       <!-- 统计卡片 -->
-      <el-row :gutter="20" class="stats-row">
+      <el-row
+        :gutter="20"
+        class="stats-row"
+      >
         <el-col :span="6">
           <div class="stat-card">
-            <div class="stat-value">{{ statistics.total || 0 }}</div>
-            <div class="stat-label">账户总数</div>
+            <div class="stat-value">
+              {{ statistics.total || 0 }}
+            </div>
+            <div class="stat-label">
+              账户总数
+            </div>
           </div>
         </el-col>
         <el-col :span="6">
           <div class="stat-card">
-            <div class="stat-value">{{ statistics.active || 0 }}</div>
-            <div class="stat-label">启用账户</div>
+            <div class="stat-value">
+              {{ statistics.active || 0 }}
+            </div>
+            <div class="stat-label">
+              启用账户
+            </div>
           </div>
         </el-col>
         <el-col :span="6">
           <div class="stat-card">
-            <div class="stat-value">{{ statistics.default || 0 }}</div>
-            <div class="stat-label">默认账户</div>
+            <div class="stat-value">
+              {{ statistics.default || 0 }}
+            </div>
+            <div class="stat-label">
+              默认账户
+            </div>
           </div>
         </el-col>
         <el-col :span="6">
           <div class="stat-card">
-            <div class="stat-value">¥{{ formatAmount(statistics.totalReceived || 0) }}</div>
-            <div class="stat-label">累计收款</div>
+            <div class="stat-value">
+              ¥{{ formatAmount(statistics.totalReceived || 0) }}
+            </div>
+            <div class="stat-label">
+              累计收款
+            </div>
           </div>
         </el-col>
       </el-row>
 
       <!-- 账户列表 -->
-      <el-table :data="accountList" v-loading="loading" stripe>
-        <el-table-column label="支付方式" width="140">
+      <el-table
+        v-loading="loading"
+        :data="accountList"
+        stripe
+      >
+        <el-table-column
+          label="支付方式"
+          width="140"
+        >
           <template #default="{ row }">
-            <el-tag :type="getPaymentMethodColor(row.paymentMethod)" size="small">
+            <el-tag
+              :type="getPaymentMethodColor(row.paymentMethod)"
+              size="small"
+            >
               {{ getPaymentMethodText(row.paymentMethod) }}
             </el-tag>
-            <el-tag v-if="row.isDefault" type="success" size="small" style="margin-left: 5px;">默认</el-tag>
+            <el-tag
+              v-if="row.isDefault"
+              type="success"
+              size="small"
+              style="margin-left: 5px;"
+            >
+              默认
+            </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="账户信息" min-width="250">
+        <el-table-column
+          label="账户信息"
+          min-width="250"
+        >
           <template #default="{ row }">
             <div class="account-info">
-              <div class="account-name">{{ getAccountDisplayName(row) }}</div>
-              <div class="account-detail">{{ getAccountDetail(row) }}</div>
+              <div class="account-name">
+                {{ getAccountDisplayName(row) }}
+              </div>
+              <div class="account-detail">
+                {{ getAccountDetail(row) }}
+              </div>
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="使用场景" width="180">
+        <el-table-column
+          label="使用场景"
+          width="180"
+        >
           <template #default="{ row }">
             <el-tag
               v-for="scenario in row.usageScenarios"
@@ -95,25 +192,44 @@
             <span v-if="!row.usageScenarios || row.usageScenarios.length === 0">-</span>
           </template>
         </el-table-column>
-        <el-table-column label="状态" width="100">
+        <el-table-column
+          label="状态"
+          width="100"
+        >
           <template #default="{ row }">
-            <el-tag :type="getStatusType(row.status?.type)" size="small">
+            <el-tag
+              :type="getStatusType(row.status?.type)"
+              size="small"
+            >
               {{ getStatusText(row.status?.type) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="收款统计" width="150" align="right">
+        <el-table-column
+          label="收款统计"
+          width="150"
+          align="right"
+        >
           <template #default="{ row }">
             <div>¥{{ formatAmount(row.totalReceived || 0) }}</div>
-            <div style="font-size: 12px; color: #909399;">{{ row.transactionCount || 0 }} 笔</div>
+            <div style="font-size: 12px; color: #909399;">
+              {{ row.transactionCount || 0 }} 笔
+            </div>
           </template>
         </el-table-column>
-        <el-table-column label="创建时间" width="160">
+        <el-table-column
+          label="创建时间"
+          width="160"
+        >
           <template #default="{ row }">
             {{ formatDate(row.createdAt) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="220" fixed="right">
+        <el-table-column
+          label="操作"
+          width="220"
+          fixed="right"
+        >
           <template #default="{ row }">
             <el-button
               v-if="!row.isDefault"
@@ -124,9 +240,30 @@
             >
               设为默认
             </el-button>
-            <el-button type="primary" size="small" link @click="handleEdit(row)">编辑</el-button>
-            <el-button type="warning" size="small" link @click="handleUpdateStatus(row)">状态</el-button>
-            <el-button type="danger" size="small" link @click="handleDelete(row)">删除</el-button>
+            <el-button
+              type="primary"
+              size="small"
+              link
+              @click="handleEdit(row)"
+            >
+              编辑
+            </el-button>
+            <el-button
+              type="warning"
+              size="small"
+              link
+              @click="handleUpdateStatus(row)"
+            >
+              状态
+            </el-button>
+            <el-button
+              type="danger"
+              size="small"
+              link
+              @click="handleDelete(row)"
+            >
+              删除
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -146,129 +283,291 @@
         label-width="120px"
       >
         <!-- 支付方式 -->
-        <el-form-item label="支付方式" prop="paymentMethod">
+        <el-form-item
+          label="支付方式"
+          prop="paymentMethod"
+        >
           <el-select
             v-model="formData.paymentMethod"
             placeholder="请选择支付方式"
             :disabled="isEdit"
+            style="width: 100%"
             @change="handlePaymentMethodChange"
           >
-            <el-option label="银行对公账户" value="bank" />
-            <el-option label="支付宝企业账户" value="alipay" />
-            <el-option label="微信商户号" value="wechat" />
-            <el-option label="聚合支付" value="aggregation" />
-            <el-option label="易宝支付" value="yopay" />
-            <el-option label="江苏银行电子钱包" value="jsbank_wallet" />
+            <el-option
+              label="银行对公账户"
+              value="bank"
+            />
+            <el-option
+              label="支付宝企业账户"
+              value="alipay"
+            />
+            <el-option
+              label="微信商户号"
+              value="wechat"
+            />
+            <el-option
+              label="聚合支付"
+              value="aggregation"
+            />
+            <el-option
+              label="易宝支付"
+              value="yopay"
+            />
+            <el-option
+              label="江苏银行电子钱包"
+              value="jsbank_wallet"
+            />
           </el-select>
         </el-form-item>
 
         <!-- 银行对公账户字段 -->
         <template v-if="formData.paymentMethod === 'bank'">
-          <el-form-item label="账户名称" prop="accountName">
-            <el-input v-model="formData.accountName" placeholder="请输入账户名称" />
+          <el-form-item
+            label="账户名称"
+            prop="accountName"
+          >
+            <el-input
+              v-model="formData.accountName"
+              placeholder="请输入账户名称"
+            />
           </el-form-item>
-          <el-form-item label="开户银行" prop="bankName">
-            <el-input v-model="formData.bankName" placeholder="请输入开户银行" />
+          <el-form-item
+            label="开户银行"
+            prop="bankName"
+          >
+            <el-input
+              v-model="formData.bankName"
+              placeholder="请输入开户银行"
+            />
           </el-form-item>
-          <el-form-item label="银行账号" prop="accountNumber">
-            <el-input v-model="formData.accountNumber" placeholder="请输入银行账号" />
+          <el-form-item
+            label="银行账号"
+            prop="accountNumber"
+          >
+            <el-input
+              v-model="formData.accountNumber"
+              placeholder="请输入银行账号"
+            />
           </el-form-item>
           <el-form-item label="开户行支行">
-            <el-input v-model="formData.branch" placeholder="请输入开户行支行（可选）" />
+            <el-input
+              v-model="formData.branch"
+              placeholder="请输入开户行支行（可选）"
+            />
           </el-form-item>
-          <el-form-item label="账户类型" prop="bankAccountType">
-            <el-select v-model="formData.bankAccountType" placeholder="请选择账户类型">
-              <el-option label="基本户" value="basic" />
-              <el-option label="一般户" value="general" />
-              <el-option label="临时户" value="temporary" />
+          <el-form-item
+            label="账户类型"
+            prop="bankAccountType"
+          >
+            <el-select
+              v-model="formData.bankAccountType"
+              placeholder="请选择账户类型"
+              style="width: 100%"
+            >
+              <el-option
+                label="基本户"
+                value="basic"
+              />
+              <el-option
+                label="一般户"
+                value="general"
+              />
+              <el-option
+                label="临时户"
+                value="temporary"
+              />
             </el-select>
           </el-form-item>
         </template>
 
         <!-- 支付宝企业账户字段 -->
         <template v-if="formData.paymentMethod === 'alipay'">
-          <el-form-item label="支付宝账号" prop="alipayAccount.accountId">
-            <el-input v-model="formData.alipayAccount.accountId" placeholder="请输入支付宝企业账号" />
+          <el-form-item
+            label="支付宝账号"
+            prop="alipayAccount.accountId"
+          >
+            <el-input
+              v-model="formData.alipayAccount.accountId"
+              placeholder="请输入支付宝企业账号"
+            />
           </el-form-item>
-          <el-form-item label="企业名称" prop="alipayAccount.companyName">
-            <el-input v-model="formData.alipayAccount.companyName" placeholder="请输入企业名称" />
+          <el-form-item
+            label="企业名称"
+            prop="alipayAccount.companyName"
+          >
+            <el-input
+              v-model="formData.alipayAccount.companyName"
+              placeholder="请输入企业名称"
+            />
           </el-form-item>
           <el-form-item label="Partner ID">
-            <el-input v-model="formData.alipayAccount.pid" placeholder="请输入支付宝Partner ID（可选）" />
+            <el-input
+              v-model="formData.alipayAccount.pid"
+              placeholder="请输入支付宝Partner ID（可选）"
+            />
           </el-form-item>
         </template>
 
         <!-- 微信商户号字段 -->
         <template v-if="formData.paymentMethod === 'wechat'">
-          <el-form-item label="微信商户号" prop="wechatAccount.merchantId">
-            <el-input v-model="formData.wechatAccount.merchantId" placeholder="请输入微信商户号" />
+          <el-form-item
+            label="微信商户号"
+            prop="wechatAccount.merchantId"
+          >
+            <el-input
+              v-model="formData.wechatAccount.merchantId"
+              placeholder="请输入微信商户号"
+            />
           </el-form-item>
-          <el-form-item label="商户名称" prop="wechatAccount.merchantName">
-            <el-input v-model="formData.wechatAccount.merchantName" placeholder="请输入商户名称" />
+          <el-form-item
+            label="商户名称"
+            prop="wechatAccount.merchantName"
+          >
+            <el-input
+              v-model="formData.wechatAccount.merchantName"
+              placeholder="请输入商户名称"
+            />
           </el-form-item>
           <el-form-item label="子商户号">
-            <el-input v-model="formData.wechatAccount.subMchId" placeholder="请输入子商户号（可选）" />
+            <el-input
+              v-model="formData.wechatAccount.subMchId"
+              placeholder="请输入子商户号（可选）"
+            />
           </el-form-item>
         </template>
 
         <!-- 聚合支付字段 -->
         <template v-if="formData.paymentMethod === 'aggregation'">
-          <el-form-item label="支付提供商" prop="aggregationAccount.provider">
-            <el-select v-model="formData.aggregationAccount.provider" placeholder="请选择支付提供商">
-              <el-option label="银联" value="unionpay" />
-              <el-option label="拉卡拉" value="lakala" />
-              <el-option label="汇付天下" value="chinapay" />
+          <el-form-item
+            label="支付提供商"
+            prop="aggregationAccount.provider"
+          >
+            <el-select
+              v-model="formData.aggregationAccount.provider"
+              placeholder="请选择支付提供商"
+              style="width: 100%"
+            >
+              <el-option
+                label="银联"
+                value="unionpay"
+              />
+              <el-option
+                label="拉卡拉"
+                value="lakala"
+              />
+              <el-option
+                label="汇付天下"
+                value="chinapay"
+              />
             </el-select>
           </el-form-item>
-          <el-form-item label="商户号" prop="aggregationAccount.merchantId">
-            <el-input v-model="formData.aggregationAccount.merchantId" placeholder="请输入商户号" />
+          <el-form-item
+            label="商户号"
+            prop="aggregationAccount.merchantId"
+          >
+            <el-input
+              v-model="formData.aggregationAccount.merchantId"
+              placeholder="请输入商户号"
+            />
           </el-form-item>
           <el-form-item label="终端号">
-            <el-input v-model="formData.aggregationAccount.terminalId" placeholder="请输入终端号（可选）" />
+            <el-input
+              v-model="formData.aggregationAccount.terminalId"
+              placeholder="请输入终端号（可选）"
+            />
           </el-form-item>
         </template>
 
         <!-- 易宝支付字段 -->
         <template v-if="formData.paymentMethod === 'yopay'">
-          <el-form-item label="易宝商户号" prop="yopayAccount.merchantId">
-            <el-input v-model="formData.yopayAccount.merchantId" placeholder="请输入易宝商户号" />
+          <el-form-item
+            label="易宝商户号"
+            prop="yopayAccount.merchantId"
+          >
+            <el-input
+              v-model="formData.yopayAccount.merchantId"
+              placeholder="请输入易宝商户号"
+            />
           </el-form-item>
-          <el-form-item label="客户编码" prop="yopayAccount.customerCode">
-            <el-input v-model="formData.yopayAccount.customerCode" placeholder="请输入客户编码" />
+          <el-form-item
+            label="客户编码"
+            prop="yopayAccount.customerCode"
+          >
+            <el-input
+              v-model="formData.yopayAccount.customerCode"
+              placeholder="请输入客户编码"
+            />
           </el-form-item>
           <el-form-item label="账户名称">
-            <el-input v-model="formData.yopayAccount.accountName" placeholder="请输入账户名称（可选）" />
+            <el-input
+              v-model="formData.yopayAccount.accountName"
+              placeholder="请输入账户名称（可选）"
+            />
           </el-form-item>
         </template>
 
         <!-- 江苏银行电子钱包字段 -->
         <template v-if="formData.paymentMethod === 'jsbank_wallet'">
-          <el-form-item label="钱包ID" prop="jsbankWallet.walletId">
-            <el-input v-model="formData.jsbankWallet.walletId" placeholder="请输入钱包ID" />
+          <el-form-item
+            label="钱包ID"
+            prop="jsbankWallet.walletId"
+          >
+            <el-input
+              v-model="formData.jsbankWallet.walletId"
+              placeholder="请输入钱包ID"
+            />
           </el-form-item>
-          <el-form-item label="钱包名称" prop="jsbankWallet.walletName">
-            <el-input v-model="formData.jsbankWallet.walletName" placeholder="请输入钱包名称" />
+          <el-form-item
+            label="钱包名称"
+            prop="jsbankWallet.walletName"
+          >
+            <el-input
+              v-model="formData.jsbankWallet.walletName"
+              placeholder="请输入钱包名称"
+            />
           </el-form-item>
-          <el-form-item label="商户代码" prop="jsbankWallet.merchantCode">
-            <el-input v-model="formData.jsbankWallet.merchantCode" placeholder="请输入商户代码" />
+          <el-form-item
+            label="商户代码"
+            prop="jsbankWallet.merchantCode"
+          >
+            <el-input
+              v-model="formData.jsbankWallet.merchantCode"
+              placeholder="请输入商户代码"
+            />
           </el-form-item>
         </template>
 
         <!-- 使用场景 -->
-        <el-form-item label="使用场景" prop="usageScenarios">
+        <el-form-item
+          label="使用场景"
+          prop="usageScenarios"
+        >
           <el-checkbox-group v-model="formData.usageScenarios">
-            <el-checkbox label="fleet_recharge">车队充值收款</el-checkbox>
-            <el-checkbox label="order_payment">订单支付收款</el-checkbox>
-            <el-checkbox label="store_settlement">门店结算收款</el-checkbox>
+            <el-checkbox label="fleet_recharge">
+              车队充值收款
+            </el-checkbox>
+            <el-checkbox label="order_payment">
+              订单支付收款
+            </el-checkbox>
+            <el-checkbox label="store_settlement">
+              门店结算收款
+            </el-checkbox>
           </el-checkbox-group>
         </el-form-item>
 
         <!-- 联系信息 -->
         <el-form-item label="财务联系人">
-          <el-input v-model="formData.contactPerson" placeholder="请输入财务联系人（可选）" />
+          <el-input
+            v-model="formData.contactPerson"
+            placeholder="请输入财务联系人（可选）"
+          />
         </el-form-item>
         <el-form-item label="联系电话">
-          <el-input v-model="formData.contactPhone" placeholder="请输入联系电话（可选）" />
+          <el-input
+            v-model="formData.contactPhone"
+            placeholder="请输入联系电话（可选）"
+          />
         </el-form-item>
 
         <!-- 备注 -->
@@ -291,19 +590,47 @@
       </el-form>
 
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmit" :loading="submitting">确定</el-button>
+        <el-button @click="dialogVisible = false">
+          取消
+        </el-button>
+        <el-button
+          type="primary"
+          :loading="submitting"
+          @click="handleSubmit"
+        >
+          确定
+        </el-button>
       </template>
     </el-dialog>
 
     <!-- 状态更新对话框 -->
-    <el-dialog v-model="statusDialogVisible" title="更新账户状态" width="500px">
-      <el-form :model="statusForm" label-width="100px">
+    <el-dialog
+      v-model="statusDialogVisible"
+      title="更新账户状态"
+      width="500px"
+    >
+      <el-form
+        :model="statusForm"
+        label-width="100px"
+      >
         <el-form-item label="账户状态">
-          <el-select v-model="statusForm.status" placeholder="请选择状态">
-            <el-option label="启用" value="active" />
-            <el-option label="冻结" value="frozen" />
-            <el-option label="停用" value="closed" />
+          <el-select
+            v-model="statusForm.status"
+            placeholder="请选择状态"
+            style="width: 100%"
+          >
+            <el-option
+              label="启用"
+              value="active"
+            />
+            <el-option
+              label="冻结"
+              value="frozen"
+            />
+            <el-option
+              label="停用"
+              value="closed"
+            />
           </el-select>
         </el-form-item>
         <el-form-item label="状态原因">
@@ -316,8 +643,15 @@
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="statusDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="confirmUpdateStatus">确定</el-button>
+        <el-button @click="statusDialogVisible = false">
+          取消
+        </el-button>
+        <el-button
+          type="primary"
+          @click="confirmUpdateStatus"
+        >
+          确定
+        </el-button>
       </template>
     </el-dialog>
   </div>
@@ -635,39 +969,39 @@ function getPaymentMethodColor(method) {
 
 function getAccountDisplayName(account) {
   switch (account.paymentMethod) {
-    case 'bank':
-      return account.accountName || '-'
-    case 'alipay':
-      return account.alipayAccount?.companyName || '-'
-    case 'wechat':
-      return account.wechatAccount?.merchantName || '-'
-    case 'aggregation':
-      return account.aggregationAccount?.provider || '-'
-    case 'yopay':
-      return account.yopayAccount?.accountName || '-'
-    case 'jsbank_wallet':
-      return account.jsbankWallet?.walletName || '-'
-    default:
-      return '-'
+  case 'bank':
+    return account.accountName || '-'
+  case 'alipay':
+    return account.alipayAccount?.companyName || '-'
+  case 'wechat':
+    return account.wechatAccount?.merchantName || '-'
+  case 'aggregation':
+    return account.aggregationAccount?.provider || '-'
+  case 'yopay':
+    return account.yopayAccount?.accountName || '-'
+  case 'jsbank_wallet':
+    return account.jsbankWallet?.walletName || '-'
+  default:
+    return '-'
   }
 }
 
 function getAccountDetail(account) {
   switch (account.paymentMethod) {
-    case 'bank':
-      return `${account.bankName} ${account.accountNumber}`
-    case 'alipay':
-      return account.alipayAccount?.accountId || '-'
-    case 'wechat':
-      return account.wechatAccount?.merchantId || '-'
-    case 'aggregation':
-      return `商户号: ${account.aggregationAccount?.merchantId || '-'}`
-    case 'yopay':
-      return `商户号: ${account.yopayAccount?.merchantId || '-'}`
-    case 'jsbank_wallet':
-      return `钱包ID: ${account.jsbankWallet?.walletId || '-'}`
-    default:
-      return '-'
+  case 'bank':
+    return `${account.bankName} ${account.accountNumber}`
+  case 'alipay':
+    return account.alipayAccount?.accountId || '-'
+  case 'wechat':
+    return account.wechatAccount?.merchantId || '-'
+  case 'aggregation':
+    return `商户号: ${account.aggregationAccount?.merchantId || '-'}`
+  case 'yopay':
+    return `商户号: ${account.yopayAccount?.merchantId || '-'}`
+  case 'jsbank_wallet':
+    return `钱包ID: ${account.jsbankWallet?.walletId || '-'}`
+  default:
+    return '-'
   }
 }
 

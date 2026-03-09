@@ -4,14 +4,26 @@
     <el-card class="filter-card">
       <el-form :inline="true">
         <el-form-item label="统计周期">
-          <el-radio-group v-model="timeRange" @change="fetchData">
-            <el-radio-button label="7">近7天</el-radio-button>
-            <el-radio-button label="30">近30天</el-radio-button>
-            <el-radio-button label="90">近90天</el-radio-button>
+          <el-radio-group
+            v-model="timeRange"
+            @change="fetchData"
+          >
+            <el-radio-button label="7">
+              近7天
+            </el-radio-button>
+            <el-radio-button label="30">
+              近30天
+            </el-radio-button>
+            <el-radio-button label="90">
+              近90天
+            </el-radio-button>
           </el-radio-group>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="fetchData">
+          <el-button
+            type="primary"
+            @click="fetchData"
+          >
             <el-icon><Refresh /></el-icon>
             刷新
           </el-button>
@@ -20,39 +32,66 @@
     </el-card>
 
     <!-- 核心指标卡片 -->
-    <el-row :gutter="20" style="margin-top: 20px">
+    <el-row
+      :gutter="20"
+      style="margin-top: 20px"
+    >
       <el-col :span="6">
         <el-card class="metric-card">
-          <el-statistic title="总订单数" :value="overview.orders?.total || 0">
-            <template #suffix>单</template>
+          <el-statistic
+            title="总订单数"
+            :value="overview.orders?.total || 0"
+          >
+            <template #suffix>
+              单
+            </template>
           </el-statistic>
         </el-card>
       </el-col>
       <el-col :span="6">
         <el-card class="metric-card metric-card-success">
-          <el-statistic title="总交易额" :value="overview.finance?.totalAmount || 0" :precision="2">
-            <template #prefix>¥</template>
+          <el-statistic
+            title="总交易额"
+            :value="overview.finance?.totalAmount || 0"
+            :precision="2"
+          >
+            <template #prefix>
+              ¥
+            </template>
           </el-statistic>
         </el-card>
       </el-col>
       <el-col :span="6">
         <el-card class="metric-card metric-card-warning">
-          <el-statistic title="合作车队" :value="overview.fleets?.total || 0">
-            <template #suffix>个</template>
+          <el-statistic
+            title="合作车队"
+            :value="overview.fleets?.total || 0"
+          >
+            <template #suffix>
+              个
+            </template>
           </el-statistic>
         </el-card>
       </el-col>
       <el-col :span="6">
         <el-card class="metric-card metric-card-info">
-          <el-statistic title="合作门店" :value="overview.stores?.total || 0">
-            <template #suffix>个</template>
+          <el-statistic
+            title="合作门店"
+            :value="overview.stores?.total || 0"
+          >
+            <template #suffix>
+              个
+            </template>
           </el-statistic>
         </el-card>
       </el-col>
     </el-row>
 
     <!-- 图表区域 -->
-    <el-row :gutter="20" style="margin-top: 20px">
+    <el-row
+      :gutter="20"
+      style="margin-top: 20px"
+    >
       <!-- 订单趋势图 -->
       <el-col :span="16">
         <el-card>
@@ -61,7 +100,10 @@
               <span>订单趋势</span>
             </div>
           </template>
-          <div ref="orderTrendChartRef" style="height: 350px"></div>
+          <div
+            ref="orderTrendChartRef"
+            style="height: 350px"
+          />
         </el-card>
       </el-col>
 
@@ -73,12 +115,18 @@
               <span>故障类型分布</span>
             </div>
           </template>
-          <div ref="faultChartRef" style="height: 350px"></div>
+          <div
+            ref="faultChartRef"
+            style="height: 350px"
+          />
         </el-card>
       </el-col>
     </el-row>
 
-    <el-row :gutter="20" style="margin-top: 20px">
+    <el-row
+      :gutter="20"
+      style="margin-top: 20px"
+    >
       <!-- 车队排名 -->
       <el-col :span="12">
         <el-card>
@@ -87,7 +135,10 @@
               <span>车队订单排名 TOP10</span>
             </div>
           </template>
-          <div ref="fleetRankingChartRef" style="height: 350px"></div>
+          <div
+            ref="fleetRankingChartRef"
+            style="height: 350px"
+          />
         </el-card>
       </el-col>
 
@@ -99,7 +150,10 @@
               <span>门店订单排名 TOP10</span>
             </div>
           </template>
-          <div ref="storeRankingChartRef" style="height: 350px"></div>
+          <div
+            ref="storeRankingChartRef"
+            style="height: 350px"
+          />
         </el-card>
       </el-col>
     </el-row>
@@ -115,43 +169,32 @@
       <el-row :gutter="20">
         <el-col :span="8">
           <div class="data-item">
-            <div class="data-label">今日订单</div>
-            <div class="data-value">{{ overview.orders?.today || 0 }}</div>
+            <div class="data-label">
+              今日订单
+            </div>
+            <div class="data-value">
+              {{ overview.orders?.today || 0 }}
+            </div>
           </div>
         </el-col>
         <el-col :span="8">
           <div class="data-item">
-            <div class="data-label">本月订单</div>
-            <div class="data-value">{{ overview.orders?.thisMonth || 0 }}</div>
+            <div class="data-label">
+              本月订单
+            </div>
+            <div class="data-value">
+              {{ overview.orders?.thisMonth || 0 }}
+            </div>
           </div>
         </el-col>
         <el-col :span="8">
           <div class="data-item">
-            <div class="data-label">待处理订单</div>
-            <div class="data-value">{{ overview.orders?.pending || 0 }}</div>
-          </div>
-        </el-col>
-      </el-row>
-
-      <el-divider />
-
-      <el-row :gutter="20">
-        <el-col :span="8">
-          <div class="data-item">
-            <div class="data-label">维修中</div>
-            <div class="data-value">{{ overview.orders?.repairing || 0 }}</div>
-          </div>
-        </el-col>
-        <el-col :span="8">
-          <div class="data-item">
-            <div class="data-label">已完成</div>
-            <div class="data-value">{{ overview.orders?.completed || 0 }}</div>
-          </div>
-        </el-col>
-        <el-col :span="8">
-          <div class="data-item">
-            <div class="data-label">车队总余额</div>
-            <div class="data-value">¥{{ overview.finance?.totalBalance?.toLocaleString() || 0 }}</div>
+            <div class="data-label">
+              待处理订单
+            </div>
+            <div class="data-value">
+              {{ overview.orders?.pending || 0 }}
+            </div>
           </div>
         </el-col>
       </el-row>
@@ -161,20 +204,67 @@
       <el-row :gutter="20">
         <el-col :span="8">
           <div class="data-item">
-            <div class="data-label">司机总数</div>
-            <div class="data-value">{{ overview.users?.drivers || 0 }}</div>
+            <div class="data-label">
+              维修中
+            </div>
+            <div class="data-value">
+              {{ overview.orders?.repairing || 0 }}
+            </div>
           </div>
         </el-col>
         <el-col :span="8">
           <div class="data-item">
-            <div class="data-label">车队管理员</div>
-            <div class="data-value">{{ overview.users?.fleetManagers || 0 }}</div>
+            <div class="data-label">
+              已完成
+            </div>
+            <div class="data-value">
+              {{ overview.orders?.completed || 0 }}
+            </div>
           </div>
         </el-col>
         <el-col :span="8">
           <div class="data-item">
-            <div class="data-label">门店技师</div>
-            <div class="data-value">{{ overview.users?.technicians || 0 }}</div>
+            <div class="data-label">
+              车队总余额
+            </div>
+            <div class="data-value">
+              ¥{{ overview.finance?.totalBalance?.toLocaleString() || 0 }}
+            </div>
+          </div>
+        </el-col>
+      </el-row>
+
+      <el-divider />
+
+      <el-row :gutter="20">
+        <el-col :span="8">
+          <div class="data-item">
+            <div class="data-label">
+              司机总数
+            </div>
+            <div class="data-value">
+              {{ overview.users?.drivers || 0 }}
+            </div>
+          </div>
+        </el-col>
+        <el-col :span="8">
+          <div class="data-item">
+            <div class="data-label">
+              车队管理员
+            </div>
+            <div class="data-value">
+              {{ overview.users?.fleetManagers || 0 }}
+            </div>
+          </div>
+        </el-col>
+        <el-col :span="8">
+          <div class="data-item">
+            <div class="data-label">
+              门店技师
+            </div>
+            <div class="data-value">
+              {{ overview.users?.technicians || 0 }}
+            </div>
           </div>
         </el-col>
       </el-row>

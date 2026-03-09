@@ -6,7 +6,11 @@
         <span class="card-header-title">车队配置</span>
       </template>
 
-      <el-form :model="fleetConfig" label-width="180px" style="max-width: 600px">
+      <el-form
+        :model="fleetConfig"
+        label-width="180px"
+        style="max-width: 600px"
+      >
         <el-form-item label="门店选择权限">
           <el-switch
             v-model="fleetConfig.allowDriverSelectStore"
@@ -21,15 +25,21 @@
           </div>
         </el-form-item>
 
-        <el-divider content-position="left">保养配置</el-divider>
+        <el-divider content-position="left">
+          保养配置
+        </el-divider>
 
         <el-form-item label="保养商品权限">
           <el-radio-group
             v-model="fleetConfig.maintenanceProductPermission"
             @change="handleConfigChange"
           >
-            <el-radio label="fleet_control">车队管理选择</el-radio>
-            <el-radio label="driver_select">司机可选择商品</el-radio>
+            <el-radio label="fleet_control">
+              车队管理选择
+            </el-radio>
+            <el-radio label="driver_select">
+              司机可选择商品
+            </el-radio>
           </el-radio-group>
           <div class="form-item-tip">
             {{ fleetConfig.maintenanceProductPermission === 'driver_select'
@@ -55,11 +65,20 @@
         </el-form-item>
 
         <el-form-item label="当前配置状态">
-          <el-space direction="vertical" :size="8">
-            <el-tag :type="fleetConfig.allowDriverSelectStore ? 'success' : 'info'" size="large">
+          <el-space
+            direction="vertical"
+            :size="8"
+          >
+            <el-tag
+              :type="fleetConfig.allowDriverSelectStore ? 'success' : 'info'"
+              size="large"
+            >
               门店选择: {{ fleetConfig.allowDriverSelectStore ? '司机选择' : '车队管理选择' }}
             </el-tag>
-            <el-tag :type="fleetConfig.maintenanceProductPermission === 'driver_select' ? 'success' : 'warning'" size="large">
+            <el-tag
+              :type="fleetConfig.maintenanceProductPermission === 'driver_select' ? 'success' : 'warning'"
+              size="large"
+            >
               保养商品: {{ fleetConfig.maintenanceProductPermission === 'driver_select' ? '司机可选商品' : '车队管理选择' }}
             </el-tag>
           </el-space>
@@ -73,7 +92,10 @@
         <span class="card-header-title">快捷入口</span>
       </template>
       <el-space :size="16">
-        <el-button type="primary" @click="openMaintenanceApproval">
+        <el-button
+          type="primary"
+          @click="openMaintenanceApproval"
+        >
           <el-icon><Document /></el-icon>
           保养申请审批
         </el-button>
@@ -90,7 +112,11 @@
         <div class="card-header">
           <span>待审批订单</span>
           <div class="header-actions">
-            <el-button type="primary" size="small" @click="fetchPendingOrders">
+            <el-button
+              type="primary"
+              size="small"
+              @click="fetchPendingOrders"
+            >
               <el-icon><Refresh /></el-icon>
               刷新
             </el-button>
@@ -99,15 +125,27 @@
       </template>
 
       <!-- 统计信息 -->
-      <el-row :gutter="20" style="margin-bottom: 20px">
+      <el-row
+        :gutter="20"
+        style="margin-bottom: 20px"
+      >
         <el-col :span="8">
-          <el-statistic title="待审批" :value="stats.pending" />
+          <el-statistic
+            title="待审批"
+            :value="stats.pending"
+          />
         </el-col>
         <el-col :span="8">
-          <el-statistic title="今日已审批" :value="stats.approvedToday" />
+          <el-statistic
+            title="今日已审批"
+            :value="stats.approvedToday"
+          />
         </el-col>
         <el-col :span="8">
-          <el-statistic title="今日已拒绝" :value="stats.rejectedToday" />
+          <el-statistic
+            title="今日已拒绝"
+            :value="stats.rejectedToday"
+          />
         </el-col>
       </el-row>
 
@@ -118,39 +156,77 @@
         stripe
         style="width: 100%"
       >
-        <el-table-column prop="orderNumber" label="订单号" width="180" />
-        <el-table-column label="车辆" width="150">
+        <el-table-column
+          prop="orderNumber"
+          label="订单号"
+          width="180"
+        />
+        <el-table-column
+          label="车辆"
+          width="150"
+        >
           <template #default="{ row }">
             {{ row.vehicleId?.plateNumber || '-' }}
           </template>
         </el-table-column>
-        <el-table-column label="报修司机" width="120">
+        <el-table-column
+          label="报修司机"
+          width="120"
+        >
           <template #default="{ row }">
             {{ row.reporterId?.nickname || '-' }}
           </template>
         </el-table-column>
-        <el-table-column label="司机电话" width="140">
+        <el-table-column
+          label="司机电话"
+          width="140"
+        >
           <template #default="{ row }">
             {{ row.reporterId?.phone || '-' }}
           </template>
         </el-table-column>
-        <el-table-column prop="faultDescription" label="故障描述" min-width="200" show-overflow-tooltip />
-        <el-table-column label="服务地址" width="200" show-overflow-tooltip>
+        <el-table-column
+          prop="faultDescription"
+          label="故障描述"
+          min-width="200"
+          show-overflow-tooltip
+        />
+        <el-table-column
+          label="服务地址"
+          width="200"
+          show-overflow-tooltip
+        >
           <template #default="{ row }">
             {{ row.serviceLocation?.address || '-' }}
           </template>
         </el-table-column>
-        <el-table-column label="提交时间" width="110">
+        <el-table-column
+          label="提交时间"
+          width="110"
+        >
           <template #default="{ row }">
             {{ formatDateTime(row.createdAt) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column
+          label="操作"
+          width="200"
+          fixed="right"
+        >
           <template #default="{ row }">
-            <el-button type="primary" size="small" @click="handleApprove(row)">
+            <el-button
+              type="primary"
+              size="small"
+              @click="handleApprove(row)"
+            >
               审批
             </el-button>
-            <el-button type="danger" size="small" link @click="handleReject(row)">
+            <el-button
+              type="danger"
+              size="small"
+              link
+              @click="handleReject(row)"
+            >
               拒绝
             </el-button>
           </template>
@@ -171,27 +247,58 @@
       title="审批订单"
       width="600px"
     >
-      <div v-if="currentOrder" class="approve-content">
+      <div
+        v-if="currentOrder"
+        class="approve-content"
+      >
         <!-- 订单详情 -->
-        <el-descriptions :column="2" border style="margin-bottom: 20px">
-          <el-descriptions-item label="订单号">{{ currentOrder.orderNumber }}</el-descriptions-item>
-          <el-descriptions-item label="车辆">{{ currentOrder.vehicleId?.plateNumber }}</el-descriptions-item>
-          <el-descriptions-item label="报修司机">{{ currentOrder.reporterId?.nickname }}</el-descriptions-item>
-          <el-descriptions-item label="司机电话">{{ currentOrder.reporterId?.phone }}</el-descriptions-item>
-          <el-descriptions-item label="服务地址" :span="2">
+        <el-descriptions
+          :column="2"
+          border
+          style="margin-bottom: 20px"
+        >
+          <el-descriptions-item label="订单号">
+            {{ currentOrder.orderNumber }}
+          </el-descriptions-item>
+          <el-descriptions-item label="车辆">
+            {{ currentOrder.vehicleId?.plateNumber }}
+          </el-descriptions-item>
+          <el-descriptions-item label="报修司机">
+            {{ currentOrder.reporterId?.nickname }}
+          </el-descriptions-item>
+          <el-descriptions-item label="司机电话">
+            {{ currentOrder.reporterId?.phone }}
+          </el-descriptions-item>
+          <el-descriptions-item
+            label="服务地址"
+            :span="2"
+          >
             {{ currentOrder.serviceLocation?.address || '-' }}
           </el-descriptions-item>
-          <el-descriptions-item label="故障描述" :span="2">
+          <el-descriptions-item
+            label="故障描述"
+            :span="2"
+          >
             {{ currentOrder.faultDescription }}
           </el-descriptions-item>
-          <el-descriptions-item label="提交时间" :span="2">
+          <el-descriptions-item
+            label="提交时间"
+            :span="2"
+          >
             {{ formatDateTime(currentOrder.createdAt) }}
           </el-descriptions-item>
         </el-descriptions>
 
         <!-- 选择门店（如果车队配置为车队管理选择门店） -->
-        <el-form v-if="!fleetConfig.allowDriverSelectStore" :model="approveForm" label-width="100px">
-          <el-form-item label="选择门店" required>
+        <el-form
+          v-if="!fleetConfig.allowDriverSelectStore"
+          :model="approveForm"
+          label-width="100px"
+        >
+          <el-form-item
+            label="选择门店"
+            required
+          >
             <el-select
               v-model="approveForm.storeId"
               placeholder="请选择维修门店"
@@ -211,7 +318,10 @@
           </el-form-item>
 
           <!-- 显示附近门店推荐 -->
-          <el-form-item v-if="nearbyStores.length > 0" label="附近门店">
+          <el-form-item
+            v-if="nearbyStores.length > 0"
+            label="附近门店"
+          >
             <div class="nearby-stores">
               <div
                 v-for="store in nearbyStores.slice(0, 5)"
@@ -220,10 +330,19 @@
                 :class="{ selected: approveForm.storeId === store._id }"
                 @click="approveForm.storeId = store._id"
               >
-                <div class="store-name">{{ store.name }}</div>
-                <div class="store-address">{{ formatAddress(store.address) }}</div>
+                <div class="store-name">
+                  {{ store.name }}
+                </div>
+                <div class="store-address">
+                  {{ formatAddress(store.address) }}
+                </div>
                 <div class="store-distance">
-                  <el-tag size="small" type="success">{{ store.distance }}公里</el-tag>
+                  <el-tag
+                    size="small"
+                    type="success"
+                  >
+                    {{ store.distance }}公里
+                  </el-tag>
                 </div>
               </div>
             </div>
@@ -243,8 +362,15 @@
       </div>
 
       <template #footer>
-        <el-button @click="approveDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="confirmApprove" :loading="approving" :disabled="!fleetConfig.allowDriverSelectStore && !approveForm.storeId">
+        <el-button @click="approveDialogVisible = false">
+          取消
+        </el-button>
+        <el-button
+          type="primary"
+          :loading="approving"
+          :disabled="!fleetConfig.allowDriverSelectStore && !approveForm.storeId"
+          @click="confirmApprove"
+        >
           审批通过
         </el-button>
       </template>
@@ -256,8 +382,14 @@
       title="拒绝订单"
       width="500px"
     >
-      <el-form :model="rejectForm" label-width="80px">
-        <el-form-item label="拒绝原因" required>
+      <el-form
+        :model="rejectForm"
+        label-width="80px"
+      >
+        <el-form-item
+          label="拒绝原因"
+          required
+        >
           <el-input
             v-model="rejectForm.reason"
             type="textarea"
@@ -269,8 +401,15 @@
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="rejectDialogVisible = false">取消</el-button>
-        <el-button type="danger" @click="confirmReject" :loading="rejecting" :disabled="!rejectForm.reason.trim()">
+        <el-button @click="rejectDialogVisible = false">
+          取消
+        </el-button>
+        <el-button
+          type="danger"
+          :loading="rejecting"
+          :disabled="!rejectForm.reason.trim()"
+          @click="confirmReject"
+        >
           确认拒绝
         </el-button>
       </template>

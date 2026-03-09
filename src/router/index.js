@@ -159,6 +159,12 @@ const routes = [
         component: () => import('@/views/store/Withdrawal.vue'),
         meta: { title: '提现管理', icon: 'Wallet', roles: ['STORE_MANAGER'] }
       },
+      {
+        path: 'store-packages',
+        name: 'StorePackages',
+        component: () => import('@/views/store/StorePackages.vue'),
+        meta: { title: '套餐管理', icon: 'Box', roles: ['STORE_MANAGER'] }
+      },
       // 车队管理菜单
       {
         path: 'fleet-vehicles',
@@ -183,6 +189,18 @@ const routes = [
         name: 'PlatformMaintenancePackages',
         component: () => import('@/views/platform/MaintenancePackages.vue'),
         meta: { title: '保养套餐管理', icon: 'Box', roles: ['PLATFORM_OPERATOR'] }
+      },
+      {
+        path: 'package-standards',
+        name: 'PackageStandards',
+        component: () => import('@/views/platform/PackageStandards.vue'),
+        meta: { title: '套餐类型规范配置', icon: 'DataBoard', roles: ['PLATFORM_OPERATOR'] }
+      },
+      {
+        path: 'store-package-audit',
+        name: 'StorePackageAudit',
+        component: () => import('@/views/platform/StorePackageAudit.vue'),
+        meta: { title: '门店套餐审核', icon: 'Select', roles: ['PLATFORM_OPERATOR'] }
       },
       {
         path: 'fleet-order-center',

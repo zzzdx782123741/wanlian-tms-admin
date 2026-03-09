@@ -4,22 +4,34 @@
     <el-row :gutter="20">
       <el-col :span="6">
         <el-card class="stat-card">
-          <el-statistic title="总门店数" :value="stats.totalStores" />
+          <el-statistic
+            title="总门店数"
+            :value="stats.totalStores"
+          />
         </el-card>
       </el-col>
       <el-col :span="6">
         <el-card class="stat-card stat-card-warning">
-          <el-statistic title="待审核" :value="stats.pendingStores" />
+          <el-statistic
+            title="待审核"
+            :value="stats.pendingStores"
+          />
         </el-card>
       </el-col>
       <el-col :span="6">
         <el-card class="stat-card stat-card-success">
-          <el-statistic title="正常营业" :value="stats.normalStores" />
+          <el-statistic
+            title="正常营业"
+            :value="stats.normalStores"
+          />
         </el-card>
       </el-col>
       <el-col :span="6">
         <el-card class="stat-card stat-card-info">
-          <el-statistic title="本月新增" :value="stats.newStores" />
+          <el-statistic
+            title="本月新增"
+            :value="stats.newStores"
+          />
         </el-card>
       </el-col>
     </el-row>
@@ -30,11 +42,19 @@
         <div class="card-header">
           <span>门店列表</span>
           <div class="header-actions">
-            <el-button type="success" size="small" @click="handleRegister">
+            <el-button
+              type="success"
+              size="small"
+              @click="handleRegister"
+            >
               <el-icon><Plus /></el-icon>
               注册门店
             </el-button>
-            <el-button type="primary" size="small" @click="handleRefresh">
+            <el-button
+              type="primary"
+              size="small"
+              @click="handleRefresh"
+            >
               <el-icon><Refresh /></el-icon>
               刷新
             </el-button>
@@ -43,12 +63,29 @@
       </template>
 
       <!-- 搜索筛选 -->
-      <el-form :inline="true" class="search-form">
+      <el-form
+        :inline="true"
+        class="search-form"
+      >
         <el-form-item label="状态">
-          <el-select v-model="queryParams.status" placeholder="全部" clearable style="width: 150px">
-            <el-option label="待审核" value="pending_audit" />
-            <el-option label="正常" value="normal" />
-            <el-option label="已停用" value="suspended" />
+          <el-select
+            v-model="queryParams.status"
+            placeholder="全部"
+            clearable
+            style="width: 160px"
+          >
+            <el-option
+              label="待审核"
+              value="pending_audit"
+            />
+            <el-option
+              label="正常"
+              value="normal"
+            />
+            <el-option
+              label="已停用"
+              value="suspended"
+            />
           </el-select>
         </el-form-item>
         <el-form-item label="关键词">
@@ -61,11 +98,16 @@
         </el-form-item>
         <el-form-item>
           <div class="form-actions">
-            <el-button type="primary" @click="handleQuery">
+            <el-button
+              type="primary"
+              @click="handleQuery"
+            >
               <el-icon><Search /></el-icon>
               查询
             </el-button>
-            <el-button @click="handleReset">重置</el-button>
+            <el-button @click="handleReset">
+              重置
+            </el-button>
           </div>
         </el-form-item>
       </el-form>
@@ -77,45 +119,77 @@
         stripe
         style="width: 100%"
       >
-        <el-table-column prop="name" label="门店名称" min-width="200" />
-        <el-table-column label="联系人" width="120">
+        <el-table-column
+          prop="name"
+          label="门店名称"
+          min-width="200"
+        />
+        <el-table-column
+          label="联系人"
+          width="120"
+        >
           <template #default="{ row }">
             {{ row.contact?.name || '-' }}
           </template>
         </el-table-column>
-        <el-table-column label="联系电话" width="140">
+        <el-table-column
+          label="联系电话"
+          width="140"
+        >
           <template #default="{ row }">
             {{ row.contact?.phone || '-' }}
           </template>
         </el-table-column>
-        <el-table-column label="服务范围" width="100" align="center">
+        <el-table-column
+          label="服务范围"
+          width="100"
+          align="center"
+        >
           <template #default="{ row }">
             {{ row.serviceRange }} km
           </template>
         </el-table-column>
-        <el-table-column label="技师数" width="80" align="center">
+        <el-table-column
+          label="技师数"
+          width="80"
+          align="center"
+        >
           <template #default="{ row }">
             {{ row.technicianCount || 0 }}
           </template>
         </el-table-column>
-        <el-table-column label="营业时间" width="140">
+        <el-table-column
+          label="营业时间"
+          width="140"
+        >
           <template #default="{ row }">
             {{ row.businessHours || '-' }}
           </template>
         </el-table-column>
-        <el-table-column label="状态" width="100" align="center">
+        <el-table-column
+          label="状态"
+          width="100"
+          align="center"
+        >
           <template #default="{ row }">
             <el-tag :type="getStatusType(row.status)">
               {{ getStatusText(row.status) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="创建时间" width="110">
+        <el-table-column
+          label="创建时间"
+          width="110"
+        >
           <template #default="{ row }">
             {{ formatDate(row.createdAt) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="240" fixed="right">
+        <el-table-column
+          label="操作"
+          width="240"
+          fixed="right"
+        >
           <template #default="{ row }">
             <el-button
               type="primary"
@@ -134,8 +208,15 @@
             >
               审核
             </el-button>
-            <el-dropdown v-if="row.status !== 'pending_audit'" style="margin-left: 10px">
-              <el-button type="primary" size="small" link>
+            <el-dropdown
+              v-if="row.status !== 'pending_audit'"
+              style="margin-left: 10px"
+            >
+              <el-button
+                type="primary"
+                size="small"
+                link
+              >
                 更多<el-icon><ArrowDown /></el-icon>
               </el-button>
               <template #dropdown>
@@ -154,7 +235,10 @@
                     <el-icon><Unlock /></el-icon>
                     启用
                   </el-dropdown-item>
-                  <el-dropdown-item divided @click="handleDelete(row)">
+                  <el-dropdown-item
+                    divided
+                    @click="handleDelete(row)"
+                  >
                     <el-icon><Delete /></el-icon>
                     删除
                   </el-dropdown-item>
@@ -184,8 +268,15 @@
       title="门店详情"
       width="700px"
     >
-      <el-descriptions v-if="currentStore._id" :column="2" border>
-        <el-descriptions-item label="门店名称" :span="2">
+      <el-descriptions
+        v-if="currentStore._id"
+        :column="2"
+        border
+      >
+        <el-descriptions-item
+          label="门店名称"
+          :span="2"
+        >
           {{ currentStore.name }}
         </el-descriptions-item>
         <el-descriptions-item label="状态">
@@ -202,7 +293,10 @@
         <el-descriptions-item label="联系电话">
           {{ currentStore.contact?.phone || '-' }}
         </el-descriptions-item>
-        <el-descriptions-item label="邮箱" :span="2">
+        <el-descriptions-item
+          label="邮箱"
+          :span="2"
+        >
           {{ currentStore.contact?.email || '-' }}
         </el-descriptions-item>
         <el-descriptions-item label="服务范围">
@@ -211,25 +305,52 @@
         <el-descriptions-item label="银行账户">
           {{ currentStore.bankAccount?.bankName }} - {{ currentStore.bankAccount?.accountNumber }}
         </el-descriptions-item>
-        <el-descriptions-item label="地址" :span="2">
+        <el-descriptions-item
+          label="地址"
+          :span="2"
+        >
           {{ currentStore.address?.province }}{{ currentStore.address?.city }}{{ currentStore.address?.district }}{{ currentStore.address?.detail }}
         </el-descriptions-item>
-        <el-descriptions-item label="创建时间" :span="2">
+        <el-descriptions-item
+          label="创建时间"
+          :span="2"
+        >
           {{ formatDateTime(currentStore.createdAt) }}
         </el-descriptions-item>
       </el-descriptions>
 
       <!-- 技师列表 -->
       <template v-if="currentStore.technicians && currentStore.technicians.length">
-        <el-divider content-position="left">门店技师</el-divider>
-        <el-table :data="currentStore.technicians" size="small" max-height="200">
-          <el-table-column prop="nickname" label="昵称" />
-          <el-table-column prop="name" label="姓名" />
-          <el-table-column prop="phone" label="电话" />
-          <el-table-column prop="technicianCert" label="资质证书" />
+        <el-divider content-position="left">
+          门店技师
+        </el-divider>
+        <el-table
+          :data="currentStore.technicians"
+          size="small"
+          max-height="200"
+        >
+          <el-table-column
+            prop="nickname"
+            label="昵称"
+          />
+          <el-table-column
+            prop="name"
+            label="姓名"
+          />
+          <el-table-column
+            prop="phone"
+            label="电话"
+          />
+          <el-table-column
+            prop="technicianCert"
+            label="资质证书"
+          />
           <el-table-column label="状态">
             <template #default="{ row }">
-              <el-tag :type="row.role?.status === 'normal' ? 'success' : 'danger'" size="small">
+              <el-tag
+                :type="row.role?.status === 'normal' ? 'success' : 'danger'"
+                size="small"
+              >
                 {{ row.role?.status === 'normal' ? '正常' : '停用' }}
               </el-tag>
             </template>
@@ -244,20 +365,36 @@
       title="门店审核"
       width="500px"
     >
-      <el-form :model="approveForm" label-width="80px">
+      <el-form
+        :model="approveForm"
+        label-width="80px"
+      >
         <el-form-item label="门店名称">
-          <el-input :value="currentStore.name" disabled />
+          <el-input
+            :value="currentStore.name"
+            disabled
+          />
         </el-form-item>
         <el-form-item label="联系人">
-          <el-input :value="currentStore.contact?.name" disabled />
+          <el-input
+            :value="currentStore.contact?.name"
+            disabled
+          />
         </el-form-item>
         <el-form-item label="联系电话">
-          <el-input :value="currentStore.contact?.phone" disabled />
+          <el-input
+            :value="currentStore.contact?.phone"
+            disabled
+          />
         </el-form-item>
         <el-form-item label="审核结果">
           <el-radio-group v-model="approveForm.approved">
-            <el-radio :label="true">通过</el-radio>
-            <el-radio :label="false">拒绝</el-radio>
+            <el-radio :label="true">
+              通过
+            </el-radio>
+            <el-radio :label="false">
+              拒绝
+            </el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="备注">
@@ -270,8 +407,15 @@
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="approveDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="confirmApprove">确定</el-button>
+        <el-button @click="approveDialogVisible = false">
+          取消
+        </el-button>
+        <el-button
+          type="primary"
+          @click="confirmApprove"
+        >
+          确定
+        </el-button>
       </template>
     </el-dialog>
   </div>
@@ -367,10 +511,15 @@ const handleRegister = () => {
 const handleViewDetail = async (row) => {
   try {
     const res = await getStoreDetail(row._id)
-    currentStore.value = res.data
+    // 后端返回的数据结构是 { store, technicians }
+    currentStore.value = {
+      ...res.data.store,
+      technicians: res.data.technicians || []
+    }
     detailDialogVisible.value = true
   } catch (error) {
     console.error('获取详情失败:', error)
+    ElMessage.error('获取门店详情失败')
   }
 }
 

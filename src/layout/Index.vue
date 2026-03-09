@@ -1,7 +1,10 @@
 <template>
   <el-container class="layout-container">
     <!-- 侧边栏 -->
-    <el-aside :width="isCollapse ? '64px' : '200px'" class="sidebar">
+    <el-aside
+      :width="isCollapse ? '64px' : '200px'"
+      class="sidebar"
+    >
       <div class="logo">
         <span v-if="!isCollapse">万联驿站2.0</span>
         <span v-else>TMS</span>
@@ -13,7 +16,10 @@
         :unique-opened="true"
         router
       >
-        <template v-for="route in menuRoutes" :key="route.path">
+        <template
+          v-for="route in menuRoutes"
+          :key="route.path"
+        >
           <el-menu-item
             v-if="!route.meta?.roles || route.meta.roles.includes(userRole)"
             :index="route.path"
@@ -21,7 +27,9 @@
             <el-icon v-if="route.meta?.icon">
               <component :is="route.meta.icon" />
             </el-icon>
-            <template #title>{{ route.meta?.title }}</template>
+            <template #title>
+              {{ route.meta?.title }}
+            </template>
           </el-menu-item>
         </template>
       </el-menu>
@@ -43,14 +51,20 @@
 
         <div class="header-right">
           <!-- 角色标签 -->
-          <el-tag :type="getRoleTagType(userRole)" class="role-tag">
+          <el-tag
+            :type="getRoleTagType(userRole)"
+            class="role-tag"
+          >
             {{ getRoleText(userRole) }}
           </el-tag>
 
           <!-- 用户信息 -->
           <el-dropdown>
             <span class="user-info">
-              <el-avatar :size="32" :src="userInfo?.avatar">
+              <el-avatar
+                :size="32"
+                :src="userInfo?.avatar"
+              >
                 {{ userInfo?.nickname?.charAt(0) }}
               </el-avatar>
               <span class="username">{{ userInfo?.nickname }}</span>
@@ -88,7 +102,10 @@
         :rules="passwordRules"
         label-width="100px"
       >
-        <el-form-item label="原密码" prop="oldPassword">
+        <el-form-item
+          label="原密码"
+          prop="oldPassword"
+        >
           <el-input
             v-model="passwordForm.oldPassword"
             type="password"
@@ -96,7 +113,10 @@
             show-password
           />
         </el-form-item>
-        <el-form-item label="新密码" prop="newPassword">
+        <el-form-item
+          label="新密码"
+          prop="newPassword"
+        >
           <el-input
             v-model="passwordForm.newPassword"
             type="password"
@@ -104,7 +124,10 @@
             show-password
           />
         </el-form-item>
-        <el-form-item label="确认密码" prop="confirmPassword">
+        <el-form-item
+          label="确认密码"
+          prop="confirmPassword"
+        >
           <el-input
             v-model="passwordForm.confirmPassword"
             type="password"
@@ -114,8 +137,14 @@
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="passwordDialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="passwordSubmitting" @click="handleChangePassword">
+        <el-button @click="passwordDialogVisible = false">
+          取消
+        </el-button>
+        <el-button
+          type="primary"
+          :loading="passwordSubmitting"
+          @click="handleChangePassword"
+        >
           确定
         </el-button>
       </template>

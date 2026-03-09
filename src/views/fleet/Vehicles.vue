@@ -4,22 +4,34 @@
     <el-row :gutter="20">
       <el-col :span="6">
         <el-card class="stat-card">
-          <el-statistic title="总车辆数" :value="stats.total" />
+          <el-statistic
+            title="总车辆数"
+            :value="stats.total"
+          />
         </el-card>
       </el-col>
       <el-col :span="6">
         <el-card class="stat-card stat-card-success">
-          <el-statistic title="正常运营" :value="stats.normal" />
+          <el-statistic
+            title="正常运营"
+            :value="stats.normal"
+          />
         </el-card>
       </el-col>
       <el-col :span="6">
         <el-card class="stat-card stat-card-warning">
-          <el-statistic title="维修中" :value="stats.repairing" />
+          <el-statistic
+            title="维修中"
+            :value="stats.repairing"
+          />
         </el-card>
       </el-col>
       <el-col :span="6">
         <el-card class="stat-card stat-card-danger">
-          <el-statistic title="已报废" :value="stats.scrapped" />
+          <el-statistic
+            title="已报废"
+            :value="stats.scrapped"
+          />
         </el-card>
       </el-col>
     </el-row>
@@ -30,11 +42,22 @@
         <div class="card-header">
           <span>车队车辆管理</span>
           <div class="header-actions">
-            <el-button v-if="userRole === 'FLEET_MANAGER'" type="success" size="small" @click="handleBatchImport">
+            <el-button
+              v-if="userRole === 'FLEET_MANAGER'"
+              type="success"
+              size="small"
+              @click="handleBatchImport"
+            >
               <el-icon><Upload /></el-icon>
               批量导入
             </el-button>
-            <el-dropdown split-button type="warning" size="small" @click="handleExport('filtered')" :loading="exporting">
+            <el-dropdown
+              split-button
+              type="warning"
+              size="small"
+              :loading="exporting"
+              @click="handleExport('filtered')"
+            >
               <el-icon><Download /></el-icon>
               导出数据
               <template #dropdown>
@@ -48,7 +71,11 @@
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
-            <el-button type="primary" size="small" @click="handleAdd">
+            <el-button
+              type="primary"
+              size="small"
+              @click="handleAdd"
+            >
               <el-icon><Plus /></el-icon>
               添加车辆
             </el-button>
@@ -57,12 +84,29 @@
       </template>
 
       <!-- 搜索筛选 -->
-      <el-form :inline="true" class="search-form">
+      <el-form
+        :inline="true"
+        class="search-form"
+      >
         <el-form-item label="状态">
-          <el-select v-model="queryParams.status" placeholder="全部" clearable style="width: 120px">
-            <el-option label="正常" value="normal" />
-            <el-option label="维修中" value="repairing" />
-            <el-option label="已报废" value="scrapped" />
+          <el-select
+            v-model="queryParams.status"
+            placeholder="全部"
+            clearable
+            style="width: 140px"
+          >
+            <el-option
+              label="正常"
+              value="normal"
+            />
+            <el-option
+              label="维修中"
+              value="repairing"
+            />
+            <el-option
+              label="已报废"
+              value="scrapped"
+            />
           </el-select>
         </el-form-item>
         <el-form-item label="关键词">
@@ -75,11 +119,16 @@
         </el-form-item>
         <el-form-item>
           <div class="form-actions">
-            <el-button type="primary" @click="handleQuery">
+            <el-button
+              type="primary"
+              @click="handleQuery"
+            >
               <el-icon><Search /></el-icon>
               查询
             </el-button>
-            <el-button @click="handleReset">重置</el-button>
+            <el-button @click="handleReset">
+              重置
+            </el-button>
           </div>
         </el-form-item>
       </el-form>
@@ -91,37 +140,87 @@
         stripe
         style="width: 100%"
       >
-        <el-table-column prop="plateNumber" label="车牌号" width="140" fixed="left" />
-        <el-table-column prop="vehicleType" label="车辆类型" width="100" />
-        <el-table-column prop="vin" label="VIN码" width="180" />
-        <el-table-column prop="engineNumber" label="发动机号" width="150" />
-        <el-table-column prop="brand" label="品牌" width="120" />
-        <el-table-column prop="model" label="车型" width="150" />
-        <el-table-column prop="driveType" label="驱动形式" width="100" />
-        <el-table-column prop="year" label="年份" width="100" />
-        <el-table-column label="当前司机" width="120">
+        <el-table-column
+          prop="plateNumber"
+          label="车牌号"
+          width="140"
+          fixed="left"
+        />
+        <el-table-column
+          prop="vehicleType"
+          label="车辆类型"
+          width="100"
+        />
+        <el-table-column
+          prop="vin"
+          label="VIN码"
+          width="180"
+        />
+        <el-table-column
+          prop="engineNumber"
+          label="发动机号"
+          width="150"
+        />
+        <el-table-column
+          prop="brand"
+          label="品牌"
+          width="120"
+        />
+        <el-table-column
+          prop="model"
+          label="车型"
+          width="150"
+        />
+        <el-table-column
+          prop="driveType"
+          label="驱动形式"
+          width="100"
+        />
+        <el-table-column
+          prop="year"
+          label="年份"
+          width="100"
+        />
+        <el-table-column
+          label="当前司机"
+          width="120"
+        >
           <template #default="{ row }">
             {{ row.currentDriverId?.nickname || '-' }}
           </template>
         </el-table-column>
-        <el-table-column label="司机电话" width="140">
+        <el-table-column
+          label="司机电话"
+          width="140"
+        >
           <template #default="{ row }">
             {{ row.currentDriverId?.phone || '-' }}
           </template>
         </el-table-column>
-        <el-table-column label="状态" width="100" align="center">
+        <el-table-column
+          label="状态"
+          width="100"
+          align="center"
+        >
           <template #default="{ row }">
             <el-tag :type="getStatusType(row.status)">
               {{ getStatusText(row.status) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="创建时间" width="110">
+        <el-table-column
+          label="创建时间"
+          width="110"
+        >
           <template #default="{ row }">
             {{ formatDate(row.createdAt) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="240" fixed="right">
+        <el-table-column
+          label="操作"
+          width="240"
+          fixed="right"
+        >
           <template #default="{ row }">
             <el-button
               type="primary"
@@ -132,24 +231,49 @@
               编辑
             </el-button>
             <el-dropdown style="margin-left: 10px">
-              <el-button type="primary" size="small" link>
+              <el-button
+                type="primary"
+                size="small"
+                link
+              >
                 更多<el-icon><ArrowDown /></el-icon>
               </el-button>
               <template #dropdown>
                 <el-dropdown-menu>
                   <el-dropdown-item @click="handleUpdateStatus(row, 'normal')">
-                    <el-tag size="small" type="success" style="margin-right: 8px">正常</el-tag>
+                    <el-tag
+                      size="small"
+                      type="success"
+                      style="margin-right: 8px"
+                    >
+                      正常
+                    </el-tag>
                     设为正常
                   </el-dropdown-item>
                   <el-dropdown-item @click="handleUpdateStatus(row, 'repairing')">
-                    <el-tag size="small" type="warning" style="margin-right: 8px">维修</el-tag>
+                    <el-tag
+                      size="small"
+                      type="warning"
+                      style="margin-right: 8px"
+                    >
+                      维修
+                    </el-tag>
                     设为维修中
                   </el-dropdown-item>
                   <el-dropdown-item @click="handleUpdateStatus(row, 'scrapped')">
-                    <el-tag size="small" type="danger" style="margin-right: 8px">报废</el-tag>
+                    <el-tag
+                      size="small"
+                      type="danger"
+                      style="margin-right: 8px"
+                    >
+                      报废
+                    </el-tag>
                     设为报废
                   </el-dropdown-item>
-                  <el-dropdown-item divided @click="handleDelete(row)">
+                  <el-dropdown-item
+                    divided
+                    @click="handleDelete(row)"
+                  >
                     <el-icon><Delete /></el-icon>
                     删除车辆
                   </el-dropdown-item>
@@ -179,21 +303,68 @@
       :title="isEdit ? '编辑车辆' : '添加车辆'"
       width="600px"
     >
-      <el-form :model="vehicleForm" :rules="formRules" ref="vehicleFormRef" label-width="120px">
-        <el-form-item label="车牌号" prop="plateNumber">
-          <el-input v-model="vehicleForm.plateNumber" placeholder="请输入车牌号" :disabled="isEdit" />
+      <el-form
+        ref="vehicleFormRef"
+        :model="vehicleForm"
+        :rules="formRules"
+        label-width="120px"
+      >
+        <el-form-item
+          label="车牌号"
+          prop="plateNumber"
+        >
+          <el-input
+            v-model="vehicleForm.plateNumber"
+            placeholder="请输入车牌号"
+            :disabled="isEdit"
+          />
         </el-form-item>
-        <el-form-item label="车辆类型" prop="vehicleType">
-          <el-select v-model="vehicleForm.vehicleType" placeholder="请选择车辆类型" style="width: 100%" @change="handleVehicleTypeChange">
-            <el-option label="牵引车" value="牵引车" />
-            <el-option label="挂车" value="挂车" />
-            <el-option label="载货车" value="载货车" />
-            <el-option label="轻卡" value="轻卡" />
-            <el-option label="自卸车" value="自卸车" />
-            <el-option label="平板车" value="平板车" />
-            <el-option label="冷藏车" value="冷藏车" />
-            <el-option label="罐车" value="罐车" />
-            <el-option label="其他" value="其他" />
+        <el-form-item
+          label="车辆类型"
+          prop="vehicleType"
+        >
+          <el-select
+            v-model="vehicleForm.vehicleType"
+            placeholder="请选择车辆类型"
+            style="width: 100%"
+            @change="handleVehicleTypeChange"
+          >
+            <el-option
+              label="牵引车"
+              value="牵引车"
+            />
+            <el-option
+              label="挂车"
+              value="挂车"
+            />
+            <el-option
+              label="载货车"
+              value="载货车"
+            />
+            <el-option
+              label="轻卡"
+              value="轻卡"
+            />
+            <el-option
+              label="自卸车"
+              value="自卸车"
+            />
+            <el-option
+              label="平板车"
+              value="平板车"
+            />
+            <el-option
+              label="冷藏车"
+              value="冷藏车"
+            />
+            <el-option
+              label="罐车"
+              value="罐车"
+            />
+            <el-option
+              label="其他"
+              value="其他"
+            />
           </el-select>
         </el-form-item>
         <el-form-item
@@ -207,27 +378,81 @@
             style="width: 100%"
           />
         </el-form-item>
-        <el-form-item label="VIN码" prop="vin">
-          <el-input v-model="vehicleForm.vin" placeholder="请输入17位VIN码（必填）" maxlength="17" />
+        <el-form-item
+          label="VIN码"
+          prop="vin"
+        >
+          <el-input
+            v-model="vehicleForm.vin"
+            placeholder="请输入17位VIN码（必填）"
+            maxlength="17"
+          />
         </el-form-item>
-        <el-form-item label="发动机号" prop="engineNumber">
-          <el-input v-model="vehicleForm.engineNumber" placeholder="请输入发动机号（必填）" />
+        <el-form-item
+          label="发动机号"
+          prop="engineNumber"
+        >
+          <el-input
+            v-model="vehicleForm.engineNumber"
+            placeholder="请输入发动机号（必填）"
+          />
         </el-form-item>
-        <el-form-item label="发动机品牌" prop="engineBrand">
-          <el-input v-model="vehicleForm.engineBrand" placeholder="请输入发动机品牌（如：潍柴、玉柴）" />
+        <el-form-item
+          label="发动机品牌"
+          prop="engineBrand"
+        >
+          <el-input
+            v-model="vehicleForm.engineBrand"
+            placeholder="请输入发动机品牌（如：潍柴、玉柴）"
+          />
         </el-form-item>
-        <el-form-item label="发动机型号" prop="engineModel">
-          <el-input v-model="vehicleForm.engineModel" placeholder="请输入发动机型号（如：WP13）" />
+        <el-form-item
+          label="发动机型号"
+          prop="engineModel"
+        >
+          <el-input
+            v-model="vehicleForm.engineModel"
+            placeholder="请输入发动机型号（如：WP13）"
+          />
         </el-form-item>
-        <el-form-item label="品牌" prop="brand">
-          <el-select v-model="vehicleForm.brand" placeholder="请选择品牌" style="width: 100%" @change="handleBrandChange">
-            <el-option label="东风" value="东风" />
-            <el-option label="解放" value="解放" />
-            <el-option label="陕汽" value="陕汽" />
-            <el-option label="重汽" value="重汽" />
-            <el-option label="江淮" value="江淮" />
-            <el-option label="福田" value="福田" />
-            <el-option label="其他" value="其他" />
+        <el-form-item
+          label="品牌"
+          prop="brand"
+        >
+          <el-select
+            v-model="vehicleForm.brand"
+            placeholder="请选择品牌"
+            style="width: 100%"
+            @change="handleBrandChange"
+          >
+            <el-option
+              label="东风"
+              value="东风"
+            />
+            <el-option
+              label="解放"
+              value="解放"
+            />
+            <el-option
+              label="陕汽"
+              value="陕汽"
+            />
+            <el-option
+              label="重汽"
+              value="重汽"
+            />
+            <el-option
+              label="江淮"
+              value="江淮"
+            />
+            <el-option
+              label="福田"
+              value="福田"
+            />
+            <el-option
+              label="其他"
+              value="其他"
+            />
           </el-select>
         </el-form-item>
         <el-form-item
@@ -241,21 +466,56 @@
             style="width: 100%"
           />
         </el-form-item>
-        <el-form-item label="车型" prop="model">
-          <el-input v-model="vehicleForm.model" placeholder="请输入车型" />
+        <el-form-item
+          label="车型"
+          prop="model"
+        >
+          <el-input
+            v-model="vehicleForm.model"
+            placeholder="请输入车型"
+          />
         </el-form-item>
         <el-form-item label="驱动形式">
-          <el-select v-model="vehicleForm.driveType" placeholder="请选择驱动形式（可选）" clearable style="width: 100%">
-            <el-option label="4x2" value="4x2" />
-            <el-option label="6x2" value="6x2" />
-            <el-option label="6x4" value="6x4" />
-            <el-option label="8x2" value="8x2" />
-            <el-option label="8x4" value="8x4" />
-            <el-option label="10x4" value="10x4" />
-            <el-option label="其他" value="其他" />
+          <el-select
+            v-model="vehicleForm.driveType"
+            placeholder="请选择驱动形式（可选）"
+            clearable
+            style="width: 100%"
+          >
+            <el-option
+              label="4x2"
+              value="4x2"
+            />
+            <el-option
+              label="6x2"
+              value="6x2"
+            />
+            <el-option
+              label="6x4"
+              value="6x4"
+            />
+            <el-option
+              label="8x2"
+              value="8x2"
+            />
+            <el-option
+              label="8x4"
+              value="8x4"
+            />
+            <el-option
+              label="10x4"
+              value="10x4"
+            />
+            <el-option
+              label="其他"
+              value="其他"
+            />
           </el-select>
         </el-form-item>
-        <el-form-item label="年份" prop="year">
+        <el-form-item
+          label="年份"
+          prop="year"
+        >
           <el-date-picker
             v-model="vehicleForm.year"
             type="year"
@@ -265,7 +525,12 @@
           />
         </el-form-item>
         <el-form-item label="当前司机">
-          <el-select v-model="vehicleForm.currentDriverId" placeholder="请选择司机（可选）" clearable style="width: 100%">
+          <el-select
+            v-model="vehicleForm.currentDriverId"
+            placeholder="请选择司机（可选）"
+            clearable
+            style="width: 100%"
+          >
             <el-option
               v-for="driver in driverList"
               :key="driver._id"
@@ -276,8 +541,16 @@
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="formDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="confirmSave" :loading="saving">确定</el-button>
+        <el-button @click="formDialogVisible = false">
+          取消
+        </el-button>
+        <el-button
+          type="primary"
+          :loading="saving"
+          @click="confirmSave"
+        >
+          确定
+        </el-button>
       </template>
     </el-dialog>
 
@@ -289,10 +562,18 @@
     >
       <div class="batch-import-content">
         <!-- 未显示结果时显示上传界面 -->
-        <div v-if="!importResult.message" class="upload-section">
+        <div
+          v-if="!importResult.message"
+          class="upload-section"
+        >
           <!-- 顶部操作栏 -->
           <div class="upload-header">
-            <el-button type="primary" link @click="downloadTemplate" :loading="downloading">
+            <el-button
+              type="primary"
+              link
+              :loading="downloading"
+              @click="downloadTemplate"
+            >
               <el-icon><Download /></el-icon>
               下载 Excel 模板
             </el-button>
@@ -310,7 +591,9 @@
             :on-change="handleFileChange"
             :on-exceed="handleExceed"
           >
-            <el-icon class="el-icon--upload"><UploadFilled /></el-icon>
+            <el-icon class="el-icon--upload">
+              <UploadFilled />
+            </el-icon>
             <div class="el-upload__text">
               拖拽 Excel 文件到此处，或<em>点击上传</em>
             </div>
@@ -327,14 +610,24 @@
               <el-icon><InfoFilled /></el-icon>
               字段说明
             </el-divider>
-            <el-descriptions :column="2" border size="small">
-              <el-descriptions-item label="必填字段" label-class-name="required-field">
+            <el-descriptions
+              :column="2"
+              border
+              size="small"
+            >
+              <el-descriptions-item
+                label="必填字段"
+                label-class-name="required-field"
+              >
                 车牌号、车辆类型、VIN码、发动机号、发动机品牌、发动机型号、品牌、车型、年份
               </el-descriptions-item>
               <el-descriptions-item label="选填字段">
                 驱动形式、当前司机（可填姓名或手机号）
               </el-descriptions-item>
-              <el-descriptions-item label="数据限制" :span="2">
+              <el-descriptions-item
+                label="数据限制"
+                :span="2"
+              >
                 最多导入 1000 条数据
               </el-descriptions-item>
             </el-descriptions>
@@ -342,8 +635,15 @@
 
           <!-- 底部按钮 -->
           <div class="upload-footer">
-            <el-button @click="batchDialogVisible = false">取消</el-button>
-            <el-button type="primary" @click="startImport" :loading="importing" :disabled="!uploadFile">
+            <el-button @click="batchDialogVisible = false">
+              取消
+            </el-button>
+            <el-button
+              type="primary"
+              :loading="importing"
+              :disabled="!uploadFile"
+              @click="startImport"
+            >
               <el-icon><Upload /></el-icon>
               开始导入
             </el-button>
@@ -351,7 +651,10 @@
         </div>
 
         <!-- 导入结果 -->
-        <div v-else class="result-section">
+        <div
+          v-else
+          class="result-section"
+        >
           <el-result
             :icon="importResult.successCount > 0 ? 'success' : 'error'"
             :title="importResult.message"
@@ -359,25 +662,47 @@
             <template #sub-title>
               <div class="result-stats">
                 <p>总计: {{ importResult.total }} 条</p>
-                <p style="color: #67c23a">成功: {{ importResult.successCount }} 条</p>
-                <p style="color: #f56c6c">失败: {{ importResult.failedCount }} 条</p>
+                <p style="color: #67c23a">
+                  成功: {{ importResult.successCount }} 条
+                </p>
+                <p style="color: #f56c6c">
+                  失败: {{ importResult.failedCount }} 条
+                </p>
               </div>
             </template>
             <template #extra>
-              <div v-if="importResult.errors && importResult.errors.length > 0" class="error-list">
-                <el-divider content-position="left">错误详情</el-divider>
+              <div
+                v-if="importResult.errors && importResult.errors.length > 0"
+                class="error-list"
+              >
+                <el-divider content-position="left">
+                  错误详情
+                </el-divider>
                 <el-scrollbar height="200px">
-                  <div v-for="(error, index) in importResult.errors.slice(0, 50)" :key="index" class="error-item">
+                  <div
+                    v-for="(error, index) in importResult.errors.slice(0, 50)"
+                    :key="index"
+                    class="error-item"
+                  >
                     第 {{ error.row }} 行: {{ error.error }}
                   </div>
-                  <div v-if="importResult.errors.length > 50" class="error-item">
+                  <div
+                    v-if="importResult.errors.length > 50"
+                    class="error-item"
+                  >
                     还有 {{ importResult.errors.length - 50 }} 条错误...
                   </div>
                 </el-scrollbar>
               </div>
               <div style="margin-top: 20px">
-                <el-button @click="batchDialogVisible = false">关闭</el-button>
-                <el-button v-if="importResult.failedCount > 0" type="primary" @click="resetImport">
+                <el-button @click="batchDialogVisible = false">
+                  关闭
+                </el-button>
+                <el-button
+                  v-if="importResult.failedCount > 0"
+                  type="primary"
+                  @click="resetImport"
+                >
                   <el-icon><Refresh /></el-icon>
                   重新导入
                 </el-button>
@@ -884,8 +1209,9 @@ const startImport = async () => {
     }
   } catch (error) {
     console.error('导入失败:', error)
+    const errorMessage = error.response?.data?.message || error.message || '导入失败'
     importResult.value = {
-      message: error.message || '导入失败',
+      message: errorMessage,
       total: 0,
       successCount: 0,
       failedCount: 0,

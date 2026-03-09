@@ -2,16 +2,19 @@
   <div class="login-container">
     <!-- 背景装饰 -->
     <div class="bg-decoration">
-      <div class="circle circle-1"></div>
-      <div class="circle circle-2"></div>
-      <div class="circle circle-3"></div>
+      <div class="circle circle-1" />
+      <div class="circle circle-2" />
+      <div class="circle circle-3" />
     </div>
 
     <div class="login-box">
       <!-- Logo 和标题 -->
       <div class="login-header">
         <div class="logo">
-          <el-icon :size="48" color="#667eea">
+          <el-icon
+            :size="48"
+            color="#667eea"
+          >
             <Van />
           </el-icon>
         </div>
@@ -70,34 +73,46 @@
       </el-form>
 
       <!-- 测试账号快捷选择（测试环境显示，生产环境隐藏） -->
-      <div v-if="isDev" class="test-accounts">
+      <div
+        v-if="isDev"
+        class="test-accounts"
+      >
         <el-divider content-position="center">
           <span style="font-size: 12px; color: #909399;">测试账号快捷登录</span>
         </el-divider>
+        <div class="account-tips">
+          <el-text
+            size="small"
+            type="info"
+          >
+            密码统一为: Test123456
+          </el-text>
+        </div>
         <div class="account-buttons">
           <el-button
             size="small"
-            type="primary"
-            @click="fillAccount('admin', 'Admin@123')"
+            type="danger"
+            @click="fillAccount('admin', 'Test123456')"
           >
             平台运营
           </el-button>
           <el-button
             size="small"
-            @click="fillAccount('fleet001', 'Fleet@123')"
+            type="warning"
+            @click="fillAccount('fleet001', 'Test123456')"
           >
-            车队管理
+            车队管理员
           </el-button>
           <el-button
             size="small"
             type="success"
-            @click="fillAccount('store001', 'Store@123')"
+            @click="fillAccount('store001', 'Test123456')"
           >
-            门店管理
+            门店管理员
           </el-button>
           <el-button
             size="small"
-            @click="fillAccount('tech001', 'Tech@123')"
+            @click="fillAccount('tech001', 'Test123456')"
           >
             门店技师
           </el-button>
@@ -174,7 +189,12 @@ const handleLogin = async () => {
     if (response.success) {
       const { token, user } = response.data
 
-      // 保存登录信息
+      // 清理旧的登录信息，避免角色混乱
+      localStorage.removeItem('token')
+      localStorage.removeItem('userInfo')
+      localStorage.removeItem('role')
+
+      // 保存新的登录信息
       localStorage.setItem('token', token)
       localStorage.setItem('userInfo', JSON.stringify(user))
       localStorage.setItem('role', user.role?.type)

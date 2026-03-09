@@ -26,15 +26,21 @@ service.interceptors.response.use(
   response => {
     const res = response.data
 
+    // 检查业务逻辑是否成功
     if (res.success === false) {
-      ElMessage.error(res.message || '请求失败')
-      return Promise.reject(new Error(res.message || '请求失败'))
+      const errorMsg = res.message || '请求失败'
+      console.error('业务错误:', errorMsg, res)
+      ElMessage.error(errorMsg)
+      return Promise.reject(new Error(errorMsg))
     }
 
     return res
   },
   error => {
     console.error('响应错误:', error)
+    console.error('错误配置:', error.config)
+    console.error('错误响应:', error.response)
+
     const status = error.response?.status
     const requestUrl = error.config?.url || ''
     const isAuthLoginRequest = [
@@ -43,6 +49,14 @@ service.interceptors.response.use(
       '/auth/login'
     ].some(path => requestUrl.includes(path))
 
+    // 从响应中提取错误消息
+    let errorMessage = '网络错误'
+    if (error.response?.data?.message) {
+      errorMessage = error.response.data.message
+    } else if (error.message) {
+      errorMessage = error.message
+    }
+
     if (status === 401 && !isAuthLoginRequest) {
       ElMessage.error('登录已过期，请重新登录')
       localStorage.removeItem('token')
@@ -50,7 +64,7 @@ service.interceptors.response.use(
       localStorage.removeItem('role')
       window.location.href = '/login'
     } else {
-      ElMessage.error(error.response?.data?.message || '网络错误')
+      ElMessage.error(errorMessage)
     }
 
     return Promise.reject(error)

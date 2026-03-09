@@ -4,24 +4,69 @@
     <el-card style="margin-bottom: 20px">
       <el-row :gutter="20">
         <el-col :span="18">
-          <el-button type="primary" @click="handleCreate">
+          <el-button
+            type="primary"
+            @click="handleCreate"
+          >
             <el-icon><Plus /></el-icon>
             新建套餐
           </el-button>
         </el-col>
-        <el-col :span="6" style="text-align: right">
-          <el-select v-model="filters.vehicleGroup" placeholder="车型分组" clearable style="width: 150px" @change="fetchPackages">
-            <el-option label="牵引车" value="牵引车" />
-            <el-option label="载货车" value="载货车" />
-            <el-option label="轻卡" value="轻卡" />
-            <el-option label="自卸" value="自卸" />
-            <el-option label="全部" value="ALL" />
+        <el-col
+          :span="6"
+          style="text-align: right"
+        >
+          <el-select
+            v-model="filters.vehicleGroup"
+            placeholder="车型分组"
+            clearable
+            style="width: 150px"
+            @change="fetchPackages"
+          >
+            <el-option
+              label="牵引车"
+              value="牵引车"
+            />
+            <el-option
+              label="载货车"
+              value="载货车"
+            />
+            <el-option
+              label="轻卡"
+              value="轻卡"
+            />
+            <el-option
+              label="自卸"
+              value="自卸"
+            />
+            <el-option
+              label="全部"
+              value="ALL"
+            />
           </el-select>
-          <el-select v-model="filters.tier" placeholder="套餐档位" clearable style="width: 120px" @change="fetchPackages">
-            <el-option label="基础" value="基础" />
-            <el-option label="标准" value="标准" />
-            <el-option label="高级" value="高级" />
-            <el-option label="尊享" value="尊享" />
+          <el-select
+            v-model="filters.tier"
+            placeholder="套餐档位"
+            clearable
+            style="width: 120px"
+            @change="fetchPackages"
+          >
+            <el-option
+              label="基础"
+              value="基础"
+            />
+            <el-option
+              label="标准"
+              value="标准"
+            />
+            <el-option
+              label="高级"
+              value="高级"
+            />
+            <el-option
+              label="尊享"
+              value="尊享"
+            />
           </el-select>
         </el-col>
       </el-row>
@@ -35,51 +80,93 @@
         stripe
         style="width: 100%"
       >
-        <el-table-column prop="name" label="套餐名称" width="180" />
-        <el-table-column prop="code" label="套餐编码" width="140" />
-        <el-table-column label="车型分组" width="100">
+        <el-table-column
+          prop="name"
+          label="套餐名称"
+          width="180"
+        />
+        <el-table-column
+          prop="code"
+          label="套餐编码"
+          width="140"
+        />
+        <el-table-column
+          label="车型分组"
+          width="100"
+        >
           <template #default="{ row }">
-            <el-tag :type="getVehicleGroupType(row.vehicleGroup)" size="small">
+            <el-tag
+              :type="getVehicleGroupType(row.vehicleGroup)"
+              size="small"
+            >
               {{ getVehicleGroupLabel(row.vehicleGroup) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="里程范围" width="140">
+        <el-table-column
+          label="里程范围"
+          width="140"
+        >
           <template #default="{ row }">
             {{ row.mileageRange?.min }}-{{ row.mileageRange?.max }} km
           </template>
         </el-table-column>
-        <el-table-column label="套餐档位" width="100">
+        <el-table-column
+          label="套餐档位"
+          width="100"
+        >
           <template #default="{ row }">
-            <el-tag :type="getTierType(row.tier)" size="small">
+            <el-tag
+              :type="getTierType(row.tier)"
+              size="small"
+            >
               {{ row.tier }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="价格" width="100">
+        <el-table-column
+          label="价格"
+          width="100"
+        >
           <template #default="{ row }">
             <span style="color: #f56c6c;">¥{{ row.price }}</span>
-            <span v-if="row.originalPrice && row.originalPrice > row.price" style="margin-left: 8px; color: #909399; text-decoration: line-through;">
+            <span
+              v-if="row.originalPrice && row.originalPrice > row.price"
+              style="margin-left: 8px; color: #909399; text-decoration: line-through;"
+            >
               ¥{{ row.originalPrice }}
             </span>
           </template>
         </el-table-column>
-        <el-table-column label="预估时长" width="100">
+        <el-table-column
+          label="预估时长"
+          width="100"
+        >
           <template #default="{ row }">
             {{ row.estimatedDuration }} 小时
           </template>
         </el-table-column>
-        <el-table-column label="商品数量" width="100">
+        <el-table-column
+          label="商品数量"
+          width="100"
+        >
           <template #default="{ row }">
             {{ row.products?.length || 0 }} 项
           </template>
         </el-table-column>
-        <el-table-column label="排序" width="80">
+        <el-table-column
+          label="排序"
+          width="80"
+        >
           <template #default="{ row }">
             {{ row.sortOrder }}
           </template>
         </el-table-column>
-        <el-table-column label="状态" width="80" align="center">
+        <el-table-column
+          label="状态"
+          width="80"
+          align="center"
+        >
           <template #default="{ row }">
             <el-switch
               v-model="row.enabled"
@@ -87,7 +174,11 @@
             />
           </template>
         </el-table-column>
-        <el-table-column label="是否热门" width="80" align="center">
+        <el-table-column
+          label="是否热门"
+          width="80"
+          align="center"
+        >
           <template #default="{ row }">
             <el-switch
               v-model="row.isFeatured"
@@ -95,12 +186,26 @@
             />
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column
+          label="操作"
+          width="200"
+          fixed="right"
+        >
           <template #default="{ row }">
-            <el-button type="primary" size="small" link @click="handleEdit(row)">
+            <el-button
+              type="primary"
+              size="small"
+              link
+              @click="handleEdit(row)"
+            >
               编辑
             </el-button>
-            <el-button type="danger" size="small" link @click="handleDelete(row)">
+            <el-button
+              type="danger"
+              size="small"
+              link
+              @click="handleDelete(row)"
+            >
               删除
             </el-button>
           </template>
@@ -126,26 +231,70 @@
       :title="isEdit ? '编辑套餐' : '新建套餐'"
       width="900px"
     >
-      <el-form :model="form" :rules="formRules" ref="formRef" label-width="120px">
-        <el-form-item label="套餐名称" prop="name">
-          <el-input v-model="form.name" placeholder="请输入套餐名称" />
+      <el-form
+        ref="formRef"
+        :model="form"
+        :rules="formRules"
+        label-width="120px"
+      >
+        <el-form-item
+          label="套餐名称"
+          prop="name"
+        >
+          <el-input
+            v-model="form.name"
+            placeholder="请输入套餐名称"
+          />
         </el-form-item>
 
-        <el-form-item label="套餐编码" prop="code">
-          <el-input v-model="form.code" placeholder="请输入套餐编码（英文）" />
+        <el-form-item
+          label="套餐编码"
+          prop="code"
+        >
+          <el-input
+            v-model="form.code"
+            placeholder="请输入套餐编码（英文）"
+          />
         </el-form-item>
 
         <el-form-item label="套餐描述">
-          <el-input v-model="form.description" type="textarea" :rows="2" placeholder="请输入套餐描述" />
+          <el-input
+            v-model="form.description"
+            type="textarea"
+            :rows="2"
+            placeholder="请输入套餐描述"
+          />
         </el-form-item>
 
-        <el-form-item label="车型分组" prop="vehicleGroup">
-          <el-select v-model="form.vehicleGroup" placeholder="请选择车型分组">
-            <el-option label="牵引车" value="牵引车" />
-            <el-option label="载货车" value="载货车" />
-            <el-option label="轻卡" value="轻卡" />
-            <el-option label="自卸" value="自卸" />
-            <el-option label="全部" value="ALL" />
+        <el-form-item
+          label="车型分组"
+          prop="vehicleGroup"
+        >
+          <el-select
+            v-model="form.vehicleGroup"
+            placeholder="请选择车型分组"
+            style="width: 100%"
+          >
+            <el-option
+              label="牵引车"
+              value="牵引车"
+            />
+            <el-option
+              label="载货车"
+              value="载货车"
+            />
+            <el-option
+              label="轻卡"
+              value="轻卡"
+            />
+            <el-option
+              label="自卸"
+              value="自卸"
+            />
+            <el-option
+              label="全部"
+              value="ALL"
+            />
           </el-select>
         </el-form-item>
 
@@ -168,16 +317,38 @@
           <span style="margin-left: 12px;">km</span>
         </el-form-item>
 
-        <el-form-item label="套餐档位" prop="tier">
-          <el-select v-model="form.tier" placeholder="请选择套餐档位">
-            <el-option label="基础" value="基础" />
-            <el-option label="标准" value="标准" />
-            <el-option label="高级" value="高级" />
-            <el-option label="尊享" value="尊享" />
+        <el-form-item
+          label="套餐档位"
+          prop="tier"
+        >
+          <el-select
+            v-model="form.tier"
+            placeholder="请选择套餐档位"
+            style="width: 100%"
+          >
+            <el-option
+              label="基础"
+              value="基础"
+            />
+            <el-option
+              label="标准"
+              value="标准"
+            />
+            <el-option
+              label="高级"
+              value="高级"
+            />
+            <el-option
+              label="尊享"
+              value="尊享"
+            />
           </el-select>
         </el-form-item>
 
-        <el-form-item label="套餐价格" prop="price">
+        <el-form-item
+          label="套餐价格"
+          prop="price"
+        >
           <el-input-number
             v-model="form.price"
             :min="0"
@@ -187,7 +358,9 @@
             style="width: 200px"
           />
           <span style="margin-left: 12px;">元（全国统一价）</span>
-          <div class="form-item-tip">如需设置区域价格，请在下方"区域定价"中配置</div>
+          <div class="form-item-tip">
+            如需设置区域价格，请在下方"区域定价"中配置
+          </div>
         </el-form-item>
 
         <el-form-item label="原价">
@@ -200,7 +373,9 @@
             style="width: 200px"
           />
           <span style="margin-left: 12px;">元</span>
-          <div class="form-item-tip">用于显示折扣</div>
+          <div class="form-item-tip">
+            用于显示折扣
+          </div>
         </el-form-item>
 
         <!-- 区域定价 -->
@@ -231,7 +406,10 @@
                 filterable
                 style="width: 150px; margin-right: 10px;"
               >
-                <el-option label="全省" value="全省" />
+                <el-option
+                  label="全省"
+                  value="全省"
+                />
                 <el-option
                   v-for="city in getCityOptions(regionalPrice.province)"
                   :key="city"
@@ -274,8 +452,8 @@
             <el-button
               type="primary"
               size="small"
-              @click="addRegionalPrice"
               style="margin-top: 10px;"
+              @click="addRegionalPrice"
             >
               + 添加区域价格
             </el-button>
@@ -285,7 +463,10 @@
           </div>
         </el-form-item>
 
-        <el-form-item label="预估时长" prop="estimatedDuration">
+        <el-form-item
+          label="预估时长"
+          prop="estimatedDuration"
+        >
           <el-input-number
             v-model="form.estimatedDuration"
             :min="0.5"
@@ -297,8 +478,15 @@
           <span style="margin-left: 12px;">小时</span>
         </el-form-item>
 
-        <el-form-item label="排序序号" prop="sortOrder">
-          <el-input-number v-model="form.sortOrder" :min="0" style="width: 150px" />
+        <el-form-item
+          label="排序序号"
+          prop="sortOrder"
+        >
+          <el-input-number
+            v-model="form.sortOrder"
+            :min="0"
+            style="width: 150px"
+          />
         </el-form-item>
 
         <!-- 服务项目列表（面向司机展示） -->
@@ -332,11 +520,18 @@
                 删除
               </el-button>
             </div>
-            <el-button type="primary" size="small" @click="addServiceItem" style="margin-top: 10px;">
+            <el-button
+              type="primary"
+              size="small"
+              style="margin-top: 10px;"
+              @click="addServiceItem"
+            >
               + 添加服务项目
             </el-button>
           </div>
-          <div class="form-item-tip">这些服务项目会展示给司机，如：更换机油、更换机滤等</div>
+          <div class="form-item-tip">
+            这些服务项目会展示给司机，如：更换机油、更换机滤等
+          </div>
         </el-form-item>
 
         <!-- 商品列表（技师端和成本核算使用） -->
@@ -355,29 +550,47 @@
               :value="product._id"
             />
           </el-select>
-          <div class="form-item-tip">技师端和成本核算使用，已选择 {{ form.products?.length || 0 }} 个商品</div>
+          <div class="form-item-tip">
+            技师端和成本核算使用，已选择 {{ form.products?.length || 0 }} 个商品
+          </div>
         </el-form-item>
 
         <el-form-item label="套餐图片">
           <el-upload
-            :file-list="form.images"
-            :on-change="handleImageChange"
+            v-model:file-list="imageFileList"
+            :http-request="handleImageUpload"
+            :on-remove="handleImageRemove"
             list-type="picture-card"
             :limit="5"
-            action="#"
+            :before-upload="beforeImageUpload"
+            accept="image/*"
           >
             <el-icon><Plus /></el-icon>
           </el-upload>
+          <div class="form-item-tip">
+            最多上传5张图片，支持jpg/png格式，每张不超过2MB
+          </div>
         </el-form-item>
 
         <el-form-item label="特色标签">
-          <el-input v-model="form.tags" placeholder="输入标签，用逗号分隔" />
+          <el-input
+            v-model="form.tags"
+            placeholder="输入标签，用逗号分隔"
+          />
         </el-form-item>
       </el-form>
 
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="confirmSave" :loading="saving">确定</el-button>
+        <el-button @click="dialogVisible = false">
+          取消
+        </el-button>
+        <el-button
+          type="primary"
+          :loading="saving"
+          @click="confirmSave"
+        >
+          确定
+        </el-button>
       </template>
     </el-dialog>
   </div>
@@ -388,8 +601,10 @@ import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import request from '@/utils/request'
+import axios from 'axios'
 import { getPackages, createPackage, updatePackage, deletePackage } from '@/api/maintenance'
 import { getProducts } from '@/api/product'
+import { getImageUrl } from '@/utils/image'
 
 // 省市数据（简化版，实际应该从外部文件导入）
 const provinces = [
@@ -414,9 +629,11 @@ const cityMap = {
 
 const loading = ref(false)
 const saving = ref(false)
+const uploading = ref(false)
 const packages = ref([])
 const allProducts = ref([])
 const total = ref(0)
+const imageFileList = ref([]) // 用于 el-upload 组件的文件列表
 
 const pagination = ref({
   page: 1,
@@ -503,15 +720,85 @@ const removeServiceItem = (index) => {
   form.value.serviceItems.splice(index, 1)
 }
 
-// 处理图片上传变化
-const handleImageChange = (file, fileList) => {
-  form.value.images = fileList
+// 图片上传前验证
+const beforeImageUpload = (file) => {
+  const isImage = file.type.startsWith('image/')
+  const isLt2M = file.size / 1024 / 1024 < 2
+
+  if (!isImage) {
+    ElMessage.error('只能上传图片文件!')
+    return false
+  }
+  if (!isLt2M) {
+    ElMessage.error('图片大小不能超过2MB!')
+    return false
+  }
+  return true
+}
+
+// 处理图片上传
+const handleImageUpload = async (options) => {
+  const { file, onSuccess, onError } = options
+
+  try {
+    uploading.value = true
+
+    const formData = new FormData()
+    formData.append('file', file)
+
+    const response = await axios.post('/api/upload', formData, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Content-Type': 'multipart/form-data'
+      }
+    })
+
+    uploading.value = false
+
+    if (response.data.success) {
+      // 将上传后的图片URL添加到表单
+      if (!form.value.images) {
+        form.value.images = []
+      }
+      form.value.images.push(response.data.data.url)
+
+      ElMessage.success('上传成功')
+      onSuccess(response.data, file)
+    } else {
+      onError(new Error(response.data.message || '上传失败'))
+    }
+  } catch (error) {
+    console.error('上传错误:', error)
+    uploading.value = false
+    ElMessage.error('上传失败，请重试')
+    onError(error)
+  }
+}
+
+// 处理图片删除
+const handleImageRemove = (file) => {
+  // 从 form.images 中移除对应的URL
+  if (file.response && file.response.data && file.response.data.url) {
+    // 新上传的图片
+    const url = file.response.data.url
+    form.value.images = form.value.images.filter(img => img !== url)
+  } else if (file.rawUrl) {
+    // 编辑时已存在的图片（使用 rawUrl 属性）
+    form.value.images = form.value.images.filter(img => img !== file.rawUrl)
+  } else if (file.url) {
+    // 兼容：通过完整URL匹配
+    form.value.images = form.value.images.filter(img => {
+      const fullUrl = getImageUrl(img)
+      return fullUrl !== file.url
+    })
+  }
 }
 
 // 新建套餐
 const handleCreate = () => {
   isEdit.value = false
   currentPackageId.value = ''
+  imageFileList.value = []
   form.value = {
     name: '',
     code: '',
@@ -537,6 +824,16 @@ const handleCreate = () => {
 const handleEdit = (row) => {
   isEdit.value = true
   currentPackageId.value = row._id
+
+  // 将已存在的图片URL转换为 el-upload 组件所需的文件列表格式
+  const existingImages = (row.images || []).map((url, index) => ({
+    name: `image-${index}`,
+    url: getImageUrl(url),
+    rawUrl: url // 保存原始URL用于后续处理
+  }))
+
+  imageFileList.value = existingImages
+
   form.value = {
     name: row.name,
     code: row.code,

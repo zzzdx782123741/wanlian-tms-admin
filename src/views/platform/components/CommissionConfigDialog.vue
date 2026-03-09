@@ -13,7 +13,10 @@
     >
       <!-- 全局配置 -->
       <template v-if="configType === 'global'">
-        <el-form-item label="配置名称" prop="name">
+        <el-form-item
+          label="配置名称"
+          prop="name"
+        >
           <el-input
             v-model="form.name"
             placeholder="如：全局默认佣金配置"
@@ -22,7 +25,10 @@
           />
         </el-form-item>
 
-        <el-form-item label="佣金比例" prop="commissionRate">
+        <el-form-item
+          label="佣金比例"
+          prop="commissionRate"
+        >
           <el-input-number
             v-model="form.percentageValue"
             :min="3"
@@ -60,7 +66,10 @@
 
       <!-- 服务类型配置 -->
       <template v-else-if="configType === 'service_type'">
-        <el-form-item label="配置名称" prop="name">
+        <el-form-item
+          label="配置名称"
+          prop="name"
+        >
           <el-input
             v-model="form.name"
             placeholder="如：维修订单佣金配置"
@@ -69,15 +78,27 @@
           />
         </el-form-item>
 
-        <el-form-item label="服务类型" prop="serviceTypes">
+        <el-form-item
+          label="服务类型"
+          prop="serviceTypes"
+        >
           <el-checkbox-group v-model="form.serviceTypes">
-            <el-checkbox label="repair">维修订单</el-checkbox>
-            <el-checkbox label="maintenance">保养订单</el-checkbox>
-            <el-checkbox label="addon">增项服务</el-checkbox>
+            <el-checkbox label="repair">
+              维修订单
+            </el-checkbox>
+            <el-checkbox label="maintenance">
+              保养订单
+            </el-checkbox>
+            <el-checkbox label="addon">
+              增项服务
+            </el-checkbox>
           </el-checkbox-group>
         </el-form-item>
 
-        <el-form-item label="佣金比例" prop="commissionRate">
+        <el-form-item
+          label="佣金比例"
+          prop="commissionRate"
+        >
           <el-input-number
             v-model="form.percentageValue"
             :min="3"
@@ -106,7 +127,10 @@
 
       <!-- 区域配置 -->
       <template v-else-if="configType === 'region'">
-        <el-form-item label="配置名称" prop="name">
+        <el-form-item
+          label="配置名称"
+          prop="name"
+        >
           <el-input
             v-model="form.name"
             placeholder="如：北京市佣金配置"
@@ -115,7 +139,10 @@
           />
         </el-form-item>
 
-        <el-form-item label="省份" prop="province">
+        <el-form-item
+          label="省份"
+          prop="province"
+        >
           <el-select
             v-model="form.province"
             placeholder="请选择省份"
@@ -140,7 +167,10 @@
             style="width: 100%"
             :disabled="!form.province"
           >
-            <el-option label="全省适用" value="" />
+            <el-option
+              label="全省适用"
+              value=""
+            />
             <el-option
               v-for="city in getCityOptions(form.province)"
               :key="city"
@@ -153,7 +183,10 @@
           </div>
         </el-form-item>
 
-        <el-form-item label="佣金比例" prop="commissionRate">
+        <el-form-item
+          label="佣金比例"
+          prop="commissionRate"
+        >
           <el-input-number
             v-model="form.percentageValue"
             :min="3"
@@ -191,8 +224,14 @@
     </el-form>
 
     <template #footer>
-      <el-button @click="handleCancel">取消</el-button>
-      <el-button type="primary" @click="handleConfirm" :loading="submitting">
+      <el-button @click="handleCancel">
+        取消
+      </el-button>
+      <el-button
+        type="primary"
+        :loading="submitting"
+        @click="handleConfirm"
+      >
         确定
       </el-button>
     </template>

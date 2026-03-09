@@ -2,16 +2,34 @@
   <div class="finance-reports-page">
     <!-- 时间范围选择 -->
     <el-card style="margin-bottom: 20px">
-      <el-form :inline="true" label-width="100px">
+      <el-form
+        :inline="true"
+        label-width="100px"
+      >
         <el-form-item label="统计周期">
-          <el-radio-group v-model="dateRangeType" size="small" @change="handleDateRangeTypeChange">
-            <el-radio-button label="today">今日</el-radio-button>
-            <el-radio-button label="week">本周</el-radio-button>
-            <el-radio-button label="month">本月</el-radio-button>
-            <el-radio-button label="custom">自定义</el-radio-button>
+          <el-radio-group
+            v-model="dateRangeType"
+            size="small"
+            @change="handleDateRangeTypeChange"
+          >
+            <el-radio-button label="today">
+              今日
+            </el-radio-button>
+            <el-radio-button label="week">
+              本周
+            </el-radio-button>
+            <el-radio-button label="month">
+              本月
+            </el-radio-button>
+            <el-radio-button label="custom">
+              自定义
+            </el-radio-button>
           </el-radio-group>
         </el-form-item>
-        <el-form-item v-if="dateRangeType === 'custom'" label="日期范围">
+        <el-form-item
+          v-if="dateRangeType === 'custom'"
+          label="日期范围"
+        >
           <el-date-picker
             v-model="customDateRange"
             type="daterange"
@@ -23,7 +41,10 @@
           />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="fetchReportsData">
+          <el-button
+            type="primary"
+            @click="fetchReportsData"
+          >
             <el-icon><Search /></el-icon>
             查询
           </el-button>
@@ -39,7 +60,12 @@
     <el-row :gutter="20">
       <el-col :span="6">
         <el-card class="metric-card metric-card-primary">
-          <el-statistic title="充值总额" :value="reportsData.totalRecharge" :precision="2" prefix="¥" />
+          <el-statistic
+            title="充值总额"
+            :value="reportsData.totalRecharge"
+            :precision="2"
+            prefix="¥"
+          />
           <div style="margin-top: 10px; font-size: 12px; color: #909399">
             {{ reportsData.rechargeCount || 0 }} 笔
           </div>
@@ -47,7 +73,12 @@
       </el-col>
       <el-col :span="6">
         <el-card class="metric-card metric-card-success">
-          <el-statistic title="平台收入" :value="reportsData.totalIncome" :precision="2" prefix="¥" />
+          <el-statistic
+            title="平台收入"
+            :value="reportsData.totalIncome"
+            :precision="2"
+            prefix="¥"
+          />
           <div style="margin-top: 10px; font-size: 12px; color: #909399">
             3% 手续费
           </div>
@@ -55,7 +86,12 @@
       </el-col>
       <el-col :span="6">
         <el-card class="metric-card metric-card-warning">
-          <el-statistic title="提现总额" :value="reportsData.totalWithdrawal" :precision="2" prefix="¥" />
+          <el-statistic
+            title="提现总额"
+            :value="reportsData.totalWithdrawal"
+            :precision="2"
+            prefix="¥"
+          />
           <div style="margin-top: 10px; font-size: 12px; color: #909399">
             门店提现
           </div>
@@ -63,7 +99,12 @@
       </el-col>
       <el-col :span="6">
         <el-card class="metric-card metric-card-info">
-          <el-statistic title="平台净收入" :value="reportsData.netIncome" :precision="2" prefix="¥" />
+          <el-statistic
+            title="平台净收入"
+            :value="reportsData.netIncome"
+            :precision="2"
+            prefix="¥"
+          />
           <div style="margin-top: 10px; font-size: 12px; color: #909399">
             收入 - 提现
           </div>
@@ -72,7 +113,10 @@
     </el-row>
 
     <!-- 图表 -->
-    <el-row :gutter="20" style="margin-top: 20px">
+    <el-row
+      :gutter="20"
+      style="margin-top: 20px"
+    >
       <el-col :span="12">
         <el-card>
           <template #header>
@@ -80,7 +124,10 @@
               <span>充值趋势</span>
             </div>
           </template>
-          <div ref="rechargeChartRef" style="height: 300px" />
+          <div
+            ref="rechargeChartRef"
+            style="height: 300px"
+          />
         </el-card>
       </el-col>
       <el-col :span="12">
@@ -90,19 +137,30 @@
               <span>收入趋势</span>
             </div>
           </template>
-          <div ref="incomeChartRef" style="height: 300px" />
+          <div
+            ref="incomeChartRef"
+            style="height: 300px"
+          />
         </el-card>
       </el-col>
     </el-row>
 
     <!-- 详细数据 -->
-    <el-row :gutter="20" style="margin-top: 20px">
+    <el-row
+      :gutter="20"
+      style="margin-top: 20px"
+    >
       <el-col :span="12">
         <el-card>
           <template #header>
             <div class="card-header">
               <span>充值明细</span>
-              <el-button type="primary" link size="small" @click="$router.push('/recharge-audit')">
+              <el-button
+                type="primary"
+                link
+                size="small"
+                @click="$router.push('/recharge-audit')"
+              >
                 查看全部
               </el-button>
             </div>
@@ -115,21 +173,44 @@
             style="width: 100%"
             max-height="400"
           >
-            <el-table-column prop="rechargeNo" label="充值单号" width="160" show-overflow-tooltip />
-            <el-table-column prop="fleetName" label="车队" width="120" show-overflow-tooltip />
-            <el-table-column label="金额" width="100" align="right">
+            <el-table-column
+              prop="rechargeNo"
+              label="充值单号"
+              width="160"
+              show-overflow-tooltip
+            />
+            <el-table-column
+              prop="fleetName"
+              label="车队"
+              width="120"
+              show-overflow-tooltip
+            />
+            <el-table-column
+              label="金额"
+              width="100"
+              align="right"
+            >
               <template #default="{ row }">
                 ¥{{ (row.amount / 100).toFixed(2) }}
               </template>
             </el-table-column>
-            <el-table-column label="状态" width="80">
+            <el-table-column
+              label="状态"
+              width="80"
+            >
               <template #default="{ row }">
-                <el-tag :type="row.status === 'approved' ? 'success' : 'warning'" size="small">
+                <el-tag
+                  :type="row.status === 'approved' ? 'success' : 'warning'"
+                  size="small"
+                >
                   {{ row.status === 'approved' ? '已通过' : '待审核' }}
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column label="时间" width="140">
+            <el-table-column
+              label="时间"
+              width="140"
+            >
               <template #default="{ row }">
                 {{ formatDate(row.appliedAt) }}
               </template>
@@ -143,7 +224,12 @@
           <template #header>
             <div class="card-header">
               <span>提现明细</span>
-              <el-button type="primary" link size="small" @click="$router.push('/settlement-management')">
+              <el-button
+                type="primary"
+                link
+                size="small"
+                @click="$router.push('/settlement-management')"
+              >
                 查看全部
               </el-button>
             </div>
@@ -156,21 +242,44 @@
             style="width: 100%"
             max-height="400"
           >
-            <el-table-column prop="withdrawalNo" label="提现单号" width="160" show-overflow-tooltip />
-            <el-table-column prop="storeName" label="门店" width="120" show-overflow-tooltip />
-            <el-table-column label="金额" width="100" align="right">
+            <el-table-column
+              prop="withdrawalNo"
+              label="提现单号"
+              width="160"
+              show-overflow-tooltip
+            />
+            <el-table-column
+              prop="storeName"
+              label="门店"
+              width="120"
+              show-overflow-tooltip
+            />
+            <el-table-column
+              label="金额"
+              width="100"
+              align="right"
+            >
               <template #default="{ row }">
                 ¥{{ (row.withdrawalAmount / 100).toFixed(2) }}
               </template>
             </el-table-column>
-            <el-table-column label="状态" width="80">
+            <el-table-column
+              label="状态"
+              width="80"
+            >
               <template #default="{ row }">
-                <el-tag :type="row.status === 'completed' ? 'success' : 'warning'" size="small">
+                <el-tag
+                  :type="row.status === 'completed' ? 'success' : 'warning'"
+                  size="small"
+                >
                   {{ row.status === 'completed' ? '已完成' : '待打款' }}
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column label="时间" width="140">
+            <el-table-column
+              label="时间"
+              width="140"
+            >
               <template #default="{ row }">
                 {{ formatDate(row.appliedAt) }}
               </template>
@@ -194,23 +303,52 @@
         stripe
         style="width: 100%"
       >
-        <el-table-column prop="incomeNo" label="收入单号" width="160" />
-        <el-table-column prop="orderNumber" label="订单号" width="160" />
-        <el-table-column prop="fleetName" label="车队" width="150" show-overflow-tooltip />
-        <el-table-column prop="storeName" label="门店" width="150" show-overflow-tooltip />
-        <el-table-column label="订单金额" width="120" align="right">
+        <el-table-column
+          prop="incomeNo"
+          label="收入单号"
+          width="160"
+        />
+        <el-table-column
+          prop="orderNumber"
+          label="订单号"
+          width="160"
+        />
+        <el-table-column
+          prop="fleetName"
+          label="车队"
+          width="150"
+          show-overflow-tooltip
+        />
+        <el-table-column
+          prop="storeName"
+          label="门店"
+          width="150"
+          show-overflow-tooltip
+        />
+        <el-table-column
+          label="订单金额"
+          width="120"
+          align="right"
+        >
           <template #default="{ row }">
             ¥{{ (row.orderAmount / 100).toFixed(2) }}
           </template>
         </el-table-column>
-        <el-table-column label="平台费(3%)" width="120" align="right">
+        <el-table-column
+          label="平台费(3%)"
+          width="120"
+          align="right"
+        >
           <template #default="{ row }">
             <span style="color: #67c23a; font-weight: 600">
               ¥{{ (row.feeAmount / 100).toFixed(2) }}
             </span>
           </template>
         </el-table-column>
-        <el-table-column label="结算时间" width="160">
+        <el-table-column
+          label="结算时间"
+          width="160"
+        >
           <template #default="{ row }">
             {{ formatDate(row.settledAt) }}
           </template>
@@ -281,16 +419,16 @@ const handleDateRangeTypeChange = () => {
 const getDateRange = () => {
   const today = dayjs()
   switch (dateRangeType.value) {
-    case 'today':
-      return [today.format('YYYY-MM-DD'), today.format('YYYY-MM-DD')]
-    case 'week':
-      return [today.startOf('week').format('YYYY-MM-DD'), today.format('YYYY-MM-DD')]
-    case 'month':
-      return [today.startOf('month').format('YYYY-MM-DD'), today.format('YYYY-MM-DD')]
-    case 'custom':
-      return customDateRange.value
-    default:
-      return [today.format('YYYY-MM-DD'), today.format('YYYY-MM-DD')]
+  case 'today':
+    return [today.format('YYYY-MM-DD'), today.format('YYYY-MM-DD')]
+  case 'week':
+    return [today.startOf('week').format('YYYY-MM-DD'), today.format('YYYY-MM-DD')]
+  case 'month':
+    return [today.startOf('month').format('YYYY-MM-DD'), today.format('YYYY-MM-DD')]
+  case 'custom':
+    return customDateRange.value
+  default:
+    return [today.format('YYYY-MM-DD'), today.format('YYYY-MM-DD')]
   }
 }
 

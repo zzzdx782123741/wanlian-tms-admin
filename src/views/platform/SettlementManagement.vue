@@ -4,24 +4,44 @@
     <el-row :gutter="20">
       <el-col :span="6">
         <el-card class="stat-card">
-          <el-statistic title="待打款" :value="stats.pending">
-            <template #suffix>笔</template>
+          <el-statistic
+            title="待打款"
+            :value="stats.pending"
+          >
+            <template #suffix>
+              笔
+            </template>
           </el-statistic>
         </el-card>
       </el-col>
       <el-col :span="6">
         <el-card class="stat-card stat-card-warning">
-          <el-statistic title="待打款金额" :value="stats.pendingAmount" :precision="2" prefix="¥" />
+          <el-statistic
+            title="待打款金额"
+            :value="stats.pendingAmount"
+            :precision="2"
+            prefix="¥"
+          />
         </el-card>
       </el-col>
       <el-col :span="6">
         <el-card class="stat-card stat-card-success">
-          <el-statistic title="今日已打款" :value="stats.todayPaid" :precision="2" prefix="¥" />
+          <el-statistic
+            title="今日已打款"
+            :value="stats.todayPaid"
+            :precision="2"
+            prefix="¥"
+          />
         </el-card>
       </el-col>
       <el-col :span="6">
         <el-card class="stat-card stat-card-info">
-          <el-statistic title="本月已打款" :value="stats.monthlyPaid" :precision="2" prefix="¥" />
+          <el-statistic
+            title="本月已打款"
+            :value="stats.monthlyPaid"
+            :precision="2"
+            prefix="¥"
+          />
         </el-card>
       </el-col>
     </el-row>
@@ -32,15 +52,27 @@
         <div class="card-header">
           <span>待打款管理</span>
           <div style="display: flex; gap: 10px">
-            <el-button type="warning" size="small" @click="handleExportPending">
+            <el-button
+              type="warning"
+              size="small"
+              @click="handleExportPending"
+            >
               <el-icon><Download /></el-icon>
               导出待打款
             </el-button>
-            <el-button type="primary" size="small" @click="handleGenerateSettlement">
+            <el-button
+              type="primary"
+              size="small"
+              @click="handleGenerateSettlement"
+            >
               <el-icon><Plus /></el-icon>
               生成结算单
             </el-button>
-            <el-button type="success" size="small" @click="fetchPendingList">
+            <el-button
+              type="success"
+              size="small"
+              @click="fetchPendingList"
+            >
               <el-icon><Refresh /></el-icon>
               刷新
             </el-button>
@@ -49,7 +81,10 @@
       </template>
 
       <!-- 搜索筛选 -->
-      <el-form :inline="true" class="search-form">
+      <el-form
+        :inline="true"
+        class="search-form"
+      >
         <el-form-item label="门店名称">
           <el-input
             v-model="filters.storeName"
@@ -71,11 +106,16 @@
           />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="handleSearch">
+          <el-button
+            type="primary"
+            @click="handleSearch"
+          >
             <el-icon><Search /></el-icon>
             查询
           </el-button>
-          <el-button @click="handleReset">重置</el-button>
+          <el-button @click="handleReset">
+            重置
+          </el-button>
         </el-form-item>
       </el-form>
 
@@ -86,45 +126,100 @@
         stripe
         style="width: 100%"
       >
-        <el-table-column type="selection" width="55" />
-        <el-table-column prop="withdrawalNo" label="提现单号" width="180" fixed="left" />
-        <el-table-column prop="storeName" label="门店名称" width="180" show-overflow-tooltip />
-        <el-table-column label="提现金额" width="120" align="right" fixed="left">
+        <el-table-column
+          type="selection"
+          width="55"
+        />
+        <el-table-column
+          prop="withdrawalNo"
+          label="提现单号"
+          width="180"
+          fixed="left"
+        />
+        <el-table-column
+          prop="storeName"
+          label="门店名称"
+          width="180"
+          show-overflow-tooltip
+        />
+        <el-table-column
+          label="提现金额"
+          width="120"
+          align="right"
+          fixed="left"
+        >
           <template #default="{ row }">
             <span style="color: #f56c6c; font-weight: 600; font-size: 15px">
               ¥{{ (row.withdrawalAmount / 100).toFixed(2) }}
             </span>
           </template>
         </el-table-column>
-        <el-table-column prop="orderCount" label="订单数量" width="100" align="center" />
-        <el-table-column prop="platformFee" label="平台手续费" width="120" align="right">
+        <el-table-column
+          prop="orderCount"
+          label="订单数量"
+          width="100"
+          align="center"
+        />
+        <el-table-column
+          prop="platformFee"
+          label="平台手续费"
+          width="120"
+          align="right"
+        >
           <template #default="{ row }">
             <span style="color: #67c23a">
               +¥{{ (row.platformFee / 100).toFixed(2) }}
             </span>
           </template>
         </el-table-column>
-        <el-table-column label="收款账户" width="250" show-overflow-tooltip>
+        <el-table-column
+          label="收款账户"
+          width="250"
+          show-overflow-tooltip
+        >
           <template #default="{ row }">
             <div>{{ row.bankAccount?.bankName }}</div>
-            <div style="color: #909399; font-size: 12px">{{ row.bankAccount?.accountNumber }}</div>
-            <div style="color: #909399; font-size: 12px">{{ row.bankAccount?.accountName }}</div>
+            <div style="color: #909399; font-size: 12px">
+              {{ row.bankAccount?.accountNumber }}
+            </div>
+            <div style="color: #909399; font-size: 12px">
+              {{ row.bankAccount?.accountName }}
+            </div>
           </template>
         </el-table-column>
-        <el-table-column label="申请类型" width="100">
+        <el-table-column
+          label="申请类型"
+          width="100"
+        >
           <template #default="{ row }">
-            <el-tag :type="row.applyType === 'platform_auto' ? 'info' : 'primary'" size="small">
+            <el-tag
+              :type="row.applyType === 'platform_auto' ? 'info' : 'primary'"
+              size="small"
+            >
               {{ row.applyType === 'platform_auto' ? '系统生成' : '门店申请' }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="appliedAt" label="申请时间" width="180">
+        <el-table-column
+          prop="appliedAt"
+          label="申请时间"
+          width="180"
+        >
           <template #default="{ row }">
             {{ formatDate(row.appliedAt) }}
           </template>
         </el-table-column>
-        <el-table-column prop="remark" label="备注" min-width="150" show-overflow-tooltip />
-        <el-table-column label="操作" width="150" fixed="right">
+        <el-table-column
+          prop="remark"
+          label="备注"
+          min-width="150"
+          show-overflow-tooltip
+        />
+        <el-table-column
+          label="操作"
+          width="150"
+          fixed="right"
+        >
           <template #default="{ row }">
             <el-button
               type="primary"
@@ -157,14 +252,29 @@
         <div class="card-header">
           <span>打款记录</span>
           <div>
-            <el-button type="success" size="small" @click="handleExportHistory">
+            <el-button
+              type="success"
+              size="small"
+              @click="handleExportHistory"
+            >
               <el-icon><Download /></el-icon>
               导出记录
             </el-button>
-            <el-radio-group v-model="historyStatusFilter" size="small" @change="fetchHistoryList" style="margin-left: 10px">
-              <el-radio-button value="">全部</el-radio-button>
-              <el-radio-button value="completed">已打款</el-radio-button>
-              <el-radio-button value="rejected">已驳回</el-radio-button>
+            <el-radio-group
+              v-model="historyStatusFilter"
+              size="small"
+              style="margin-left: 10px"
+              @change="fetchHistoryList"
+            >
+              <el-radio-button value="">
+                全部
+              </el-radio-button>
+              <el-radio-button value="completed">
+                已打款
+              </el-radio-button>
+              <el-radio-button value="rejected">
+                已驳回
+              </el-radio-button>
             </el-radio-group>
           </div>
         </div>
@@ -176,22 +286,49 @@
         stripe
         style="width: 100%"
       >
-        <el-table-column prop="withdrawalNo" label="提现单号" width="180" />
-        <el-table-column prop="storeName" label="门店名称" width="180" show-overflow-tooltip />
-        <el-table-column label="金额" width="120" align="right">
+        <el-table-column
+          prop="withdrawalNo"
+          label="提现单号"
+          width="180"
+        />
+        <el-table-column
+          prop="storeName"
+          label="门店名称"
+          width="180"
+          show-overflow-tooltip
+        />
+        <el-table-column
+          label="金额"
+          width="120"
+          align="right"
+        >
           <template #default="{ row }">
             ¥{{ (row.withdrawalAmount / 100).toFixed(2) }}
           </template>
         </el-table-column>
-        <el-table-column prop="orderCount" label="订单数" width="100" align="center" />
-        <el-table-column label="状态" width="100">
+        <el-table-column
+          prop="orderCount"
+          label="订单数"
+          width="100"
+          align="center"
+        />
+        <el-table-column
+          label="状态"
+          width="100"
+        >
           <template #default="{ row }">
-            <el-tag :type="getStatusType(row.status)" size="small">
+            <el-tag
+              :type="getStatusType(row.status)"
+              size="small"
+            >
               {{ getStatusText(row.status) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="打款凭证" width="100">
+        <el-table-column
+          label="打款凭证"
+          width="100"
+        >
           <template #default="{ row }">
             <el-button
               v-if="row.paymentProof || (row.paymentProofs && row.paymentProofs.length > 0)"
@@ -202,20 +339,33 @@
             >
               查看
             </el-button>
-            <span v-else style="color: #ccc">-</span>
+            <span
+              v-else
+              style="color: #ccc"
+            >-</span>
           </template>
         </el-table-column>
-        <el-table-column label="申请时间" width="180">
+        <el-table-column
+          label="申请时间"
+          width="180"
+        >
           <template #default="{ row }">
             {{ formatDate(row.appliedAt) }}
           </template>
         </el-table-column>
-        <el-table-column label="打款时间" width="180">
+        <el-table-column
+          label="打款时间"
+          width="180"
+        >
           <template #default="{ row }">
             {{ row.processedAt ? formatDate(row.processedAt) : '-' }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="150" fixed="right">
+        <el-table-column
+          label="操作"
+          width="150"
+          fixed="right"
+        >
           <template #default="{ row }">
             <el-button
               size="small"
@@ -252,11 +402,21 @@
         style="margin-bottom: 20px"
       />
 
-      <el-descriptions v-if="currentWithdrawal" :column="2" border>
-        <el-descriptions-item label="提现单号" :span="2">
+      <el-descriptions
+        v-if="currentWithdrawal"
+        :column="2"
+        border
+      >
+        <el-descriptions-item
+          label="提现单号"
+          :span="2"
+        >
           {{ currentWithdrawal.withdrawalNo }}
         </el-descriptions-item>
-        <el-descriptions-item label="门店名称" :span="2">
+        <el-descriptions-item
+          label="门店名称"
+          :span="2"
+        >
           {{ currentWithdrawal.storeName || '未知门店' }}
         </el-descriptions-item>
         <el-descriptions-item label="提现金额">
@@ -267,13 +427,22 @@
         <el-descriptions-item label="订单数量">
           {{ currentWithdrawal.orderCount || 0 }} 笔
         </el-descriptions-item>
-        <el-descriptions-item label="开户行" :span="2">
+        <el-descriptions-item
+          label="开户行"
+          :span="2"
+        >
           {{ currentWithdrawal.bankAccount?.bankName || '-' }}
         </el-descriptions-item>
-        <el-descriptions-item label="账号" :span="2">
+        <el-descriptions-item
+          label="账号"
+          :span="2"
+        >
           {{ currentWithdrawal.bankAccount?.accountNumber || '-' }}
         </el-descriptions-item>
-        <el-descriptions-item label="户名" :span="2">
+        <el-descriptions-item
+          label="户名"
+          :span="2"
+        >
           {{ currentWithdrawal.bankAccount?.accountName || '-' }}
         </el-descriptions-item>
       </el-descriptions>
@@ -285,7 +454,10 @@
         label-width="100px"
         style="margin-top: 20px"
       >
-        <el-form-item label="打款回单" prop="paymentProof">
+        <el-form-item
+          label="打款回单"
+          prop="paymentProof"
+        >
           <el-upload
             v-model:file-list="confirmFileList"
             :action="uploadUrl"
@@ -304,7 +476,10 @@
             支持jpg、png、pdf格式，最多上传5张
           </div>
         </el-form-item>
-        <el-form-item label="备注" prop="remark">
+        <el-form-item
+          label="备注"
+          prop="remark"
+        >
           <el-input
             v-model="confirmForm.remark"
             type="textarea"
@@ -315,7 +490,9 @@
       </el-form>
 
       <template #footer>
-        <el-button @click="confirmDialogVisible = false">取消</el-button>
+        <el-button @click="confirmDialogVisible = false">
+          取消
+        </el-button>
         <el-button
           type="primary"
           :loading="submitting"
@@ -362,7 +539,9 @@
       </el-form>
 
       <template #footer>
-        <el-button @click="generateDialogVisible = false">取消</el-button>
+        <el-button @click="generateDialogVisible = false">
+          取消
+        </el-button>
         <el-button
           type="primary"
           :loading="submitting"
@@ -379,11 +558,21 @@
       title="提现详情"
       width="700px"
     >
-      <el-descriptions v-if="currentWithdrawal" :column="2" border>
-        <el-descriptions-item label="提现单号" :span="2">
+      <el-descriptions
+        v-if="currentWithdrawal"
+        :column="2"
+        border
+      >
+        <el-descriptions-item
+          label="提现单号"
+          :span="2"
+        >
           {{ currentWithdrawal.withdrawalNo }}
         </el-descriptions-item>
-        <el-descriptions-item label="门店名称" :span="2">
+        <el-descriptions-item
+          label="门店名称"
+          :span="2"
+        >
           {{ currentWithdrawal.storeName || '未知门店' }}
         </el-descriptions-item>
         <el-descriptions-item label="提现金额">
@@ -402,13 +591,24 @@
             {{ getStatusText(currentWithdrawal.status) }}
           </el-tag>
         </el-descriptions-item>
-        <el-descriptions-item label="申请时间" :span="2">
+        <el-descriptions-item
+          label="申请时间"
+          :span="2"
+        >
           {{ formatDate(currentWithdrawal.appliedAt) }}
         </el-descriptions-item>
-        <el-descriptions-item v-if="currentWithdrawal.processedAt" label="打款时间" :span="2">
+        <el-descriptions-item
+          v-if="currentWithdrawal.processedAt"
+          label="打款时间"
+          :span="2"
+        >
           {{ formatDate(currentWithdrawal.processedAt) }}
         </el-descriptions-item>
-        <el-descriptions-item v-if="currentWithdrawal.remark" label="备注" :span="2">
+        <el-descriptions-item
+          v-if="currentWithdrawal.remark"
+          label="备注"
+          :span="2"
+        >
           {{ currentWithdrawal.remark }}
         </el-descriptions-item>
       </el-descriptions>
@@ -429,7 +629,10 @@
             arrow="always"
             indicator-position="outside"
           >
-            <el-carousel-item v-for="(image, index) in currentWithdrawal.paymentProofs" :key="index">
+            <el-carousel-item
+              v-for="(image, index) in currentWithdrawal.paymentProofs"
+              :key="index"
+            >
               <el-image
                 :src="image"
                 fit="contain"

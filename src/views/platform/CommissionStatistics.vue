@@ -4,7 +4,9 @@
       <template #header>
         <div class="card-header">
           <span>佣金统计</span>
-          <el-tag type="info">功能开发中</el-tag>
+          <el-tag type="info">
+            功能开发中
+          </el-tag>
         </div>
       </template>
       <el-empty description="佣金统计功能正在开发中，敬请期待..." />

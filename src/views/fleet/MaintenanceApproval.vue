@@ -4,22 +4,34 @@
     <el-row :gutter="20">
       <el-col :span="6">
         <el-card class="stat-card">
-          <el-statistic title="待审批" :value="stats.pending" />
+          <el-statistic
+            title="待审批"
+            :value="stats.pending"
+          />
         </el-card>
       </el-col>
       <el-col :span="6">
         <el-card class="stat-card stat-card-success">
-          <el-statistic title="今日已审批" :value="stats.approvedToday" />
+          <el-statistic
+            title="今日已审批"
+            :value="stats.approvedToday"
+          />
         </el-card>
       </el-col>
       <el-col :span="6">
         <el-card class="stat-card stat-card-warning">
-          <el-statistic title="今日已拒绝" :value="stats.rejectedToday" />
+          <el-statistic
+            title="今日已拒绝"
+            :value="stats.rejectedToday"
+          />
         </el-card>
       </el-col>
       <el-col :span="6">
         <el-card class="stat-card stat-card-info">
-          <el-statistic title="本月累计" :value="stats.monthTotal" />
+          <el-statistic
+            title="本月累计"
+            :value="stats.monthTotal"
+          />
         </el-card>
       </el-col>
     </el-row>
@@ -29,7 +41,11 @@
       <template #header>
         <div class="card-header">
           <span>待审批申请</span>
-          <el-button type="primary" size="small" @click="fetchApplications">
+          <el-button
+            type="primary"
+            size="small"
+            @click="fetchApplications"
+          >
             <el-icon><Refresh /></el-icon>
             刷新
           </el-button>
@@ -37,20 +53,42 @@
       </template>
 
       <!-- 搜索筛选 -->
-      <el-form :inline="true" class="search-form">
+      <el-form
+        :inline="true"
+        class="search-form"
+      >
         <el-form-item label="状态">
-          <el-select v-model="queryParams.status" placeholder="全部" clearable style="width: 120px">
-            <el-option label="待审批" value="pending" />
-            <el-option label="已审批" value="approved" />
-            <el-option label="已拒绝" value="rejected" />
+          <el-select
+            v-model="queryParams.status"
+            placeholder="全部"
+            clearable
+            style="width: 140px"
+          >
+            <el-option
+              label="待审批"
+              value="pending"
+            />
+            <el-option
+              label="已审批"
+              value="approved"
+            />
+            <el-option
+              label="已拒绝"
+              value="rejected"
+            />
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="handleQuery">
+          <el-button
+            type="primary"
+            @click="handleQuery"
+          >
             <el-icon><Search /></el-icon>
             查询
           </el-button>
-          <el-button @click="handleReset">重置</el-button>
+          <el-button @click="handleReset">
+            重置
+          </el-button>
         </el-form-item>
       </el-form>
 
@@ -61,33 +99,56 @@
         stripe
         style="width: 100%"
       >
-        <el-table-column prop="orderNumber" label="申请单号" width="180" />
-        <el-table-column label="车辆" width="150">
+        <el-table-column
+          prop="orderNumber"
+          label="申请单号"
+          width="180"
+        />
+        <el-table-column
+          label="车辆"
+          width="150"
+        >
           <template #default="{ row }">
             {{ row.orderId?.vehicleId?.plateNumber || '-' }}
           </template>
         </el-table-column>
-        <el-table-column label="保养类型" width="120">
+        <el-table-column
+          label="保养类型"
+          width="120"
+        >
           <template #default="{ row }">
             {{ row.maintenanceType?.name || '-' }}
           </template>
         </el-table-column>
-        <el-table-column label="服务地址" width="200" show-overflow-tooltip>
+        <el-table-column
+          label="服务地址"
+          width="200"
+          show-overflow-tooltip
+        >
           <template #default="{ row }">
             {{ row.orderId?.serviceLocation?.address || '-' }}
           </template>
         </el-table-column>
-        <el-table-column label="提交时间" width="110">
+        <el-table-column
+          label="提交时间"
+          width="110"
+        >
           <template #default="{ row }">
             {{ formatDateTime(row.createdAt) }}
           </template>
         </el-table-column>
-        <el-table-column label="当前里程" width="100">
+        <el-table-column
+          label="当前里程"
+          width="100"
+        >
           <template #default="{ row }">
             {{ row.orderId?.milestone || '-' }} km
           </template>
         </el-table-column>
-        <el-table-column label="里程照片" width="100">
+        <el-table-column
+          label="里程照片"
+          width="100"
+        >
           <template #default="{ row }">
             <el-button
               v-if="row.orderId?.milestonePhotos && row.orderId.milestonePhotos.length > 0"
@@ -101,12 +162,26 @@
             <span v-else>-</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column
+          label="操作"
+          width="200"
+          fixed="right"
+        >
           <template #default="{ row }">
-            <el-button type="primary" size="small" link @click="handleApprove(row)">
+            <el-button
+              type="primary"
+              size="small"
+              link
+              @click="handleApprove(row)"
+            >
               审批
             </el-button>
-            <el-button type="danger" size="small" link @click="handleReject(row)">
+            <el-button
+              type="danger"
+              size="small"
+              link
+              @click="handleReject(row)"
+            >
               拒绝
             </el-button>
           </template>
@@ -132,13 +207,28 @@
       :title="fleetConfig.allowDriverSelectStore ? '审批保养申请（司机已选择门店）' : '审批保养申请'"
       width="900px"
     >
-      <div v-if="currentApplication" class="approve-content">
+      <div
+        v-if="currentApplication"
+        class="approve-content"
+      >
         <!-- 申请信息 -->
-        <el-descriptions :column="2" border style="margin-bottom: 20px">
-          <el-descriptions-item label="申请单号">{{ currentApplication.orderId?.orderNumber }}</el-descriptions-item>
-          <el-descriptions-item label="保养类型">{{ currentApplication.maintenanceType?.name }}</el-descriptions-item>
-          <el-descriptions-item label="车辆">{{ currentApplication.orderId?.vehicleId?.plateNumber }}</el-descriptions-item>
-          <el-descriptions-item label="当前里程">{{ currentApplication.orderId?.milestone }} km</el-descriptions-item>
+        <el-descriptions
+          :column="2"
+          border
+          style="margin-bottom: 20px"
+        >
+          <el-descriptions-item label="申请单号">
+            {{ currentApplication.orderId?.orderNumber }}
+          </el-descriptions-item>
+          <el-descriptions-item label="保养类型">
+            {{ currentApplication.maintenanceType?.name }}
+          </el-descriptions-item>
+          <el-descriptions-item label="车辆">
+            {{ currentApplication.orderId?.vehicleId?.plateNumber }}
+          </el-descriptions-item>
+          <el-descriptions-item label="当前里程">
+            {{ currentApplication.orderId?.milestone }} km
+          </el-descriptions-item>
           <el-descriptions-item label="服务地址">
             {{ currentApplication.orderId?.serviceLocation?.address || '-' }}
           </el-descriptions-item>
@@ -149,8 +239,14 @@
           <el-descriptions-item label="司机备注">
             {{ currentApplication.driverRemark || '-' }}
           </el-descriptions-item>
-          <el-descriptions-item label="里程照片" :span="2">
-            <div v-if="currentApplication.orderId?.milestonePhotos && currentApplication.orderId.milestonePhotos.length > 0" class="milestone-photos">
+          <el-descriptions-item
+            label="里程照片"
+            :span="2"
+          >
+            <div
+              v-if="currentApplication.orderId?.milestonePhotos && currentApplication.orderId.milestonePhotos.length > 0"
+              class="milestone-photos"
+            >
               <el-image
                 v-for="(photo, index) in currentApplication.orderId.milestonePhotos"
                 :key="index"
@@ -189,8 +285,15 @@
         </el-alert>
 
         <!-- 选择门店（仅当车队分配门店时显示） -->
-        <el-form :model="approveForm" label-width="120px" v-if="!fleetConfig.allowDriverSelectStore">
-          <el-form-item label="选择门店" required>
+        <el-form
+          v-if="!fleetConfig.allowDriverSelectStore"
+          :model="approveForm"
+          label-width="120px"
+        >
+          <el-form-item
+            label="选择门店"
+            required
+          >
             <el-select
               v-model="approveForm.storeId"
               placeholder="请选择维修门店"
@@ -208,7 +311,10 @@
         </el-form>
 
         <!-- 套餐调整 -->
-        <el-form :model="approveForm" label-width="120px">
+        <el-form
+          :model="approveForm"
+          label-width="120px"
+        >
           <el-form-item label="套餐选择">
             <el-select
               v-model="approveForm.packageId"
@@ -242,7 +348,10 @@
           </el-alert>
 
           <!-- 最终金额 -->
-          <el-form-item label="审批金额" required>
+          <el-form-item
+            label="审批金额"
+            required
+          >
             <el-input-number
               v-model="approveForm.finalAmount"
               :min="0"
@@ -281,8 +390,16 @@
       </div>
 
       <template #footer>
-        <el-button @click="approveDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="confirmApprove" :loading="approving">确认通过</el-button>
+        <el-button @click="approveDialogVisible = false">
+          取消
+        </el-button>
+        <el-button
+          type="primary"
+          :loading="approving"
+          @click="confirmApprove"
+        >
+          确认通过
+        </el-button>
       </template>
     </el-dialog>
 
@@ -292,8 +409,14 @@
       title="拒绝保养申请"
       width="500px"
     >
-      <el-form :model="rejectForm" label-width="80px">
-        <el-form-item label="拒绝原因" required>
+      <el-form
+        :model="rejectForm"
+        label-width="80px"
+      >
+        <el-form-item
+          label="拒绝原因"
+          required
+        >
           <el-input
             v-model="rejectForm.reason"
             type="textarea"
@@ -305,8 +428,15 @@
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="rejectDialogVisible = false">取消</el-button>
-        <el-button type="danger" @click="confirmReject" :loading="rejecting" :disabled="!rejectForm.reason.trim()">
+        <el-button @click="rejectDialogVisible = false">
+          取消
+        </el-button>
+        <el-button
+          type="danger"
+          :loading="rejecting"
+          :disabled="!rejectForm.reason.trim()"
+          @click="confirmReject"
+        >
           确认拒绝
         </el-button>
       </template>

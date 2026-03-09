@@ -4,32 +4,50 @@
     <el-row :gutter="20">
       <el-col :span="4">
         <el-card class="stat-card">
-          <el-statistic title="总订单" :value="stats.totalOrders" />
+          <el-statistic
+            title="总订单"
+            :value="stats.totalOrders"
+          />
         </el-card>
       </el-col>
       <el-col :span="4">
         <el-card class="stat-card stat-card-warning">
-          <el-statistic title="待接单" :value="stats.pendingOrders" />
+          <el-statistic
+            title="待接单"
+            :value="stats.pendingOrders"
+          />
         </el-card>
       </el-col>
       <el-col :span="4">
         <el-card class="stat-card stat-card-info">
-          <el-statistic title="维修中" :value="stats.repairingOrders" />
+          <el-statistic
+            title="维修中"
+            :value="stats.repairingOrders"
+          />
         </el-card>
       </el-col>
       <el-col :span="4">
         <el-card class="stat-card stat-card-success">
-          <el-statistic title="已完成" :value="stats.completedOrders" />
+          <el-statistic
+            title="已完成"
+            :value="stats.completedOrders"
+          />
         </el-card>
       </el-col>
       <el-col :span="4">
         <el-card class="stat-card stat-card-primary">
-          <el-statistic title="待初审" :value="stats.quotedOrders" />
+          <el-statistic
+            title="待初审"
+            :value="stats.quotedOrders"
+          />
         </el-card>
       </el-col>
       <el-col :span="4">
         <el-card class="stat-card stat-card-danger">
-          <el-statistic title="今日订单" :value="stats.todayOrders" />
+          <el-statistic
+            title="今日订单"
+            :value="stats.todayOrders"
+          />
         </el-card>
       </el-col>
     </el-row>
@@ -40,7 +58,13 @@
         <div class="card-header">
           <span>全平台订单监控</span>
           <div class="header-actions">
-            <el-dropdown split-button type="warning" size="small" @click="handleExport('filtered')" :loading="exporting">
+            <el-dropdown
+              split-button
+              type="warning"
+              size="small"
+              :loading="exporting"
+              @click="handleExport('filtered')"
+            >
               <el-icon><Download /></el-icon>
               导出数据
               <template #dropdown>
@@ -54,7 +78,11 @@
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
-            <el-button type="primary" size="small" @click="handleRefresh">
+            <el-button
+              type="primary"
+              size="small"
+              @click="handleRefresh"
+            >
               <el-icon><Refresh /></el-icon>
               刷新
             </el-button>
@@ -63,15 +91,45 @@
       </template>
 
       <!-- 搜索筛选 -->
-      <el-form :inline="true" class="search-form">
+      <el-form
+        :inline="true"
+        class="search-form"
+      >
         <el-form-item label="订单状态">
-          <el-select v-model="queryParams.status" placeholder="全部" clearable style="width: 150px">
-            <el-option label="待车队审批" value="awaiting_fleet_approval" />
-            <el-option label="待评估" value="pending_assessment" />
-            <el-option label="待审批" value="awaiting_approval" />
-            <el-option label="维修中" value="in_repair" />
-            <el-option label="已完成" value="completed" />
-            <el-option label="已拒绝" value="rejected" />
+          <el-select
+            v-model="queryParams.status"
+            placeholder="全部"
+            clearable
+            style="width: 160px"
+          >
+            <el-option
+              label="待车队审批"
+              value="awaiting_fleet_approval"
+            />
+            <el-option
+              label="待评估"
+              value="pending_assessment"
+            />
+            <el-option
+              label="待审批"
+              value="awaiting_approval"
+            />
+            <el-option
+              label="维修中"
+              value="in_repair"
+            />
+            <el-option
+              label="待确认"
+              value="pending_confirmation"
+            />
+            <el-option
+              label="已完成"
+              value="completed"
+            />
+            <el-option
+              label="已拒绝"
+              value="rejected"
+            />
           </el-select>
         </el-form-item>
         <el-form-item label="关键词">
@@ -84,11 +142,16 @@
         </el-form-item>
         <el-form-item>
           <div class="form-actions">
-            <el-button type="primary" @click="handleQuery">
+            <el-button
+              type="primary"
+              @click="handleQuery"
+            >
               <el-icon><Search /></el-icon>
               查询
             </el-button>
-            <el-button @click="handleReset">重置</el-button>
+            <el-button @click="handleReset">
+              重置
+            </el-button>
           </div>
         </el-form-item>
       </el-form>
@@ -100,44 +163,81 @@
         stripe
         style="width: 100%"
       >
-        <el-table-column prop="orderNumber" label="订单号" width="180" fixed="left" />
-        <el-table-column label="车牌号" width="120">
+        <el-table-column
+          prop="orderNumber"
+          label="订单号"
+          width="180"
+          fixed="left"
+        />
+        <el-table-column
+          label="车牌号"
+          width="120"
+        >
           <template #default="{ row }">
             {{ row.vehicleId?.plateNumber || '-' }}
           </template>
         </el-table-column>
-        <el-table-column label="车队" width="150">
+        <el-table-column
+          label="车队"
+          width="150"
+        >
           <template #default="{ row }">
             {{ row.vehicleId?.fleetId?.name || '-' }}
           </template>
         </el-table-column>
-        <el-table-column prop="faultDescription" label="故障描述" min-width="200" show-overflow-tooltip />
-        <el-table-column label="报价金额" width="120" align="right">
+        <el-table-column
+          prop="faultDescription"
+          label="故障描述"
+          min-width="200"
+          show-overflow-tooltip
+        />
+        <el-table-column
+          label="报价金额"
+          width="120"
+          align="right"
+        >
           <template #default="{ row }">
-            <span v-if="row.quote" style="color: #f56c6c; font-weight: 600">
+            <span
+              v-if="row.quote"
+              style="color: #f56c6c; font-weight: 600"
+            >
               ¥{{ row.quote.total }}
             </span>
             <span v-else>-</span>
           </template>
         </el-table-column>
-        <el-table-column label="维修门店" width="180">
+        <el-table-column
+          label="维修门店"
+          width="180"
+        >
           <template #default="{ row }">
             {{ row.storeId?.name || '-' }}
           </template>
         </el-table-column>
-        <el-table-column label="状态" width="100" align="center">
+        <el-table-column
+          label="状态"
+          width="100"
+          align="center"
+        >
           <template #default="{ row }">
             <el-tag :type="getStatusType(row.status)">
               {{ getStatusText(row.status) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="创建时间" width="110">
+        <el-table-column
+          label="创建时间"
+          width="110"
+        >
           <template #default="{ row }">
             {{ formatDate(row.createdAt) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column
+          label="操作"
+          width="200"
+          fixed="right"
+        >
           <template #default="{ row }">
             <el-button
               type="primary"
@@ -179,8 +279,15 @@
       title="订单详情"
       width="900px"
     >
-      <el-descriptions v-if="currentOrder._id" :column="2" border>
-        <el-descriptions-item label="订单号" :span="2">
+      <el-descriptions
+        v-if="currentOrder._id"
+        :column="2"
+        border
+      >
+        <el-descriptions-item
+          label="订单号"
+          :span="2"
+        >
           {{ currentOrder.orderNumber }}
         </el-descriptions-item>
         <el-descriptions-item label="车牌号">
@@ -189,7 +296,10 @@
         <el-descriptions-item label="车队">
           {{ currentOrder.vehicleId?.fleetId?.name }}
         </el-descriptions-item>
-        <el-descriptions-item label="故障描述" :span="2">
+        <el-descriptions-item
+          label="故障描述"
+          :span="2"
+        >
           {{ currentOrder.faultDescription }}
         </el-descriptions-item>
         <el-descriptions-item label="维修门店">
@@ -198,7 +308,10 @@
         <el-descriptions-item label="接单技师">
           {{ currentOrder.technicianId?.nickname || '-' }}
         </el-descriptions-item>
-        <el-descriptions-item label="报价金额" v-if="currentOrder.quote">
+        <el-descriptions-item
+          v-if="currentOrder.quote"
+          label="报价金额"
+        >
           <span style="color: #f56c6c; font-weight: 600; font-size: 18px">
             ¥{{ currentOrder.quote.total }}
           </span>
@@ -208,23 +321,46 @@
             {{ getStatusText(currentOrder.status) }}
           </el-tag>
         </el-descriptions-item>
-        <el-descriptions-item label="创建时间" :span="2">
+        <el-descriptions-item
+          label="创建时间"
+          :span="2"
+        >
           {{ formatDateTime(currentOrder.createdAt) }}
         </el-descriptions-item>
       </el-descriptions>
 
       <!-- 报价明细 -->
       <template v-if="currentOrder.quote && currentOrder.quote.items">
-        <el-divider content-position="left">报价明细</el-divider>
-        <el-table :data="currentOrder.quote.items" size="small" border>
-          <el-table-column prop="item" label="项目" />
-          <el-table-column prop="price" label="单价" width="100">
+        <el-divider content-position="left">
+          报价明细
+        </el-divider>
+        <el-table
+          :data="currentOrder.quote.items"
+          size="small"
+          border
+        >
+          <el-table-column
+            prop="item"
+            label="项目"
+          />
+          <el-table-column
+            prop="price"
+            label="单价"
+            width="100"
+          >
             <template #default="{ row }">
               ¥{{ row.price }}
             </template>
           </el-table-column>
-          <el-table-column prop="quantity" label="数量" width="80" />
-          <el-table-column label="小计" width="100">
+          <el-table-column
+            prop="quantity"
+            label="数量"
+            width="80"
+          />
+          <el-table-column
+            label="小计"
+            width="100"
+          >
             <template #default="{ row }">
               ¥{{ row.price * row.quantity }}
             </template>
@@ -242,7 +378,9 @@
 
       <!-- 维修日志 -->
       <template v-if="currentOrder.logs && currentOrder.logs.length">
-        <el-divider content-position="left">维修日志</el-divider>
+        <el-divider content-position="left">
+          维修日志
+        </el-divider>
         <el-timeline>
           <el-timeline-item
             v-for="log in currentOrder.logs"
@@ -250,7 +388,10 @@
             :timestamp="formatDateTime(log.createdAt)"
           >
             {{ log.content }}
-            <div v-if="log.images && log.images.length" style="margin-top: 5px">
+            <div
+              v-if="log.images && log.images.length"
+              style="margin-top: 5px"
+            >
               <el-image
                 v-for="(img, idx) in log.images"
                 :key="idx"
@@ -272,12 +413,21 @@
       title="订单初审"
       width="600px"
     >
-      <el-form :model="approveForm" label-width="100px">
+      <el-form
+        :model="approveForm"
+        label-width="100px"
+      >
         <el-form-item label="订单号">
-          <el-input :value="currentOrder.orderNumber" disabled />
+          <el-input
+            :value="currentOrder.orderNumber"
+            disabled
+          />
         </el-form-item>
         <el-form-item label="车牌号">
-          <el-input :value="currentOrder.vehicleId?.plateNumber" disabled />
+          <el-input
+            :value="currentOrder.vehicleId?.plateNumber"
+            disabled
+          />
         </el-form-item>
         <el-form-item label="故障描述">
           <el-input
@@ -288,14 +438,23 @@
           />
         </el-form-item>
         <el-form-item label="报价金额">
-          <el-input :value="`¥${currentOrder.quote?.total || 0}`" disabled>
-            <template #prepend>总计</template>
+          <el-input
+            :value="`¥${currentOrder.quote?.total || 0}`"
+            disabled
+          >
+            <template #prepend>
+              总计
+            </template>
           </el-input>
         </el-form-item>
         <el-form-item label="审批结果">
           <el-radio-group v-model="approveForm.approved">
-            <el-radio :label="true">通过</el-radio>
-            <el-radio :label="false">拒绝</el-radio>
+            <el-radio :label="true">
+              通过
+            </el-radio>
+            <el-radio :label="false">
+              拒绝
+            </el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="审批意见">
@@ -308,8 +467,15 @@
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="approveDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="confirmApprove">确定</el-button>
+        <el-button @click="approveDialogVisible = false">
+          取消
+        </el-button>
+        <el-button
+          type="primary"
+          @click="confirmApprove"
+        >
+          确定
+        </el-button>
       </template>
     </el-dialog>
   </div>
@@ -320,6 +486,7 @@ import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Download, Refresh } from '@element-plus/icons-vue'
 import { getOrders, getOrderDetail, approveQuote, exportOrders } from '@/api/order'
+import { getOverview } from '@/api/stats'
 import dayjs from 'dayjs'
 
 const loading = ref(false)
@@ -335,6 +502,25 @@ const stats = ref({
   completedOrders: 0,
   todayOrders: 0
 })
+
+const fetchOverviewStats = async () => {
+  try {
+    const res = await getOverview()
+    const overview = res.data || {}
+
+    stats.value = {
+      ...stats.value,
+      totalOrders: Number(overview.orders?.total ?? 0),
+      pendingOrders: Number(overview.orders?.pending ?? 0),
+      quotedOrders: Number(overview.orders?.quoted ?? 0),
+      repairingOrders: Number(overview.orders?.repairing ?? 0),
+      completedOrders: Number(overview.orders?.completed ?? 0),
+      todayOrders: Number(overview.orders?.today ?? 0)
+    }
+  } catch (error) {
+    console.error('获取订单概览失败:', error)
+  }
+}
 
 const queryParams = ref({
   page: 1,
@@ -360,7 +546,7 @@ const fetchOrders = async () => {
     total.value = res.data.total || 0
 
     // 计算统计数据
-    calculateStats(orderList.value)
+    fetchOverviewStats()
   } catch (error) {
     console.error('获取订单列表失败:', error)
   } finally {
@@ -379,7 +565,8 @@ const calculateStats = (orders) => {
     quotedOrders: orders.filter(o => o.status === 'awaiting_fleet_approval').length,
     approvedOrders: orders.filter(o => o.status === 'awaiting_approval').length,
     repairingOrders: orders.filter(o => o.status === 'in_repair').length,
-    completedOrders: orders.filter(o => ['completed', 'confirmed'].includes(o.status)).length,
+    pendingConfirmationOrders: orders.filter(o => o.status === 'pending_confirmation').length,
+    completedOrders: orders.filter(o => o.status === 'completed').length,
     todayOrders: orders.filter(o => new Date(o.createdAt) >= today).length
   }
 }
@@ -468,7 +655,7 @@ const confirmApprove = async () => {
     await approveQuote(currentOrder.value._id, approveForm.value)
     ElMessage.success('审批成功')
     approveDialogVisible.value = false
-    fetchOrders()
+    await fetchOrders()
   } catch (error) {
     console.error('审批失败:', error)
   }
@@ -478,10 +665,12 @@ const confirmApprove = async () => {
 const getStatusType = (status) => {
   const typeMap = {
     'awaiting_fleet_approval': 'info',
+    'awaiting_time_confirmation': 'info',
     'pending_assessment': 'warning',
     'awaiting_approval': 'warning',
     'in_repair': 'primary',
     'awaiting_addon_approval': 'warning',
+    'pending_confirmation': 'warning',
     'completed': 'success',
     'refunded': 'info',
     'rejected': 'danger'
@@ -493,10 +682,12 @@ const getStatusType = (status) => {
 const getStatusText = (status) => {
   const textMap = {
     'awaiting_fleet_approval': '待车队审批',
+    'awaiting_time_confirmation': '待确认时间',
     'pending_assessment': '待评估',
     'awaiting_approval': '待审批',
     'in_repair': '维修中',
     'awaiting_addon_approval': '增项待审批',
+    'pending_confirmation': '待确认',
     'completed': '已完成',
     'refunded': '已退款',
     'rejected': '已拒绝'

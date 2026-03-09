@@ -106,6 +106,22 @@ export function getStoreSettlements(params) {
   })
 }
 
+export function getStoreOrders(params) {
+  return request({
+    url: '/store/orders',
+    method: 'get',
+    params
+  })
+}
+
+export function getStoreStatistics(params) {
+  return request({
+    url: '/store/statistics',
+    method: 'get',
+    params
+  })
+}
+
 /**
  * 门店端 - 获取已完成订单
  */

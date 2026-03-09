@@ -2,7 +2,13 @@
   <div class="store-orders">
     <div class="page-header">
       <h2>门店订单</h2>
-      <el-dropdown split-button type="warning" size="small" @click="handleExport('filtered')" :loading="exporting">
+      <el-dropdown
+        split-button
+        type="warning"
+        size="small"
+        :loading="exporting"
+        @click="handleExport('filtered')"
+      >
         <el-icon><Download /></el-icon>
         导出数据
         <template #dropdown>
@@ -19,49 +25,140 @@
     </div>
 
     <!-- 统计卡片 -->
-    <el-row :gutter="20" class="stats-row">
-      <el-col :span="6">
+    <el-row
+      :gutter="20"
+      class="stats-row"
+    >
+      <el-col :span="3">
         <el-card class="stat-card stat-card-info">
-          <el-statistic title="待确认时间" :value="stats.awaiting_time_confirmation" />
+          <el-statistic
+            title="待确认时间"
+            :value="stats.awaiting_time_confirmation"
+          />
         </el-card>
       </el-col>
-      <el-col :span="6">
+      <el-col :span="3">
         <el-card class="stat-card">
-          <el-statistic title="待接车" :value="stats.pending_assessment" />
+          <el-statistic
+            title="待接车"
+            :value="stats.pending_assessment"
+          />
         </el-card>
       </el-col>
-      <el-col :span="6">
+      <el-col :span="3">
         <el-card class="stat-card stat-card-warning">
-          <el-statistic title="待报价" :value="stats.awaiting_approval" />
+          <el-statistic
+            title="待报价"
+            :value="stats.awaiting_approval"
+          />
         </el-card>
       </el-col>
-      <el-col :span="6">
+      <el-col :span="3">
         <el-card class="stat-card stat-card-primary">
-          <el-statistic title="维修中" :value="stats.in_repair" />
+          <el-statistic
+            title="维修中"
+            :value="stats.in_repair"
+          />
+        </el-card>
+      </el-col>
+      <el-col :span="3">
+        <el-card class="stat-card stat-card-warning">
+          <el-statistic
+            title="增项待审批"
+            :value="stats.awaiting_addon_approval"
+          />
+        </el-card>
+      </el-col>
+      <el-col :span="3">
+        <el-card class="stat-card stat-card-warning">
+          <el-statistic
+            title="待确认"
+            :value="stats.pending_confirmation"
+          />
+        </el-card>
+      </el-col>
+      <el-col :span="3">
+        <el-card class="stat-card stat-card-success">
+          <el-statistic
+            title="已完成"
+            :value="stats.completed"
+          />
         </el-card>
       </el-col>
     </el-row>
 
     <!-- 筛选条件 -->
     <el-card class="filter-card">
-      <el-form :inline="true" :model="filters">
+      <el-form
+        :inline="true"
+        :model="filters"
+      >
         <el-form-item label="订单状态">
-          <el-select v-model="filters.status" placeholder="全部状态" clearable @change="loadOrders" style="width: 180px">
-            <el-option label="全部状态" value=""></el-option>
-            <el-option label="待确认时间" value="awaiting_time_confirmation"></el-option>
-            <el-option label="待接车" value="pending_assessment"></el-option>
-            <el-option label="待报价" value="awaiting_approval"></el-option>
-            <el-option label="维修中" value="in_repair"></el-option>
-            <el-option label="增项待审批" value="awaiting_addon_approval"></el-option>
-            <el-option label="待确认" value="completed"></el-option>
-            <el-option label="已拒绝" value="rejected"></el-option>
+          <el-select
+            v-model="filters.status"
+            placeholder="全部状态"
+            clearable
+            style="width: 180px"
+            @change="loadOrders"
+          >
+            <el-option
+              label="全部状态"
+              value=""
+            />
+            <el-option
+              label="待确认时间"
+              value="awaiting_time_confirmation"
+            />
+            <el-option
+              label="待接车"
+              value="pending_assessment"
+            />
+            <el-option
+              label="待报价"
+              value="awaiting_approval"
+            />
+            <el-option
+              label="维修中"
+              value="in_repair"
+            />
+            <el-option
+              label="增项待审批"
+              value="awaiting_addon_approval"
+            />
+            <el-option
+              label="待确认"
+              value="pending_confirmation"
+            />
+            <el-option
+              label="已完成"
+              value="completed"
+            />
+            <el-option
+              label="已拒绝"
+              value="rejected"
+            />
           </el-select>
         </el-form-item>
         <el-form-item label="订单类型">
-          <el-select v-model="filters.type" placeholder="全部类型" clearable @change="loadOrders" style="width: 150px">
-            <el-option label="全部类型" value=""></el-option>
-            <el-option label="维修订单" value="repair"></el-option>
-            <el-option label="保养订单" value="maintenance"></el-option>
+          <el-select
+            v-model="filters.type"
+            placeholder="全部类型"
+            clearable
+            style="width: 150px"
+            @change="loadOrders"
+          >
+            <el-option
+              label="全部类型"
+              value=""
+            />
+            <el-option
+              label="维修订单"
+              value="repair"
+            />
+            <el-option
+              label="保养订单"
+              value="maintenance"
+            />
           </el-select>
         </el-form-item>
         <el-form-item label="创建时间">
@@ -77,8 +174,15 @@
         </el-form-item>
         <el-form-item>
           <div class="form-actions">
-            <el-button type="primary" @click="loadOrders">查询</el-button>
-            <el-button @click="resetFilters">重置</el-button>
+            <el-button
+              type="primary"
+              @click="loadOrders"
+            >
+              查询
+            </el-button>
+            <el-button @click="resetFilters">
+              重置
+            </el-button>
           </div>
         </el-form-item>
       </el-form>
@@ -86,50 +190,98 @@
 
     <!-- 订单列表 -->
     <el-card class="table-card">
-      <el-table :data="orders" v-loading="loading" stripe>
-        <el-table-column prop="orderNumber" label="订单号" width="180" />
-        <el-table-column label="类型" width="100">
+      <el-table
+        v-loading="loading"
+        :data="orders"
+        stripe
+      >
+        <el-table-column
+          prop="orderNumber"
+          label="订单号"
+          width="180"
+        />
+        <el-table-column
+          label="类型"
+          width="100"
+        >
           <template #default="{ row }">
-            <el-tag :type="row.type === 'repair' ? '' : 'success'" size="small">
+            <el-tag
+              :type="row.type === 'repair' ? '' : 'success'"
+              size="small"
+            >
               {{ row.type === 'repair' ? '维修' : '保养' }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="车辆" width="150">
+        <el-table-column
+          label="车辆"
+          width="150"
+        >
           <template #default="{ row }">
             {{ row.vehicleId?.plateNumber || '-' }}
           </template>
         </el-table-column>
-        <el-table-column label="报修人" width="120">
+        <el-table-column
+          label="报修人"
+          width="120"
+        >
           <template #default="{ row }">
             {{ row.reporterId?.name || '-' }}
           </template>
         </el-table-column>
-        <el-table-column label="故障描述" min-width="200">
+        <el-table-column
+          label="故障描述"
+          min-width="200"
+        >
           <template #default="{ row }">
             {{ row.faultDescription || '-' }}
           </template>
         </el-table-column>
-        <el-table-column label="报价金额" width="120" align="right">
+        <el-table-column
+          label="报价金额"
+          width="120"
+          align="right"
+        >
           <template #default="{ row }">
             <span class="amount">{{ row.quote?.total ? '¥' + formatAmount(row.quote.total) : '-' }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="状态" width="100">
+        <el-table-column
+          label="状态"
+          width="100"
+        >
           <template #default="{ row }">
-            <el-tag :type="getStatusColor(row.status)" size="small">
+            <el-tag
+              :type="getStatusColor(row.status)"
+              size="small"
+            >
               {{ getStatusText(row.status) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="createdAt" label="创建时间" width="180">
+        <el-table-column
+          prop="createdAt"
+          label="创建时间"
+          width="180"
+        >
           <template #default="{ row }">
             {{ formatDate(row.createdAt) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="150" fixed="right">
+        <el-table-column
+          label="操作"
+          width="150"
+          fixed="right"
+        >
           <template #default="{ row }">
-            <el-button link type="primary" size="small" @click="viewDetail(row)">详情</el-button>
+            <el-button
+              link
+              type="primary"
+              size="small"
+              @click="viewDetail(row)"
+            >
+              详情
+            </el-button>
             <el-button
               v-if="row.status === 'awaiting_time_confirmation'"
               link
@@ -167,42 +319,70 @@
         :total="pagination.total"
         :page-sizes="[10, 20, 50, 100]"
         layout="total, sizes, prev, pager, next, jumper"
+        class="pagination"
         @size-change="loadOrders"
         @current-change="loadOrders"
-        class="pagination"
       />
     </el-card>
 
     <!-- 订单详情对话框 -->
-    <el-dialog v-model="detailVisible" title="订单详情" width="900px">
-      <el-descriptions v-if="currentOrder" :column="2" border>
-        <el-descriptions-item label="订单号">{{ currentOrder.orderNumber }}</el-descriptions-item>
+    <el-dialog
+      v-model="detailVisible"
+      title="订单详情"
+      width="900px"
+    >
+      <el-descriptions
+        v-if="currentOrder"
+        :column="2"
+        border
+      >
+        <el-descriptions-item label="订单号">
+          {{ currentOrder.orderNumber }}
+        </el-descriptions-item>
         <el-descriptions-item label="订单类型">
           <el-tag :type="currentOrder.type === 'repair' ? '' : 'success'">
             {{ currentOrder.type === 'repair' ? '维修订单' : '保养订单' }}
           </el-tag>
         </el-descriptions-item>
-        <el-descriptions-item label="车牌号">{{ currentOrder.vehicleId?.plateNumber }}</el-descriptions-item>
+        <el-descriptions-item label="车牌号">
+          {{ currentOrder.vehicleId?.plateNumber }}
+        </el-descriptions-item>
         <el-descriptions-item label="品牌型号">
           {{ currentOrder.vehicleId?.brand }} {{ currentOrder.vehicleId?.model }}
         </el-descriptions-item>
-        <el-descriptions-item label="报修人">{{ currentOrder.reporterId?.name || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="联系电话">{{ currentOrder.reporterId?.phone || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="报修人">
+          {{ currentOrder.reporterId?.name || '-' }}
+        </el-descriptions-item>
+        <el-descriptions-item label="联系电话">
+          {{ currentOrder.reporterId?.phone || '-' }}
+        </el-descriptions-item>
         <el-descriptions-item label="预约时间">
           {{ currentOrder.appointmentAt ? formatDate(currentOrder.appointmentAt) : '-' }}
         </el-descriptions-item>
         <el-descriptions-item label="当前里程">
           {{ currentOrder.milestone ? currentOrder.milestone + ' 公里' : '-' }}
         </el-descriptions-item>
-        <el-descriptions-item label="故障描述" :span="2">
+        <el-descriptions-item
+          label="故障描述"
+          :span="2"
+        >
           {{ currentOrder.faultDescription }}
         </el-descriptions-item>
-        <el-descriptions-item label="接车检查" :span="2" v-if="currentOrder.receiveCheck">
+        <el-descriptions-item
+          v-if="currentOrder.receiveCheck"
+          label="接车检查"
+          :span="2"
+        >
           <div><strong>检查里程：</strong>{{ currentOrder.receiveCheck.mileage || '-' }} 公里</div>
           <div><strong>诊断结果：</strong>{{ currentOrder.receiveCheck.diagnosis || '-' }}</div>
         </el-descriptions-item>
-        <el-descriptions-item label="报价信息" :span="2" v-if="currentOrder.quote">
-          <div><strong>报价总额：</strong>
+        <el-descriptions-item
+          v-if="currentOrder.quote"
+          label="报价信息"
+          :span="2"
+        >
+          <div>
+            <strong>报价总额：</strong>
             <span class="total-amount">¥{{ formatAmount(currentOrder.quote.total) }}</span>
           </div>
         </el-descriptions-item>
@@ -218,10 +398,21 @@
     </el-dialog>
 
     <!-- 确认时间对话框 -->
-    <el-dialog v-model="confirmTimeDialogVisible" title="确认到店时间" width="500px">
-      <el-form v-if="currentOrder" :model="confirmTimeForm" label-width="100px">
+    <el-dialog
+      v-model="confirmTimeDialogVisible"
+      title="确认到店时间"
+      width="500px"
+    >
+      <el-form
+        v-if="currentOrder"
+        :model="confirmTimeForm"
+        label-width="100px"
+      >
         <el-form-item label="订单号">
-          <el-input :value="currentOrder.orderNumber" disabled />
+          <el-input
+            :value="currentOrder.orderNumber"
+            disabled
+          />
         </el-form-item>
 
         <el-form-item label="期望时间">
@@ -231,7 +422,10 @@
           </div>
         </el-form-item>
 
-        <el-form-item label="确认日期" required>
+        <el-form-item
+          label="确认日期"
+          required
+        >
           <el-date-picker
             v-model="confirmTimeForm.confirmedDate"
             type="date"
@@ -241,7 +435,10 @@
           />
         </el-form-item>
 
-        <el-form-item label="时间段" required>
+        <el-form-item
+          label="时间段"
+          required
+        >
           <el-select
             v-model="confirmTimeForm.confirmedTimeSlot"
             placeholder="选择时间段"
@@ -262,7 +459,10 @@
             active-text="已调整时间"
             inactive-text="按原时间"
           />
-          <div class="form-tip" style="margin-top: 8px;">
+          <div
+            class="form-tip"
+            style="margin-top: 8px;"
+          >
             如调整了司机期望的时间，请开启此选项
           </div>
         </el-form-item>
@@ -280,27 +480,57 @@
       </el-form>
 
       <template #footer>
-        <el-button @click="confirmTimeDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleConfirmTime" :loading="confirming">
+        <el-button @click="confirmTimeDialogVisible = false">
+          取消
+        </el-button>
+        <el-button
+          type="primary"
+          :loading="confirming"
+          @click="handleConfirmTime"
+        >
           确认
         </el-button>
       </template>
     </el-dialog>
 
     <!-- 接车检查对话框 -->
-    <el-dialog v-model="receiveDialogVisible" title="接车检查" width="900px" :close-on-click-modal="false">
+    <el-dialog
+      v-model="receiveDialogVisible"
+      title="接车检查"
+      width="900px"
+      :close-on-click-modal="false"
+    >
       <div v-if="currentOrder">
         <!-- 订单基本信息 -->
-        <el-descriptions :column="2" border style="margin-bottom: 20px">
-          <el-descriptions-item label="订单号">{{ currentOrder.orderNumber }}</el-descriptions-item>
-          <el-descriptions-item label="车牌号">{{ currentOrder.vehicleId?.plateNumber }}</el-descriptions-item>
-          <el-descriptions-item label="报修里程">{{ currentOrder.milestone }} 公里</el-descriptions-item>
-          <el-descriptions-item label="故障描述">{{ currentOrder.faultDescription }}</el-descriptions-item>
+        <el-descriptions
+          :column="2"
+          border
+          style="margin-bottom: 20px"
+        >
+          <el-descriptions-item label="订单号">
+            {{ currentOrder.orderNumber }}
+          </el-descriptions-item>
+          <el-descriptions-item label="车牌号">
+            {{ currentOrder.vehicleId?.plateNumber }}
+          </el-descriptions-item>
+          <el-descriptions-item label="报修里程">
+            {{ currentOrder.milestone }} 公里
+          </el-descriptions-item>
+          <el-descriptions-item label="故障描述">
+            {{ currentOrder.faultDescription }}
+          </el-descriptions-item>
         </el-descriptions>
 
-        <el-form :model="receiveForm" label-width="120px" ref="receiveFormRef">
+        <el-form
+          ref="receiveFormRef"
+          :model="receiveForm"
+          label-width="120px"
+        >
           <!-- 当前里程 -->
-          <el-form-item label="当前里程" required>
+          <el-form-item
+            label="当前里程"
+            required
+          >
             <el-input-number
               v-model="receiveForm.mileage"
               :min="0"
@@ -313,7 +543,10 @@
           </el-form-item>
 
           <!-- 故障诊断 -->
-          <el-form-item label="故障诊断" required>
+          <el-form-item
+            label="故障诊断"
+            required
+          >
             <el-input
               v-model="receiveForm.diagnosis"
               type="textarea"
@@ -325,7 +558,10 @@
           </el-form-item>
 
           <!-- 接车照片 -->
-          <el-form-item label="接车照片" required>
+          <el-form-item
+            label="接车照片"
+            required
+          >
             <el-upload
               v-model:file-list="receiveForm.checkinPhotos"
               action="#"
@@ -339,25 +575,62 @@
             >
               <el-icon><Plus /></el-icon>
             </el-upload>
-            <div class="upload-tip">至少上传一张接车照片</div>
+            <div class="upload-tip">
+              至少上传一张接车照片
+            </div>
           </el-form-item>
 
           <!-- 报价商品 -->
-          <el-form-item label="报价商品" required>
-            <el-button type="primary" size="small" @click="showProductSelectDialog">
+          <el-form-item
+            label="报价商品"
+            required
+          >
+            <el-button
+              type="primary"
+              size="small"
+              @click="showProductSelectDialog"
+            >
               <el-icon><Plus /></el-icon>
               添加商品
             </el-button>
             <div class="selected-items">
-              <div v-if="receiveForm.selectedItems.length === 0" class="empty-tip">暂未选择商品</div>
-              <el-table v-else :data="receiveForm.selectedItems" style="width: 100%; margin-top: 10px" size="small">
-                <el-table-column prop="name" label="商品名称" width="200" />
-                <el-table-column prop="category" label="分类" width="100" />
-                <el-table-column prop="price" label="单价" width="100">
-                  <template #default="{ row }">¥{{ row.price }}</template>
+              <div
+                v-if="receiveForm.selectedItems.length === 0"
+                class="empty-tip"
+              >
+                暂未选择商品
+              </div>
+              <el-table
+                v-else
+                :data="receiveForm.selectedItems"
+                style="width: 100%; margin-top: 10px"
+                size="small"
+              >
+                <el-table-column
+                  prop="name"
+                  label="商品名称"
+                  width="200"
+                />
+                <el-table-column
+                  prop="category"
+                  label="分类"
+                  width="100"
+                />
+                <el-table-column
+                  prop="price"
+                  label="单价"
+                  width="100"
+                >
+                  <template #default="{ row }">
+                    ¥{{ row.price }}
+                  </template>
                 </el-table-column>
-                <el-table-column prop="quantity" label="数量" width="150">
-                  <template #default="{ row, $index }">
+                <el-table-column
+                  prop="quantity"
+                  label="数量"
+                  width="150"
+                >
+                  <template #default="{ row, $index: _$index }">
                     <el-input-number
                       v-model="row.quantity"
                       :min="1"
@@ -367,12 +640,25 @@
                     />
                   </template>
                 </el-table-column>
-                <el-table-column label="小计" width="100">
-                  <template #default="{ row }">¥{{ (row.price * row.quantity).toFixed(2) }}</template>
+                <el-table-column
+                  label="小计"
+                  width="100"
+                >
+                  <template #default="{ row }">
+                    ¥{{ (row.price * row.quantity).toFixed(2) }}
+                  </template>
                 </el-table-column>
-                <el-table-column label="操作" width="80">
-                  <template #default="{ row, $index }">
-                    <el-button type="danger" link size="small" @click="removeSelectedItem($index)">
+                <el-table-column
+                  label="操作"
+                  width="80"
+                >
+                  <template #default="{ row: _row, $index }">
+                    <el-button
+                      type="danger"
+                      link
+                      size="small"
+                      @click="removeSelectedItem($index)"
+                    >
                       删除
                     </el-button>
                   </template>
@@ -415,21 +701,33 @@
             >
               <el-icon><Plus /></el-icon>
             </el-upload>
-            <div class="upload-tip">可选：上传报价单、检测报告等图片</div>
+            <div class="upload-tip">
+              可选：上传报价单、检测报告等图片
+            </div>
           </el-form-item>
         </el-form>
       </div>
 
       <template #footer>
-        <el-button @click="receiveDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmitQuote" :loading="receiving">
+        <el-button @click="receiveDialogVisible = false">
+          取消
+        </el-button>
+        <el-button
+          type="primary"
+          :loading="receiving"
+          @click="handleSubmitQuote"
+        >
           提交报价
         </el-button>
       </template>
     </el-dialog>
 
     <!-- 商品选择对话框 -->
-    <el-dialog v-model="productSelectDialogVisible" title="选择商品" width="800px">
+    <el-dialog
+      v-model="productSelectDialogVisible"
+      title="选择商品"
+      width="800px"
+    >
       <el-input
         v-model="productSearchKeyword"
         placeholder="搜索商品名称或编码"
@@ -448,15 +746,44 @@
         style="width: 100%; height: 400px"
         @selection-change="handleProductSelectionChange"
       >
-        <el-table-column type="selection" width="55" />
-        <el-table-column prop="name" label="商品名称" width="200" />
-        <el-table-column prop="code" label="编码" width="120" />
-        <el-table-column prop="category" label="分类" width="100" />
-        <el-table-column prop="salePrice" label="销售价格" width="100">
-          <template #default="{ row }">¥{{ row.salePrice }}</template>
+        <el-table-column
+          type="selection"
+          width="55"
+        />
+        <el-table-column
+          prop="name"
+          label="商品名称"
+          width="200"
+        />
+        <el-table-column
+          prop="code"
+          label="编码"
+          width="120"
+        />
+        <el-table-column
+          prop="category"
+          label="分类"
+          width="100"
+        />
+        <el-table-column
+          prop="salePrice"
+          label="销售价格"
+          width="100"
+        >
+          <template #default="{ row }">
+            ¥{{ row.salePrice }}
+          </template>
         </el-table-column>
-        <el-table-column prop="stock" label="库存" width="80" />
-        <el-table-column prop="unit" label="单位" width="60" />
+        <el-table-column
+          prop="stock"
+          label="库存"
+          width="80"
+        />
+        <el-table-column
+          prop="unit"
+          label="单位"
+          width="60"
+        />
       </el-table>
 
       <el-pagination
@@ -471,39 +798,79 @@
       />
 
       <template #footer>
-        <el-button @click="productSelectDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="confirmProductSelection" :disabled="selectedProducts.length === 0">
+        <el-button @click="productSelectDialogVisible = false">
+          取消
+        </el-button>
+        <el-button
+          type="primary"
+          :disabled="selectedProducts.length === 0"
+          @click="confirmProductSelection"
+        >
           确定添加（{{ selectedProducts.length }}）
         </el-button>
       </template>
     </el-dialog>
 
     <!-- 图片预览对话框 -->
-    <el-dialog v-model="imagePreviewVisible" title="图片预览" width="600px">
-      <img :src="previewImageUrl" style="width: 100%" />
+    <el-dialog
+      v-model="imagePreviewVisible"
+      title="图片预览"
+      width="600px"
+    >
+      <img
+        :src="previewImageUrl"
+        style="width: 100%"
+      >
     </el-dialog>
 
     <!-- 完工对话框 -->
-    <el-dialog v-model="completeDialogVisible" title="维修完工" width="600px">
-      <el-form v-if="currentOrder" :model="completeForm" label-width="120px" ref="completeFormRef">
+    <el-dialog
+      v-model="completeDialogVisible"
+      title="维修完工"
+      width="600px"
+    >
+      <el-form
+        v-if="currentOrder"
+        ref="completeFormRef"
+        :model="completeForm"
+        label-width="120px"
+      >
         <el-form-item label="订单号">
-          <el-input :value="currentOrder.orderNumber" disabled />
+          <el-input
+            :value="currentOrder.orderNumber"
+            disabled
+          />
         </el-form-item>
 
         <el-form-item label="车牌号">
-          <el-input :value="currentOrder.vehicleId?.plateNumber" disabled />
+          <el-input
+            :value="currentOrder.vehicleId?.plateNumber"
+            disabled
+          />
         </el-form-item>
 
         <el-form-item label="维修项目">
-          <div v-if="currentOrder.quote && currentOrder.quote.items" style="margin-bottom: 10px">
-            <div v-for="(item, index) in currentOrder.quote.items" :key="index" style="padding: 5px 0; border-bottom: 1px solid #eee;">
+          <div
+            v-if="currentOrder.quote && currentOrder.quote.items"
+            style="margin-bottom: 10px"
+          >
+            <div
+              v-for="(item, index) in currentOrder.quote.items"
+              :key="index"
+              style="padding: 5px 0; border-bottom: 1px solid #eee;"
+            >
               {{ item.name }} - ¥{{ item.price }} x {{ item.quantity }}{{ item.unit }}
             </div>
           </div>
-          <div v-else>无</div>
+          <div v-else>
+            无
+          </div>
         </el-form-item>
 
-        <el-form-item label="完工里程" required>
+        <el-form-item
+          label="完工里程"
+          required
+        >
           <el-input-number
             v-model="completeForm.completionMileage"
             :min="0"
@@ -515,7 +882,10 @@
           <span style="margin-left: 10px">公里</span>
         </el-form-item>
 
-        <el-form-item label="维修说明" required>
+        <el-form-item
+          label="维修说明"
+          required
+        >
           <el-input
             v-model="completeForm.workDescription"
             type="textarea"
@@ -539,8 +909,14 @@
       </el-form>
 
       <template #footer>
-        <el-button @click="completeDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmitComplete" :loading="completing">
+        <el-button @click="completeDialogVisible = false">
+          取消
+        </el-button>
+        <el-button
+          type="primary"
+          :loading="completing"
+          @click="handleSubmitComplete"
+        >
           提交完工
         </el-button>
       </template>
@@ -620,7 +996,9 @@ const stats = reactive({
   pending_assessment: 0,
   awaiting_approval: 0,
   in_repair: 0,
-  completed_this_month: 0
+  awaiting_addon_approval: 0,
+  pending_confirmation: 0,
+  completed: 0
 })
 
 // 确认时间对话框相关
@@ -1022,7 +1400,8 @@ function getStatusText(status) {
     awaiting_approval: '待报价',
     in_repair: '维修中',
     awaiting_addon_approval: '增项待审批',
-    completed: '待确认',
+    pending_confirmation: '待确认',
+    completed: '已完成',
     refunded: '已退款',
     rejected: '已拒绝'
   }
@@ -1036,6 +1415,7 @@ function getStatusColor(status) {
     awaiting_approval: '',
     in_repair: 'primary',
     awaiting_addon_approval: 'warning',
+    pending_confirmation: 'warning',
     completed: 'success',
     refunded: 'info',
     rejected: 'danger'
@@ -1089,7 +1469,7 @@ async function handleConfirmTime() {
   confirming.value = true
   try {
     await request({
-      url: `/api/orders/${currentOrder.value._id}/confirm-time`,
+      url: `/orders/${currentOrder.value._id}/confirm-time`,
       method: 'put',
       data: confirmTimeForm.value
     })

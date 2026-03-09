@@ -34,3 +34,20 @@ html, body {
 ::-webkit-scrollbar-track {
   background: #f5f7fa;
 }
+
+// 下拉框通用宽度类
+.filter-select {
+  width: 180px;  // 筛选条件中的下拉框
+}
+
+.filter-select-wide {
+  width: 220px;  // 筛选条件下拉框（用于长文本选项）
+}
+
+.form-select {
+  width: 100%;   // 表单中的下拉框（自适应）
+}
+
+.dialog-select {
+  width: 100%;   // 对话框中的下拉框（自适应）
+}

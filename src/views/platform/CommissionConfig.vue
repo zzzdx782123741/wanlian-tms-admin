@@ -4,20 +4,39 @@
     <div class="page-header">
       <h2>佣金配置管理</h2>
       <div class="header-stats">
-        <el-statistic title="总配置数" :value="stats.total" />
-        <el-statistic title="已启用" :value="stats.enabled" />
-        <el-statistic title="已禁用" :value="stats.disabled" />
+        <el-statistic
+          title="总配置数"
+          :value="stats.total"
+        />
+        <el-statistic
+          title="已启用"
+          :value="stats.enabled"
+        />
+        <el-statistic
+          title="已禁用"
+          :value="stats.disabled"
+        />
       </div>
     </div>
 
     <!-- 配置类型Tab -->
     <el-card style="margin-top: 20px">
-      <el-tabs v-model="activeTab" @tab-change="handleTabChange">
+      <el-tabs
+        v-model="activeTab"
+        @tab-change="handleTabChange"
+      >
         <!-- 全局配置 -->
-        <el-tab-pane label="全局配置" name="global">
+        <el-tab-pane
+          label="全局配置"
+          name="global"
+        >
           <div class="tab-header">
             <span class="tab-desc">全局默认佣金比例（当没有匹配到其他配置时使用）</span>
-            <el-button type="primary" size="small" @click="handleCreate('global')">
+            <el-button
+              type="primary"
+              size="small"
+              @click="handleCreate('global')"
+            >
               <el-icon><Plus /></el-icon>
               新增全局配置
             </el-button>
@@ -32,10 +51,17 @@
         </el-tab-pane>
 
         <!-- 服务类型配置 -->
-        <el-tab-pane label="服务类型配置" name="service_type">
+        <el-tab-pane
+          label="服务类型配置"
+          name="service_type"
+        >
           <div class="tab-header">
             <span class="tab-desc">按服务类型设置不同佣金比例（维修/保养/增项）</span>
-            <el-button type="primary" size="small" @click="handleCreate('service_type')">
+            <el-button
+              type="primary"
+              size="small"
+              @click="handleCreate('service_type')"
+            >
               <el-icon><Plus /></el-icon>
               新增服务类型配置
             </el-button>
@@ -50,10 +76,17 @@
         </el-tab-pane>
 
         <!-- 区域配置 -->
-        <el-tab-pane label="区域配置" name="region">
+        <el-tab-pane
+          label="区域配置"
+          name="region"
+        >
           <div class="tab-header">
             <span class="tab-desc">按省市设置不同佣金比例</span>
-            <el-button type="primary" size="small" @click="handleCreate('region')">
+            <el-button
+              type="primary"
+              size="small"
+              @click="handleCreate('region')"
+            >
               <el-icon><Plus /></el-icon>
               新增区域配置
             </el-button>

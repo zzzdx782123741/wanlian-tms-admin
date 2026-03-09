@@ -4,7 +4,9 @@
       <template #header>
         <div class="card-header">
           <span>代客充值</span>
-          <el-tag type="info">平台运营代车队提交充值申请</el-tag>
+          <el-tag type="info">
+            平台运营代车队提交充值申请
+          </el-tag>
         </div>
       </template>
 
@@ -14,7 +16,10 @@
         :rules="rechargeRules"
         label-width="140px"
       >
-        <el-form-item label="车队" prop="fleetId">
+        <el-form-item
+          label="车队"
+          prop="fleetId"
+        >
           <el-select
             v-model="rechargeForm.fleetId"
             placeholder="请选择车队"
@@ -31,18 +36,27 @@
             >
               <div style="display: flex; justify-content: space-between; align-items: center">
                 <span>{{ fleet.name }}</span>
-                <span v-if="fleet.account" style="color: #909399; font-size: 12px">
+                <span
+                  v-if="fleet.account"
+                  style="color: #909399; font-size: 12px"
+                >
                   余额：¥{{ (fleet.account.balance / 100).toFixed(2) }}
                 </span>
               </div>
             </el-option>
           </el-select>
-          <div v-if="selectedFleet" style="margin-top: 5px; color: #909399; font-size: 12px">
+          <div
+            v-if="selectedFleet"
+            style="margin-top: 5px; color: #909399; font-size: 12px"
+          >
             当前余额：¥{{ (selectedFleet.account?.balance / 100).toFixed(2) }}
           </div>
         </el-form-item>
 
-        <el-form-item label="充值金额" prop="amount">
+        <el-form-item
+          label="充值金额"
+          prop="amount"
+        >
           <el-input-number
             v-model="rechargeForm.amount"
             :min="100"
@@ -55,7 +69,10 @@
           <span style="margin-left: 10px; color: #909399">元</span>
         </el-form-item>
 
-        <el-form-item label="汇款方户名" prop="remitterName">
+        <el-form-item
+          label="汇款方户名"
+          prop="remitterName"
+        >
           <el-input
             v-model="rechargeForm.remitterName"
             placeholder="请输入汇款账户名称"
@@ -64,7 +81,10 @@
           />
         </el-form-item>
 
-        <el-form-item label="收款账户" prop="receiverAccountId">
+        <el-form-item
+          label="收款账户"
+          prop="receiverAccountId"
+        >
           <el-select
             v-model="rechargeForm.receiverAccountId"
             placeholder="请选择收款账户"
@@ -88,7 +108,10 @@
           </div>
         </el-form-item>
 
-        <el-form-item label="打款日期" prop="transferDate">
+        <el-form-item
+          label="打款日期"
+          prop="transferDate"
+        >
           <el-date-picker
             v-model="rechargeForm.transferDate"
             type="date"
@@ -99,7 +122,10 @@
           />
         </el-form-item>
 
-        <el-form-item label="转账凭证" prop="proofImages">
+        <el-form-item
+          label="转账凭证"
+          prop="proofImages"
+        >
           <el-upload
             v-model:file-list="fileList"
             :action="uploadUrl"
@@ -120,7 +146,10 @@
           </div>
         </el-form-item>
 
-        <el-form-item label="备注" prop="remark">
+        <el-form-item
+          label="备注"
+          prop="remark"
+        >
           <el-input
             v-model="rechargeForm.remark"
             type="textarea"
@@ -139,7 +168,10 @@
           >
             提交充值申请
           </el-button>
-          <el-button @click="handleReset" :disabled="submitting">
+          <el-button
+            :disabled="submitting"
+            @click="handleReset"
+          >
             重置
           </el-button>
         </el-form-item>
@@ -151,7 +183,12 @@
       <template #header>
         <div class="card-header">
           <span>最近代客充值记录</span>
-          <el-button type="primary" link size="small" @click="viewAllRecords">
+          <el-button
+            type="primary"
+            link
+            size="small"
+            @click="viewAllRecords"
+          >
             查看全部
           </el-button>
         </div>
@@ -163,37 +200,76 @@
         stripe
         style="width: 100%"
       >
-        <el-table-column prop="rechargeNo" label="充值单号" width="180" />
-        <el-table-column prop="fleetName" label="车队名称" width="180" show-overflow-tooltip />
-        <el-table-column label="充值金额" width="120" align="right">
+        <el-table-column
+          prop="rechargeNo"
+          label="充值单号"
+          width="180"
+        />
+        <el-table-column
+          prop="fleetName"
+          label="车队名称"
+          width="180"
+          show-overflow-tooltip
+        />
+        <el-table-column
+          label="充值金额"
+          width="120"
+          align="right"
+        >
           <template #default="{ row }">
             <span style="color: #67c23a; font-weight: 600">
               ¥{{ (row.amount / 100).toFixed(2) }}
             </span>
           </template>
         </el-table-column>
-        <el-table-column prop="remitterName" label="汇款方" width="180" show-overflow-tooltip />
-        <el-table-column label="凭证" width="80">
+        <el-table-column
+          prop="remitterName"
+          label="汇款方"
+          width="180"
+          show-overflow-tooltip
+        />
+        <el-table-column
+          label="凭证"
+          width="80"
+        >
           <template #default="{ row }">
-            <el-tag v-if="row.proofImages && row.proofImages.length > 0" size="small">
+            <el-tag
+              v-if="row.proofImages && row.proofImages.length > 0"
+              size="small"
+            >
               {{ row.proofImages.length }}张
             </el-tag>
-            <span v-else style="color: #ccc">无</span>
+            <span
+              v-else
+              style="color: #ccc"
+            >无</span>
           </template>
         </el-table-column>
-        <el-table-column label="审核状态" width="100">
+        <el-table-column
+          label="审核状态"
+          width="100"
+        >
           <template #default="{ row }">
-            <el-tag :type="getStatusType(row.status)" size="small">
+            <el-tag
+              :type="getStatusType(row.status)"
+              size="small"
+            >
               {{ getStatusText(row.status) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="申请时间" width="180">
+        <el-table-column
+          label="申请时间"
+          width="180"
+        >
           <template #default="{ row }">
             {{ formatDate(row.appliedAt) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="100">
+        <el-table-column
+          label="操作"
+          width="100"
+        >
           <template #default="{ row }">
             <el-button
               size="small"
@@ -214,7 +290,11 @@
       title="充值详情"
       width="600px"
     >
-      <el-descriptions v-if="currentRecord" :column="1" border>
+      <el-descriptions
+        v-if="currentRecord"
+        :column="1"
+        border
+      >
         <el-descriptions-item label="充值单号">
           {{ currentRecord.rechargeNo }}
         </el-descriptions-item>
@@ -236,26 +316,40 @@
           {{ currentRecord.transferDate }}
         </el-descriptions-item>
         <el-descriptions-item label="申请类型">
-          <el-tag type="info">平台代客充值</el-tag>
+          <el-tag type="info">
+            平台代客充值
+          </el-tag>
         </el-descriptions-item>
         <el-descriptions-item label="审核状态">
           <el-tag :type="getStatusType(currentRecord.status)">
             {{ getStatusText(currentRecord.status) }}
           </el-tag>
         </el-descriptions-item>
-        <el-descriptions-item v-if="currentRecord.status !== 'pending'" label="审核金额">
+        <el-descriptions-item
+          v-if="currentRecord.status !== 'pending'"
+          label="审核金额"
+        >
           ¥{{ (currentRecord.actualAmount / 100).toFixed(2) }}
         </el-descriptions-item>
-        <el-descriptions-item v-if="currentRecord.reviewRemark" label="审核备注">
+        <el-descriptions-item
+          v-if="currentRecord.reviewRemark"
+          label="审核备注"
+        >
           {{ currentRecord.reviewRemark }}
         </el-descriptions-item>
         <el-descriptions-item label="申请时间">
           {{ formatDate(currentRecord.appliedAt) }}
         </el-descriptions-item>
-        <el-descriptions-item v-if="currentRecord.reviewedAt" label="审核时间">
+        <el-descriptions-item
+          v-if="currentRecord.reviewedAt"
+          label="审核时间"
+        >
           {{ formatDate(currentRecord.reviewedAt) }}
         </el-descriptions-item>
-        <el-descriptions-item v-if="currentRecord.remark" label="备注">
+        <el-descriptions-item
+          v-if="currentRecord.remark"
+          label="备注"
+        >
           {{ currentRecord.remark }}
         </el-descriptions-item>
       </el-descriptions>
@@ -269,7 +363,10 @@
           arrow="always"
           indicator-position="outside"
         >
-          <el-carousel-item v-for="(image, index) in currentRecord.proofImages" :key="index">
+          <el-carousel-item
+            v-for="(image, index) in currentRecord.proofImages"
+            :key="index"
+          >
             <el-image
               :src="image"
               fit="contain"
@@ -435,7 +532,12 @@ const handleSubmit = async () => {
 
   submitting.value = true
   try {
-    await createAgentRecharge(rechargeForm.value)
+    // 将元转换为分（后端存储的是分）
+    const submitData = {
+      ...rechargeForm.value,
+      amount: Math.round(rechargeForm.value.amount * 100)
+    }
+    await createAgentRecharge(submitData)
     ElMessage.success('代客充值申请已提交，等待财务审核')
     handleReset()
     fetchRecentRecords()

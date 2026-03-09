@@ -8,160 +8,258 @@
         sub-title="您的账号尚未关联车队，无法访问账户管理功能"
       >
         <template #extra>
-          <el-button type="primary" @click="$router.push('/')">返回首页</el-button>
+          <el-button
+            type="primary"
+            @click="$router.push('/')"
+          >
+            返回首页
+          </el-button>
         </template>
       </el-result>
     </el-card>
 
     <!-- 账户概览 -->
     <template v-else>
-      <el-row :gutter="20">
-      <el-col :span="6">
-        <el-card class="balance-card">
-          <el-statistic title="账户总余额" :precision="2">
-            <template #prefix>¥</template>
-            <template #default>{{ formatMoney(accountInfo.balance || 0) }}</template>
-          </el-statistic>
-        </el-card>
-      </el-col>
-      <el-col :span="6">
-        <el-card class="balance-card balance-card-success">
-          <el-statistic title="可用余额" :precision="2">
-            <template #prefix>¥</template>
-            <template #default>{{ formatMoney(availableBalance) }}</template>
-          </el-statistic>
-          <div style="margin-top: 8px; font-size: 12px; color: #909399">
-            总余额 - 冻结金额
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :span="6">
-        <el-card class="balance-card balance-card-warning">
-          <el-statistic title="冻结金额" :precision="2">
-            <template #prefix>¥</template>
-            <template #default>{{ formatMoney(accountInfo.frozenAmount || 0) }}</template>
-          </el-statistic>
-          <div style="margin-top: 8px; font-size: 12px; color: #909399">
-            订单审批中冻结的金额
-          </div>
-        </el-card>
-      </el-col>
-      <el-col :span="6">
-        <el-card class="balance-card balance-card-info">
-          <el-statistic title="总充值" :precision="2">
-            <template #prefix>¥</template>
-            <template #default>{{ formatMoney(statistics.totalRecharge || 0) }}</template>
-          </el-statistic>
-        </el-card>
-      </el-col>
-    </el-row>
-
-    <!-- 充值入口 -->
-    <el-card style="margin-top: 20px">
-      <template #header>
-        <div class="card-header">
-          <span>充值管理</span>
-        </div>
-      </template>
-      <el-row :gutter="20">
-        <el-col :span="12">
-          <div class="recharge-option" @click="$router.push('/fleet-recharge')">
-            <el-icon size="40" color="#409eff"><Money /></el-icon>
-            <div style="margin-top: 10px; font-weight: 600">申请充值</div>
-            <div style="margin-top: 5px; font-size: 12px; color: #909399">
-              线下转账后提交申请
-            </div>
+      <el-row
+        :gutter="20"
+        style="margin-bottom: 20px"
+      >
+        <el-col :span="18">
+          <div style="font-size: 16px; font-weight: 600; color: #2c3e50">
+            账户概览
           </div>
         </el-col>
-        <el-col :span="12">
-          <div class="recharge-option" @click="$router.push('/fleet-recharge')">
-            <el-icon size="40" color="#67c23a"><Document /></el-icon>
-            <div style="margin-top: 10px; font-weight: 600">充值记录</div>
-            <div style="margin-top: 5px; font-size: 12px; color: #909399">
-              查看充值历史和审核状态
-            </div>
-          </div>
+        <el-col
+          :span="6"
+          style="text-align: right"
+        >
+          <el-button
+            type="primary"
+            :icon="Refresh"
+            :loading="loading"
+            @click="refreshAllData"
+          >
+            刷新数据
+          </el-button>
         </el-col>
       </el-row>
-    </el-card>
 
-    <!-- 交易记录 -->
-    <el-card style="margin-top: 20px">
-      <template #header>
-        <div class="card-header">
-          <span>交易明细</span>
-          <div class="header-actions">
-            <el-radio-group v-model="transactionType" size="small">
-              <el-radio-button value="">全部</el-radio-button>
-              <el-radio-button value="recharge">充值</el-radio-button>
-              <el-radio-button value="freeze">冻结</el-radio-button>
-              <el-radio-button value="unfreeze">解冻</el-radio-button>
-              <el-radio-button value="deduct">扣除</el-radio-button>
-            </el-radio-group>
+      <el-row :gutter="20">
+        <el-col :span="6">
+          <el-card class="stat-card">
+            <el-statistic
+              title="账户总余额"
+              :value="formatMoney(accountInfo.balance || 0)"
+              :precision="2"
+              prefix="¥"
+            />
+          </el-card>
+        </el-col>
+        <el-col :span="6">
+          <el-card class="stat-card stat-card-success">
+            <el-statistic
+              title="可用余额"
+              :value="formatMoney(availableBalance)"
+              :precision="2"
+              prefix="¥"
+            />
+          </el-card>
+        </el-col>
+        <el-col :span="6">
+          <el-card class="stat-card stat-card-warning">
+            <el-statistic
+              title="冻结金额"
+              :value="formatMoney(accountInfo.frozenAmount || 0)"
+              :precision="2"
+              prefix="¥"
+            />
+          </el-card>
+        </el-col>
+        <el-col :span="6">
+          <el-card class="stat-card stat-card-info">
+            <el-statistic
+              title="总充值"
+              :value="formatMoney(statistics.totalRecharge || 0)"
+              :precision="2"
+              prefix="¥"
+            />
+          </el-card>
+        </el-col>
+      </el-row>
+
+      <!-- 充值入口 -->
+      <el-card style="margin-top: 20px">
+        <template #header>
+          <div class="card-header">
+            <span>充值管理</span>
           </div>
-        </div>
-      </template>
+        </template>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <div
+              class="recharge-option"
+              @click="$router.push('/fleet-recharge')"
+            >
+              <el-icon
+                size="40"
+                color="#409eff"
+              >
+                <Money />
+              </el-icon>
+              <div style="margin-top: 10px; font-weight: 600">
+                申请充值
+              </div>
+              <div style="margin-top: 5px; font-size: 12px; color: #909399">
+                线下转账后提交申请
+              </div>
+            </div>
+          </el-col>
+          <el-col :span="12">
+            <div
+              class="recharge-option"
+              @click="$router.push('/fleet-recharge')"
+            >
+              <el-icon
+                size="40"
+                color="#67c23a"
+              >
+                <Document />
+              </el-icon>
+              <div style="margin-top: 10px; font-weight: 600">
+                充值记录
+              </div>
+              <div style="margin-top: 5px; font-size: 12px; color: #909399">
+                查看充值历史和审核状态
+              </div>
+            </div>
+          </el-col>
+        </el-row>
+      </el-card>
 
-      <el-table
-        v-loading="loading"
-        :data="transactionList"
-        stripe
-        style="width: 100%"
-      >
-        <el-table-column label="类型" width="100">
-          <template #default="{ row }">
-            <el-tag :type="getTransactionTypeTag(row.type)" size="small">
-              {{ getTransactionTypeText(row.type) }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="金额" width="150" align="right">
-          <template #default="{ row }">
-            <span :style="{ color: getTransactionAmountColor(row.type), fontWeight: 600 }">
-              {{ getTransactionAmountPrefix(row.type) }}¥{{ formatMoney(Math.abs(row.amount)) }}
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column label="余额" width="150" align="right">
-          <template #default="{ row }">
-            ¥{{ formatMoney(row.balance) }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="description" label="说明" min-width="200" show-overflow-tooltip />
-        <el-table-column label="关联订单" width="120">
-          <template #default="{ row }">
-            <el-button v-if="row.orderId" type="primary" link size="small" @click="viewOrder(row.orderId)">
-              查看订单
-            </el-button>
-            <span v-else style="color: #ccc">-</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="时间" width="180">
-          <template #default="{ row }">
-            {{ formatDate(row.createdAt) }}
-          </template>
-        </el-table-column>
-      </el-table>
+      <!-- 交易记录 -->
+      <el-card style="margin-top: 20px">
+        <template #header>
+          <div class="card-header">
+            <span>交易明细</span>
+            <div class="header-actions">
+              <el-radio-group
+                v-model="transactionType"
+                size="small"
+              >
+                <el-radio-button value="">
+                  全部
+                </el-radio-button>
+                <el-radio-button value="recharge">
+                  充值
+                </el-radio-button>
+                <el-radio-button value="freeze">
+                  冻结
+                </el-radio-button>
+                <el-radio-button value="unfreeze">
+                  解冻
+                </el-radio-button>
+                <el-radio-button value="deduct">
+                  扣除
+                </el-radio-button>
+              </el-radio-group>
+            </div>
+          </div>
+        </template>
 
-      <el-pagination
-        v-model:current-page="pagination.page"
-        v-model:page-size="pagination.limit"
-        :total="pagination.total"
-        :page-sizes="[10, 20, 50, 100]"
-        layout="total, sizes, prev, pager, next, jumper"
-        style="margin-top: 20px; justify-content: flex-end"
-        @size-change="fetchTransactions"
-        @current-change="fetchTransactions"
-      />
-    </el-card>
+        <el-table
+          v-loading="loading"
+          :data="transactionList"
+          stripe
+          style="width: 100%"
+        >
+          <el-table-column
+            label="类型"
+            width="100"
+          >
+            <template #default="{ row }">
+              <el-tag
+                :type="getTransactionTypeTag(row.type)"
+                size="small"
+              >
+                {{ getTransactionTypeText(row.type) }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column
+            label="金额"
+            width="150"
+            align="right"
+          >
+            <template #default="{ row }">
+              <span :style="{ color: getTransactionAmountColor(row.type), fontWeight: 600 }">
+                {{ getTransactionAmountPrefix(row.type) }}¥{{ formatMoney(Math.abs(row.amount)) }}
+              </span>
+            </template>
+          </el-table-column>
+          <el-table-column
+            label="余额"
+            width="150"
+            align="right"
+          >
+            <template #default="{ row }">
+              ¥{{ formatMoney(row.balance) }}
+            </template>
+          </el-table-column>
+          <el-table-column
+            prop="description"
+            label="说明"
+            min-width="200"
+            show-overflow-tooltip
+          />
+          <el-table-column
+            label="关联订单"
+            width="120"
+          >
+            <template #default="{ row }">
+              <el-button
+                v-if="row.orderId"
+                type="primary"
+                link
+                size="small"
+                @click="viewOrder(row.orderId)"
+              >
+                查看订单
+              </el-button>
+              <span
+                v-else
+                style="color: #ccc"
+              >-</span>
+            </template>
+          </el-table-column>
+          <el-table-column
+            label="时间"
+            width="180"
+          >
+            <template #default="{ row }">
+              {{ formatDate(row.createdAt) }}
+            </template>
+          </el-table-column>
+        </el-table>
+
+        <el-pagination
+          v-model:current-page="pagination.page"
+          v-model:page-size="pagination.limit"
+          :total="pagination.total"
+          :page-sizes="[10, 20, 50, 100]"
+          layout="total, sizes, prev, pager, next, jumper"
+          style="margin-top: 20px; justify-content: flex-end"
+          @size-change="fetchTransactions"
+          @current-change="fetchTransactions"
+        />
+      </el-card>
     </template>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, watch, computed } from 'vue'
+import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { ElMessage, ElResult } from 'element-plus'
-import { Money, Document } from '@element-plus/icons-vue'
+import { Money, Document, Refresh } from '@element-plus/icons-vue'
 import { getBalance, getTransactions, getStatistics } from '@/api/account'
 import { useRouter } from 'vue-router'
 import dayjs from 'dayjs'
@@ -170,6 +268,9 @@ const router = useRouter()
 
 const rechargeFormRef = ref()
 const loading = ref(false)
+
+// 定时器
+let refreshTimer = null
 
 // 获取用户信息，检查是否有车队
 const userInfo = computed(() => {
@@ -313,16 +414,46 @@ watch(transactionType, () => {
   fetchTransactions()
 })
 
+// 刷新所有数据
+const refreshAllData = async () => {
+  loading.value = true
+  try {
+    await Promise.all([
+      fetchBalance(),
+      fetchStatistics(),
+      fetchTransactions()
+    ])
+    ElMessage.success('数据已刷新')
+  } catch (error) {
+    console.error('刷新数据失败:', error)
+    ElMessage.error('刷新数据失败')
+  } finally {
+    loading.value = false
+  }
+}
+
 onMounted(() => {
   fetchBalance()
   fetchStatistics()
   fetchTransactions()
+
+  // 每30秒自动刷新一次账户数据
+  refreshTimer = setInterval(() => {
+    fetchBalance()
+    fetchStatistics()
+  }, 30000)
+})
+
+onUnmounted(() => {
+  if (refreshTimer) {
+    clearInterval(refreshTimer)
+  }
 })
 </script>
 
 <style scoped lang="scss">
 .fleet-account {
-  .balance-card {
+  .stat-card {
     margin-bottom: 0;
 
     &:hover {
@@ -330,15 +461,15 @@ onMounted(() => {
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
 
-    &.balance-card-success :deep(.el-statistic__number) {
+    &.stat-card-success :deep(.el-statistic__number) {
       color: #67c23a;
     }
 
-    &.balance-card-warning :deep(.el-statistic__number) {
+    &.stat-card-warning :deep(.el-statistic__number) {
       color: #e6a23c;
     }
 
-    &.balance-card-info :deep(.el-statistic__number) {
+    &.stat-card-info :deep(.el-statistic__number) {
       color: #409eff;
     }
   }

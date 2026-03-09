@@ -1,16 +1,29 @@
 <template>
   <div class="fleet-register-page">
-    <el-page-header @back="$router.back()" title="返回">
+    <el-page-header
+      title="返回"
+      @back="$router.back()"
+    >
       <template #content>
         <div class="page-header-content">
-          <el-icon :size="20" style="margin-right: 8px"><OfficeBuilding /></el-icon>
+          <el-icon
+            :size="20"
+            style="margin-right: 8px"
+          >
+            <OfficeBuilding />
+          </el-icon>
           <span class="text-large font-600">车队注册</span>
         </div>
       </template>
     </el-page-header>
 
     <el-card style="margin-top: 20px">
-      <el-steps :active="currentStep" finish-status="success" align-center style="margin-bottom: 30px">
+      <el-steps
+        :active="currentStep"
+        finish-status="success"
+        align-center
+        style="margin-bottom: 30px"
+      >
         <el-step title="基本信息" />
         <el-step title="法人信息" />
         <el-step title="资质材料" />
@@ -20,7 +33,10 @@
 
       <div class="form-container">
         <!-- 步骤1：基本信息 -->
-        <div v-show="currentStep === 0" class="step-content">
+        <div
+          v-show="currentStep === 0"
+          class="step-content"
+        >
           <el-form
             ref="basicFormRef"
             :model="formData"
@@ -28,19 +44,38 @@
             label-width="140px"
             size="large"
           >
-            <el-form-item label="车队名称" prop="name">
-              <el-input v-model="formData.name" placeholder="请输入车队名称" clearable />
+            <el-form-item
+              label="车队名称"
+              prop="name"
+            >
+              <el-input
+                v-model="formData.name"
+                placeholder="请输入车队名称"
+                clearable
+              />
             </el-form-item>
 
-            <el-form-item label="车队类型" prop="fleetType">
+            <el-form-item
+              label="车队类型"
+              prop="fleetType"
+            >
               <el-radio-group v-model="formData.fleetType">
-                <el-radio label="logistics_company">物流公司</el-radio>
-                <el-radio label="individual_operator">运输个体户</el-radio>
-                <el-radio label="other">其他企业</el-radio>
+                <el-radio label="logistics_company">
+                  物流公司
+                </el-radio>
+                <el-radio label="individual_operator">
+                  运输个体户
+                </el-radio>
+                <el-radio label="other">
+                  其他企业
+                </el-radio>
               </el-radio-group>
             </el-form-item>
 
-            <el-form-item label="统一社会信用代码" prop="creditCode">
+            <el-form-item
+              label="统一社会信用代码"
+              prop="creditCode"
+            >
               <el-input
                 v-model="formData.creditCode"
                 placeholder="请输入18位统一社会信用代码"
@@ -49,7 +84,10 @@
               />
             </el-form-item>
 
-            <el-form-item label="经营范围" prop="businessScope">
+            <el-form-item
+              label="经营范围"
+              prop="businessScope"
+            >
               <el-input
                 v-model="formData.businessScope"
                 type="textarea"
@@ -58,11 +96,21 @@
               />
             </el-form-item>
 
-            <el-form-item label="联系人姓名" prop="contact.name">
-              <el-input v-model="formData.contact.name" placeholder="请输入联系人姓名" clearable />
+            <el-form-item
+              label="联系人姓名"
+              prop="contact.name"
+            >
+              <el-input
+                v-model="formData.contact.name"
+                placeholder="请输入联系人姓名"
+                clearable
+              />
             </el-form-item>
 
-            <el-form-item label="联系人电话" prop="contact.phone">
+            <el-form-item
+              label="联系人电话"
+              prop="contact.phone"
+            >
               <el-input
                 v-model="formData.contact.phone"
                 placeholder="请输入联系人电话"
@@ -70,11 +118,21 @@
               />
             </el-form-item>
 
-            <el-form-item label="邮箱地址" prop="contact.email">
-              <el-input v-model="formData.contact.email" placeholder="请输入邮箱地址" clearable />
+            <el-form-item
+              label="邮箱地址"
+              prop="contact.email"
+            >
+              <el-input
+                v-model="formData.contact.email"
+                placeholder="请输入邮箱地址"
+                clearable
+              />
             </el-form-item>
 
-            <el-form-item label="详细地址" prop="address.detail">
+            <el-form-item
+              label="详细地址"
+              prop="address.detail"
+            >
               <el-input
                 v-model="formData.address.detail"
                 placeholder="请输入详细地址"
@@ -85,7 +143,10 @@
         </div>
 
         <!-- 步骤2：法人信息 -->
-        <div v-show="currentStep === 1" class="step-content">
+        <div
+          v-show="currentStep === 1"
+          class="step-content"
+        >
           <el-form
             ref="legalFormRef"
             :model="formData"
@@ -93,7 +154,10 @@
             label-width="140px"
             size="large"
           >
-            <el-form-item label="法人代表姓名" prop="legalRepresentative.name">
+            <el-form-item
+              label="法人代表姓名"
+              prop="legalRepresentative.name"
+            >
               <el-input
                 v-model="formData.legalRepresentative.name"
                 placeholder="请输入法人代表姓名"
@@ -101,7 +165,10 @@
               />
             </el-form-item>
 
-            <el-form-item label="法人身份证号" prop="legalRepresentative.idCard">
+            <el-form-item
+              label="法人身份证号"
+              prop="legalRepresentative.idCard"
+            >
               <el-input
                 v-model="formData.legalRepresentative.idCard"
                 placeholder="请输入法人身份证号"
@@ -110,7 +177,10 @@
               />
             </el-form-item>
 
-            <el-form-item label="法人手机号" prop="legalRepresentative.phone">
+            <el-form-item
+              label="法人手机号"
+              prop="legalRepresentative.phone"
+            >
               <el-input
                 v-model="formData.legalRepresentative.phone"
                 placeholder="请输入法人手机号"
@@ -121,7 +191,10 @@
         </div>
 
         <!-- 步骤3：资质材料 -->
-        <div v-show="currentStep === 2" class="step-content">
+        <div
+          v-show="currentStep === 2"
+          class="step-content"
+        >
           <el-form
             ref="certFormRef"
             :model="formData"
@@ -129,7 +202,10 @@
             label-width="140px"
             size="large"
           >
-            <el-form-item label="营业执照号码" prop="businessLicense.number">
+            <el-form-item
+              label="营业执照号码"
+              prop="businessLicense.number"
+            >
               <el-input
                 v-model="formData.businessLicense.number"
                 placeholder="请输入营业执照号码"
@@ -137,26 +213,35 @@
               />
             </el-form-item>
 
-            <el-form-item label="营业执照照片" prop="businessLicense.url">
+            <el-form-item
+              label="营业执照照片"
+              prop="businessLicense.url"
+            >
               <el-upload
-                :action="uploadUrl"
-                :headers="uploadHeaders"
-                :on-success="(res) => handleUploadSuccess(res, 'businessLicense.url')"
+                :http-request="(options) => customUpload(options, 'businessLicense.url')"
                 :on-error="handleUploadError"
                 :before-upload="beforeUpload"
                 :show-file-list="false"
                 accept="image/*"
                 name="file"
               >
-                <el-button type="primary" :loading="uploading">
+                <el-button
+                  type="primary"
+                  :loading="uploading"
+                >
                   <el-icon><Upload /></el-icon>
                   点击上传
                 </el-button>
                 <template #tip>
-                  <div class="el-upload__tip">支持jpg/png格式，大小不超过5MB</div>
+                  <div class="el-upload__tip">
+                    支持jpg/png格式，大小不超过5MB
+                  </div>
                 </template>
               </el-upload>
-              <div v-if="formData.businessLicense.url" class="uploaded-preview">
+              <div
+                v-if="formData.businessLicense.url"
+                class="uploaded-preview"
+              >
                 <el-image
                   :src="getImageUrl(formData.businessLicense.url)"
                   fit="cover"
@@ -166,8 +251,8 @@
                 <el-button
                   type="danger"
                   size="small"
-                  @click="removeImage('businessLicense')"
                   style="margin-left: 10px"
+                  @click="removeImage('businessLicense')"
                 >
                   删除
                 </el-button>
@@ -184,24 +269,30 @@
 
             <el-form-item label="道路运输许可证">
               <el-upload
-                :action="uploadUrl"
-                :headers="uploadHeaders"
-                :on-success="(res) => handleUploadSuccess(res, 'transportLicense.url')"
+                :http-request="(options) => customUpload(options, 'transportLicense.url')"
                 :on-error="handleUploadError"
                 :before-upload="beforeUpload"
                 :show-file-list="false"
                 accept="image/*"
                 name="file"
               >
-                <el-button type="primary" :loading="uploading">
+                <el-button
+                  type="primary"
+                  :loading="uploading"
+                >
                   <el-icon><Upload /></el-icon>
                   点击上传
                 </el-button>
                 <template #tip>
-                  <div class="el-upload__tip">选填，支持jpg/png格式，大小不超过5MB</div>
+                  <div class="el-upload__tip">
+                    选填，支持jpg/png格式，大小不超过5MB
+                  </div>
                 </template>
               </el-upload>
-              <div v-if="formData.transportLicense.url" class="uploaded-preview">
+              <div
+                v-if="formData.transportLicense.url"
+                class="uploaded-preview"
+              >
                 <el-image
                   :src="getImageUrl(formData.transportLicense.url)"
                   fit="cover"
@@ -211,8 +302,8 @@
                 <el-button
                   type="danger"
                   size="small"
-                  @click="removeImage('transportLicense')"
                   style="margin-left: 10px"
+                  @click="removeImage('transportLicense')"
                 >
                   删除
                 </el-button>
@@ -222,7 +313,10 @@
         </div>
 
         <!-- 步骤4：管理员账号 -->
-        <div v-show="currentStep === 3" class="step-content">
+        <div
+          v-show="currentStep === 3"
+          class="step-content"
+        >
           <el-form
             ref="accountFormRef"
             :model="formData"
@@ -239,7 +333,10 @@
               请填写车队管理员账号信息，注册成功后将通过短信发送登录账号和初始密码
             </el-alert>
 
-            <el-form-item label="登录账号" prop="createdBy.username">
+            <el-form-item
+              label="登录账号"
+              prop="createdBy.username"
+            >
               <el-input
                 v-model="formData.createdBy.username"
                 placeholder="请输入登录账号（手机号）"
@@ -247,7 +344,10 @@
               />
             </el-form-item>
 
-            <el-form-item label="管理员姓名" prop="createdBy.name">
+            <el-form-item
+              label="管理员姓名"
+              prop="createdBy.name"
+            >
               <el-input
                 v-model="formData.createdBy.name"
                 placeholder="请输入管理员姓名"
@@ -255,7 +355,10 @@
               />
             </el-form-item>
 
-            <el-form-item label="手机号码" prop="createdBy.phone">
+            <el-form-item
+              label="手机号码"
+              prop="createdBy.phone"
+            >
               <el-input
                 v-model="formData.createdBy.phone"
                 placeholder="请输入手机号码"
@@ -265,30 +368,69 @@
 
             <el-form-item label="直接审核通过">
               <el-switch v-model="formData.directApprove" />
-              <div class="form-tip">开启后车队将直接进入正常运营状态，无需等待审核</div>
+              <div class="form-tip">
+                开启后车队将直接进入正常运营状态，无需等待审核
+              </div>
             </el-form-item>
           </el-form>
         </div>
 
         <!-- 步骤5：确认提交 -->
-        <div v-show="currentStep === 4" class="step-content">
-          <el-descriptions title="车队信息确认" :column="2" border>
-            <el-descriptions-item label="车队名称">{{ formData.name }}</el-descriptions-item>
+        <div
+          v-show="currentStep === 4"
+          class="step-content"
+        >
+          <el-descriptions
+            title="车队信息确认"
+            :column="2"
+            border
+          >
+            <el-descriptions-item label="车队名称">
+              {{ formData.name }}
+            </el-descriptions-item>
             <el-descriptions-item label="车队类型">
               {{ getFleetTypeText(formData.fleetType) }}
             </el-descriptions-item>
-            <el-descriptions-item label="统一社会信用代码">{{ formData.creditCode }}</el-descriptions-item>
-            <el-descriptions-item label="法人代表">{{ formData.legalRepresentative.name }}</el-descriptions-item>
-            <el-descriptions-item label="法人身份证">{{ formData.legalRepresentative.idCard }}</el-descriptions-item>
-            <el-descriptions-item label="法人手机">{{ formData.legalRepresentative.phone }}</el-descriptions-item>
-            <el-descriptions-item label="联系人">{{ formData.contact.name }}</el-descriptions-item>
-            <el-descriptions-item label="联系电话">{{ formData.contact.phone }}</el-descriptions-item>
-            <el-descriptions-item label="详细地址" :span="2">{{ formData.address.detail }}</el-descriptions-item>
-            <el-descriptions-item label="营业执照号码">{{ formData.businessLicense.number }}</el-descriptions-item>
-            <el-descriptions-item label="管理员账号">{{ formData.createdBy.username }}</el-descriptions-item>
-            <el-descriptions-item label="管理员姓名">{{ formData.createdBy.name }}</el-descriptions-item>
-            <el-descriptions-item label="手机号码">{{ formData.createdBy.phone }}</el-descriptions-item>
-            <el-descriptions-item label="直接审核通过" :span="2">
+            <el-descriptions-item label="统一社会信用代码">
+              {{ formData.creditCode }}
+            </el-descriptions-item>
+            <el-descriptions-item label="法人代表">
+              {{ formData.legalRepresentative.name }}
+            </el-descriptions-item>
+            <el-descriptions-item label="法人身份证">
+              {{ formData.legalRepresentative.idCard }}
+            </el-descriptions-item>
+            <el-descriptions-item label="法人手机">
+              {{ formData.legalRepresentative.phone }}
+            </el-descriptions-item>
+            <el-descriptions-item label="联系人">
+              {{ formData.contact.name }}
+            </el-descriptions-item>
+            <el-descriptions-item label="联系电话">
+              {{ formData.contact.phone }}
+            </el-descriptions-item>
+            <el-descriptions-item
+              label="详细地址"
+              :span="2"
+            >
+              {{ formData.address.detail }}
+            </el-descriptions-item>
+            <el-descriptions-item label="营业执照号码">
+              {{ formData.businessLicense.number }}
+            </el-descriptions-item>
+            <el-descriptions-item label="管理员账号">
+              {{ formData.createdBy.username }}
+            </el-descriptions-item>
+            <el-descriptions-item label="管理员姓名">
+              {{ formData.createdBy.name }}
+            </el-descriptions-item>
+            <el-descriptions-item label="手机号码">
+              {{ formData.createdBy.phone }}
+            </el-descriptions-item>
+            <el-descriptions-item
+              label="直接审核通过"
+              :span="2"
+            >
               <el-tag :type="formData.directApprove ? 'success' : 'info'">
                 {{ formData.directApprove ? '是' : '否' }}
               </el-tag>
@@ -299,7 +441,12 @@
 
       <!-- 操作按钮 -->
       <div class="step-actions">
-        <el-button v-if="currentStep > 0" @click="handlePrev">上一步</el-button>
+        <el-button
+          v-if="currentStep > 0"
+          @click="handlePrev"
+        >
+          上一步
+        </el-button>
         <el-button
           v-if="currentStep < 4"
           type="primary"
@@ -321,21 +468,64 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRouter } from 'vue-router'
 import { OfficeBuilding, Upload } from '@element-plus/icons-vue'
 import request from '@/utils/request'
+import axios from 'axios'
 
 const router = useRouter()
 const currentStep = ref(0)
 const submitting = ref(false)
-
-const uploadUrl = import.meta.env.VITE_API_URL + '/upload'
-const uploadHeaders = computed(() => ({
-  Authorization: 'Bearer ' + localStorage.getItem('token')
-}))
 const uploading = ref(false)
+
+// 自定义上传方法
+const customUpload = async (options, field) => {
+  const { file, onSuccess, onError } = options
+
+  try {
+    uploading.value = true
+
+    // 创建FormData
+    const uploadFormData = new FormData()
+    uploadFormData.append('file', file)
+
+    // 使用axios直接发送请求，获取完整的响应对象
+    const axiosResponse = await axios.post('/api/upload', uploadFormData, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Content-Type': 'multipart/form-data'
+      }
+    })
+
+    console.log('上传Axios响应:', axiosResponse)
+    console.log('响应数据:', axiosResponse.data)
+    console.log('字段:', field)
+
+    uploading.value = false
+
+    // axiosResponse.data 是后端返回的数据
+    const response = axiosResponse.data
+
+    if (response && response.success) {
+      // 直接更新 formData
+      const keys = field.split('.')
+      if (keys.length === 2) {
+        formData[keys[0]][keys[1]] = response.data.url
+      }
+      ElMessage.success('上传成功')
+      // 调用 onSuccess 让 el-upload 知道上传成功
+      onSuccess(response, file)
+    } else {
+      onError(new Error(response?.message || '上传失败'))
+    }
+  } catch (error) {
+    console.error('上传错误:', error)
+    uploading.value = false
+    onError(error)
+  }
+}
 
 // 表单数据
 const formData = reactive({
@@ -505,8 +695,13 @@ const getImageUrl = (url) => {
   if (url.startsWith('http://') || url.startsWith('https://')) {
     return url
   }
-  // 否则拼接API URL
-  return import.meta.env.VITE_API_URL?.replace('/api', '') + url
+  // 在开发环境中，通过 /api 前缀访问后端静态资源
+  // 例如：/uploads/xxx.jpg -> /api/uploads/xxx.jpg
+  if (url.startsWith('/uploads') || url.startsWith('/public')) {
+    return '/api' + url
+  }
+  // 其他情况直接返回
+  return url
 }
 
 // 删除图片
@@ -523,18 +718,18 @@ const removeImage = (type) => {
 const handleNext = async () => {
   let formRef = null
   switch (currentStep.value) {
-    case 0:
-      formRef = basicFormRef.value
-      break
-    case 1:
-      formRef = legalFormRef.value
-      break
-    case 2:
-      formRef = certFormRef.value
-      break
-    case 3:
-      formRef = accountFormRef.value
-      break
+  case 0:
+    formRef = basicFormRef.value
+    break
+  case 1:
+    formRef = legalFormRef.value
+    break
+  case 2:
+    formRef = certFormRef.value
+    break
+  case 3:
+    formRef = accountFormRef.value
+    break
   }
 
   if (!formRef) {
