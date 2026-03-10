@@ -353,7 +353,7 @@
             v-model="form.price"
             :min="0"
             :precision="2"
-            :step="100"
+            :step="1"
             controls-position="right"
             style="width: 200px"
           />
@@ -368,7 +368,7 @@
             v-model="form.originalPrice"
             :min="0"
             :precision="2"
-            :step="100"
+            :step="1"
             controls-position="right"
             style="width: 200px"
           />
@@ -422,7 +422,7 @@
                 placeholder="价格"
                 :min="0"
                 :precision="2"
-                :step="100"
+                :step="1"
                 controls-position="right"
                 style="width: 150px; margin-right: 10px;"
               />
@@ -431,7 +431,7 @@
                 placeholder="原价"
                 :min="0"
                 :precision="2"
-                :step="100"
+                :step="1"
                 controls-position="right"
                 style="width: 150px; margin-right: 10px;"
               />

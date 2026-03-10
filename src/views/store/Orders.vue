@@ -30,6 +30,14 @@
       class="stats-row"
     >
       <el-col :span="3">
+        <el-card class="stat-card stat-card-warning">
+          <el-statistic
+            title="待车队审批"
+            :value="stats.awaiting_fleet_approval"
+          />
+        </el-card>
+      </el-col>
+      <el-col :span="3">
         <el-card class="stat-card stat-card-info">
           <el-statistic
             title="待确认时间"
@@ -40,7 +48,7 @@
       <el-col :span="3">
         <el-card class="stat-card">
           <el-statistic
-            title="待接车"
+            title="待接车检查"
             :value="stats.pending_assessment"
           />
         </el-card>
@@ -48,7 +56,7 @@
       <el-col :span="3">
         <el-card class="stat-card stat-card-warning">
           <el-statistic
-            title="待报价"
+            title="待审批报价"
             :value="stats.awaiting_approval"
           />
         </el-card>
@@ -106,15 +114,19 @@
               value=""
             />
             <el-option
+              label="待车队审批"
+              value="awaiting_fleet_approval"
+            />
+            <el-option
               label="待确认时间"
               value="awaiting_time_confirmation"
             />
             <el-option
-              label="待接车"
+              label="待接车检查"
               value="pending_assessment"
             />
             <el-option
-              label="待报价"
+              label="待审批报价"
               value="awaiting_approval"
             />
             <el-option
@@ -132,6 +144,10 @@
             <el-option
               label="已完成"
               value="completed"
+            />
+            <el-option
+              label="已退款"
+              value="refunded"
             />
             <el-option
               label="已拒绝"
@@ -243,7 +259,7 @@
           align="right"
         >
           <template #default="{ row }">
-            <span class="amount">{{ row.quote?.total ? '¥' + formatAmount(row.quote.total) : '-' }}</span>
+            <span class="amount">{{ row.quote?.total ? '¥' + formatAmount(row.quote.actualTotal || row.quote.total) : '-' }}</span>
           </template>
         </el-table-column>
         <el-table-column
@@ -299,6 +315,15 @@
               @click="handleReceive(row)"
             >
               接车
+            </el-button>
+            <el-button
+              v-if="row.status === 'in_repair'"
+              link
+              type="warning"
+              size="small"
+              @click="handleAddon(row)"
+            >
+              增项
             </el-button>
             <el-button
               v-if="row.status === 'in_repair'"
@@ -383,7 +408,7 @@
         >
           <div>
             <strong>报价总额：</strong>
-            <span class="total-amount">¥{{ formatAmount(currentOrder.quote.total) }}</span>
+            <span class="total-amount">¥{{ formatAmount(currentOrder.quote.actualTotal || currentOrder.quote.total) }}</span>
           </div>
         </el-descriptions-item>
         <el-descriptions-item label="订单状态">
@@ -615,14 +640,18 @@
                   prop="category"
                   label="分类"
                   width="100"
-                />
+                >
+                  <template #default="{ row }">
+                    {{ getCategoryText(row.category) }}
+                  </template>
+                </el-table-column>
                 <el-table-column
                   prop="price"
                   label="单价"
                   width="100"
                 >
                   <template #default="{ row }">
-                    ¥{{ row.price }}
+                    ¥{{ formatAmount(row.price) }}
                   </template>
                 </el-table-column>
                 <el-table-column
@@ -645,7 +674,7 @@
                   width="100"
                 >
                   <template #default="{ row }">
-                    ¥{{ (row.price * row.quantity).toFixed(2) }}
+                    ¥{{ formatAmount(row.price * row.quantity) }}
                   </template>
                 </el-table-column>
                 <el-table-column
@@ -764,14 +793,18 @@
           prop="category"
           label="分类"
           width="100"
-        />
+        >
+          <template #default="{ row }">
+            {{ getCategoryText(row.category) }}
+          </template>
+        </el-table-column>
         <el-table-column
-          prop="salePrice"
+          prop="price"
           label="销售价格"
           width="100"
         >
           <template #default="{ row }">
-            ¥{{ row.salePrice }}
+            ¥{{ getProductPrice(row).toFixed(2) }}
           </template>
         </el-table-column>
         <el-table-column
@@ -921,6 +954,168 @@
         </el-button>
       </template>
     </el-dialog>
+
+    <!-- 增项对话框 -->
+    <el-dialog
+      v-model="addonDialogVisible"
+      title="维修增项"
+      width="800px"
+    >
+      <el-form
+        v-if="currentOrder"
+        ref="addonFormRef"
+        :model="addonForm"
+        label-width="120px"
+      >
+        <!-- 订单基本信息 -->
+        <el-form-item label="订单号">
+          <el-input
+            :value="currentOrder.orderNumber"
+            disabled
+          />
+        </el-form-item>
+
+        <el-form-item label="车牌号">
+          <el-input
+            :value="currentOrder.vehicleId?.plateNumber"
+            disabled
+          />
+        </el-form-item>
+
+        <!-- 增项项目 -->
+        <el-form-item
+          label="增项项目"
+          required
+        >
+          <el-button
+            type="primary"
+            plain
+            @click="openAddonProductSelectDialog"
+          >
+            <el-icon><Plus /></el-icon>
+            添加商品
+          </el-button>
+
+          <!-- 已选商品表格 -->
+          <el-table
+            v-if="addonForm.selectedItems.length > 0"
+            :data="addonForm.selectedItems"
+            style="width: 100%; margin-top: 10px"
+            size="small"
+            border
+          >
+            <el-table-column
+              prop="name"
+              label="商品名称"
+              width="200"
+            />
+            <el-table-column
+              prop="categoryText"
+              label="分类"
+              width="100"
+            />
+            <el-table-column
+              prop="price"
+              label="单价"
+              width="100"
+            >
+              <template #default="{ row }">
+                ¥{{ formatAmount(row.price) }}
+              </template>
+            </el-table-column>
+            <el-table-column
+              label="数量"
+              width="150"
+            >
+              <template #default="{ row }">
+                <el-input-number
+                  v-model="row.quantity"
+                  :min="1"
+                  :max="99"
+                  size="small"
+                  @change="updateAddonTotal"
+                />
+              </template>
+            </el-table-column>
+            <el-table-column
+              label="小计"
+              width="120"
+            >
+              <template #default="{ row }">
+                ¥{{ formatAmount(row.price * row.quantity) }}
+              </template>
+            </el-table-column>
+            <el-table-column
+              label="操作"
+              width="80"
+            >
+              <template #default="{ $index }">
+                <el-button
+                  type="danger"
+                  link
+                  size="small"
+                  @click="removeAddonItem($index)"
+                >
+                  删除
+                </el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+        </el-form-item>
+
+        <!-- 增项总额 -->
+        <el-form-item label="增项总额">
+          <div class="total-amount">
+            ¥{{ addonForm.totalAmount }}
+          </div>
+        </el-form-item>
+
+        <!-- 增项原因 -->
+        <el-form-item
+          label="增项原因"
+          required
+        >
+          <el-input
+            v-model="addonForm.reason"
+            type="textarea"
+            :rows="3"
+            placeholder="请详细说明增项原因"
+            maxlength="200"
+            show-word-limit
+          />
+        </el-form-item>
+
+        <!-- 增项图片 -->
+        <el-form-item label="增项图片">
+          <el-upload
+            v-model:file-list="addonForm.imageFileList"
+            action="#"
+            list-type="picture-card"
+            :auto-upload="false"
+            :limit="9"
+            accept="image/*"
+            :on-change="handleAddonPhotoChange"
+            :on-preview="handlePreviewImage"
+            :on-remove="handleRemoveAddonPhoto"
+          >
+            <el-icon><Plus /></el-icon>
+          </el-upload>
+        </el-form-item>
+      </el-form>
+
+      <template #footer>
+        <el-button @click="addonDialogVisible = false">
+          取消
+        </el-button>
+        <el-button
+          type="warning"
+          :loading="submittingAddon"
+          @click="handleSubmitAddon"
+        >
+          提交增项
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -929,7 +1124,6 @@ import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Search, Download } from '@element-plus/icons-vue'
 import request from '@/utils/request'
-import { getProducts } from '@/api/product'
 import dayjs from 'dayjs'
 
 const loading = ref(false)
@@ -953,6 +1147,7 @@ const receiveForm = ref({
 
 // 商品选择相关
 const productSelectDialogVisible = ref(false)
+const productSelectSource = ref('') // 'quote' 或 'addon'
 const loadingProducts = ref(false)
 const productList = ref([])
 const selectedProducts = ref([])
@@ -976,6 +1171,17 @@ const completeForm = ref({
   notes: ''
 })
 
+// 增项对话框相关
+const addonDialogVisible = ref(false)
+const submittingAddon = ref(false)
+const addonFormRef = ref(null)
+const addonForm = ref({
+  selectedItems: [],
+  totalAmount: '0.00',
+  reason: '',
+  imageFileList: []
+})
+
 const filters = reactive({
   status: '',
   type: '',
@@ -992,6 +1198,7 @@ const pagination = reactive({
 })
 
 const stats = reactive({
+  awaiting_fleet_approval: 0,
   awaiting_time_confirmation: 0,
   pending_assessment: 0,
   awaiting_approval: 0,
@@ -1134,6 +1341,7 @@ function handleReceive(row) {
 
 // 显示商品选择对话框
 async function showProductSelectDialog() {
+  productSelectSource.value = 'quote'
   productSelectDialogVisible.value = true
   productSearchKeyword.value = ''
   selectedProducts.value = []
@@ -1146,19 +1354,25 @@ async function loadProducts() {
   try {
     const params = {
       page: productPagination.page,
-      limit: productPagination.limit,
-      status: 'approved' // 只显示已审核通过的商品
+      limit: productPagination.limit
     }
 
     if (productSearchKeyword.value) {
       params.keyword = productSearchKeyword.value
     }
 
-    const res = await getProducts(params)
-    productList.value = res.data.products || []
+    // 使用门店专属的商品API
+    const res = await request({
+      url: '/store/products',
+      method: 'GET',
+      params
+    })
+
+    productList.value = res.data.list || []
     productPagination.total = res.data.total || 0
   } catch (error) {
-    ElMessage.error('加载商品列表失败')
+    console.error('加载商品列表失败:', error)
+    ElMessage.error(error.response?.data?.message || '加载商品列表失败')
   } finally {
     loadingProducts.value = false
   }
@@ -1175,6 +1389,22 @@ function handleProductSelectionChange(selection) {
   selectedProducts.value = selection
 }
 
+function getProductPrice(product) {
+  const rawPrice = product?.price ?? product?.salePrice ?? 0
+  const parsedPrice = Number(rawPrice)
+  return Number.isFinite(parsedPrice) ? parsedPrice : 0
+}
+
+function getCategoryText(category) {
+  const categoryMap = {
+    parts: '配件',
+    labor: '工时',
+    service: '服务',
+    material: '材料'
+  }
+  return categoryMap[category] || category || '-'
+}
+
 // 确认商品选择
 function confirmProductSelection() {
   if (selectedProducts.value.length === 0) {
@@ -1182,6 +1412,17 @@ function confirmProductSelection() {
     return
   }
 
+  if (productSelectSource.value === 'addon') {
+    // 增项来源
+    addSelectedProductsToAddon()
+  } else {
+    // 报价来源（默认）
+    addSelectedProductsToQuote()
+  }
+}
+
+// 添加商品到报价（原confirmProductSelection的逻辑）
+function addSelectedProductsToQuote() {
   // 添加到已选商品列表
   selectedProducts.value.forEach(product => {
     // 检查是否已存在
@@ -1197,7 +1438,8 @@ function confirmProductSelection() {
         name: product.name,
         code: product.code,
         category: product.category,
-        price: product.salePrice,
+        categoryText: getCategoryText(product.category),
+        price: getProductPrice(product),
         quantity: 1,
         unit: product.unit
       })
@@ -1392,12 +1634,168 @@ async function handleSubmitComplete() {
   }
 }
 
+// 增项相关方法
+function handleAddon(row) {
+  currentOrder.value = row
+  addonForm.value = {
+    selectedItems: [],
+    totalAmount: '0.00',
+    reason: '',
+    imageFileList: []
+  }
+  addonDialogVisible.value = true
+}
+
+// 打开增项商品选择对话框
+async function openAddonProductSelectDialog() {
+  productSelectSource.value = 'addon'
+  productSelectDialogVisible.value = true
+  productSearchKeyword.value = ''
+  // 使用临时变量存储选中的商品
+  selectedProducts.value = []
+  await loadProducts()
+}
+
+// 从商品选择对话框添加商品到增项
+function addSelectedProductsToAddon() {
+  if (selectedProducts.value.length === 0) {
+    ElMessage.warning('请先选择商品')
+    return
+  }
+
+  // 添加到增项表单
+  selectedProducts.value.forEach(product => {
+    const existingIndex = addonForm.value.selectedItems.findIndex(item => item.id === product._id)
+    if (existingIndex >= 0) {
+      // 已存在，数量+1
+      addonForm.value.selectedItems[existingIndex].quantity += 1
+    } else {
+      // 不存在，添加新商品
+      addonForm.value.selectedItems.push({
+        id: product._id,
+        name: product.name,
+        code: product.code,
+        category: product.category,
+        categoryText: getCategoryText(product.category),
+        price: getProductPrice(product),
+        quantity: 1,
+        unit: product.unit
+      })
+    }
+  })
+
+  updateAddonTotal()
+  productSelectDialogVisible.value = false
+  selectedProducts.value = []
+  ElMessage.success(`成功添加 ${selectedProducts.value.length} 个增项商品`)
+}
+
+function removeAddonItem(index) {
+  addonForm.value.selectedItems.splice(index, 1)
+  updateAddonTotal()
+}
+
+function updateAddonTotal() {
+  const total = addonForm.value.selectedItems.reduce(
+    (sum, item) => sum + (item.price || 0) * (item.quantity || 1),
+    0
+  )
+  addonForm.value.totalAmount = total.toFixed(2)
+}
+
+// 增项图片相关
+function handleAddonPhotoChange(file, fileList) {
+  addonForm.value.imageFileList = fileList
+}
+
+function handleRemoveAddonPhoto(file, fileList) {
+  addonForm.value.imageFileList = fileList
+}
+
+// 上传单张图片
+function uploadSingleImage(file) {
+  return new Promise((resolve, reject) => {
+    const formData = new FormData()
+    formData.append('file', file.raw)
+
+    request({
+      url: '/upload',
+      method: 'POST',
+      data: formData,
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
+      .then(res => {
+        resolve(res.url)
+      })
+      .catch(err => {
+        reject(err)
+      })
+  })
+}
+
+// 提交增项
+async function handleSubmitAddon() {
+  // 验证
+  if (addonForm.value.selectedItems.length === 0) {
+    ElMessage.warning('请至少添加一个增项商品')
+    return
+  }
+  if (!addonForm.value.reason || addonForm.value.reason.trim() === '') {
+    ElMessage.warning('请填写增项原因')
+    return
+  }
+
+  submittingAddon.value = true
+  try {
+    // 上传图片
+    const uploadedImages = []
+    for (let i = 0; i < addonForm.value.imageFileList.length; i++) {
+      try {
+        const url = await uploadSingleImage(addonForm.value.imageFileList[i])
+        uploadedImages.push(url)
+      } catch (error) {
+        console.error('上传图片失败:', error)
+      }
+    }
+
+    // 构建增项数据
+    const addonData = {
+      addonItems: addonForm.value.selectedItems.map(item => ({
+        item: item.name,
+        price: parseFloat(item.price),
+        quantity: item.quantity,
+        productId: item.id,
+        category: item.category
+      })),
+      reason: addonForm.value.reason.trim(),
+      addonImages: uploadedImages
+    }
+
+    await request({
+      url: `/orders/${currentOrder.value._id}/addon`,
+      method: 'POST',
+      data: addonData
+    })
+
+    ElMessage.success('增项提交成功')
+    addonDialogVisible.value = false
+    loadOrders()
+  } catch (error) {
+    ElMessage.error(error.message || '提交失败')
+  } finally {
+    submittingAddon.value = false
+  }
+}
+
 // 辅助函数
 function getStatusText(status) {
   const map = {
+    awaiting_fleet_approval: '待车队审批',
     awaiting_time_confirmation: '待确认时间',
-    pending_assessment: '待接车',
-    awaiting_approval: '待报价',
+    pending_assessment: '待接车检查',
+    awaiting_approval: '待审批报价',
     in_repair: '维修中',
     awaiting_addon_approval: '增项待审批',
     pending_confirmation: '待确认',
@@ -1410,6 +1808,7 @@ function getStatusText(status) {
 
 function getStatusColor(status) {
   const map = {
+    awaiting_fleet_approval: 'warning',
     awaiting_time_confirmation: 'info',
     pending_assessment: 'warning',
     awaiting_approval: '',
@@ -1425,7 +1824,7 @@ function getStatusColor(status) {
 
 function formatAmount(amount) {
   if (!amount) return '0.00'
-  return parseFloat(amount).toLocaleString('zh-CN', {
+  return parseFloat(amount / 100).toLocaleString('zh-CN', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   })

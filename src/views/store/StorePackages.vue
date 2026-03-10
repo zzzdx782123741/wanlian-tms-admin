@@ -55,16 +55,16 @@
             @change="handleFilterChange"
           >
             <el-option
-              label="基础"
-              value="基础"
+              label="实惠"
+              value="实惠"
             />
             <el-option
               label="标准"
               value="标准"
             />
             <el-option
-              label="高级"
-              value="高级"
+              label="优质"
+              value="优质"
             />
             <el-option
               label="尊享"
@@ -146,7 +146,7 @@
           width="120"
         >
           <template #default="{ row }">
-            <span style="color: #f56c6c;">¥{{ row.price / 100 }}</span>
+            <span style="color: #f56c6c;">¥{{ row.price }}</span>
           </template>
         </el-table-column>
         <el-table-column
@@ -357,10 +357,7 @@
           <span style="margin-left: 12px;">km</span>
         </el-form-item>
 
-        <el-form-item
-          label="套餐价格"
-          prop="price"
-        >
+        <el-form-item label="套餐价格">
           <el-input-number
             v-model="form.price"
             :min="0"
@@ -368,18 +365,28 @@
             :step="100"
             controls-position="right"
             style="width: 200px"
+            placeholder="请先添加商品"
           />
           <span style="margin-left: 12px;">元</span>
+          <div style="margin-top: 8px; font-size: 12px; color: #909399;">
+            原价：¥{{ calculatedOriginalPrice.toFixed(2) }}
+            <span
+              v-if="form.price && form.price !== calculatedOriginalPrice"
+              style="margin-left: 8px; color: #409eff;"
+            >
+              ({{ form.price > calculatedOriginalPrice ? '加价' : '打折' }}: ¥{{ (form.price - calculatedOriginalPrice).toFixed(2) }})
+            </span>
+          </div>
           <!-- 价格区间提示 -->
           <div
             v-if="currentPriceRange"
             class="price-range-hint"
           >
             <el-tag
-              :type="getPriceTagType(form.price)"
+              :type="getPriceTagType(form.price || calculatedOriginalPrice)"
               size="small"
             >
-              规范区间：¥{{ currentPriceRange.minPrice / 100 }} - ¥{{ currentPriceRange.maxPrice / 100 }}
+              规范区间：¥{{ currentPriceRange.minPrice }} - ¥{{ currentPriceRange.maxPrice }}
             </el-tag>
             <span
               v-if="isPriceOutOfRange"
@@ -397,7 +404,7 @@
         </el-form-item>
 
         <!-- 原价显示（自动计算） -->
-        <el-form-item label="原价">
+        <el-form-item label="原价（商品总价）">
           <div style="display: flex; align-items: center;">
             <span style="font-size: 18px; color: #909399;">
               ¥{{ calculatedOriginalPrice.toFixed(2) }}
@@ -504,7 +511,7 @@
                   v-if="item.productPrice"
                   style="color: #f56c6c; margin-left: 8px;"
                 >
-                  ¥{{ item.productPrice / 100 }}
+                  ¥{{ item.productPrice }}
                 </span>
               </div>
               <el-input-number
@@ -620,7 +627,7 @@
           width="100"
         >
           <template #default="{ row }">
-            ¥{{ row.price / 100 }}
+            ¥{{ row.price }}
           </template>
         </el-table-column>
         <el-table-column
@@ -673,10 +680,10 @@
             <span v-else>-</span>
           </el-descriptions-item>
           <el-descriptions-item label="套餐价格">
-            ¥{{ currentPackage.price / 100 }}
+            ¥{{ currentPackage.price }}
           </el-descriptions-item>
           <el-descriptions-item label="原价">
-            {{ currentPackage.originalPrice ? '¥' + (currentPackage.originalPrice / 100).toFixed(2) : '-' }}
+            {{ currentPackage.originalPrice ? '¥' + currentPackage.originalPrice.toFixed(2) : '-' }}
           </el-descriptions-item>
           <el-descriptions-item label="预估时长">
             {{ currentPackage.estimatedDuration }} 小时
@@ -742,7 +749,7 @@
               <span>x {{ item.quantity }} {{ item.productId?.unit || '' }}</span>
             </div>
             <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #eee;">
-              <strong>商品总价：¥{{ calculateProductsTotal(currentPackage.products).toFixed(2) }}</strong>
+              <strong>商品总价：¥{{ currentPackage.products.reduce((sum, item) => sum + (item.productId?.price || 0) * item.quantity, 0).toFixed(2) }}</strong>
             </div>
           </div>
           <div
@@ -956,8 +963,8 @@ const form = reactive({
 
 const formRules = {
   standardId: [{ required: true, message: '请选择套餐类型', trigger: 'change' }],
-  name: [{ required: true, message: '请输入套餐名称', trigger: 'blur' }],
-  price: [{ required: true, message: '请输入套餐价格', trigger: 'blur' }]
+  name: [{ required: true, message: '请输入套餐名称', trigger: 'blur' }]
+  // price 改为可选，默认等于原价
 }
 
 // 批量导入相关
@@ -986,7 +993,7 @@ const groupedStandards = computed(() => {
   return Object.keys(groups).map(key => ({
     vehicleGroup: key,
     standards: groups[key].sort((a, b) => {
-      const tierOrder = { '基础': 1, '标准': 2, '高级': 3, '尊享': 4 }
+      const tierOrder = { '实惠': 1, '标准': 2, '优质': 3, '尊享': 4 }
       return tierOrder[a.tier] - tierOrder[b.tier]
     })
   }))
@@ -1000,8 +1007,8 @@ const calculatedOriginalPrice = computed(() => {
 // 计算属性：价格是否超出区间
 const isPriceOutOfRange = computed(() => {
   if (!currentPriceRange.value || !form.price) return false
-  const priceInCents = Math.round(form.price * 100)
-  return priceInCents < currentPriceRange.value.minPrice || priceInCents > currentPriceRange.value.maxPrice
+  // 套餐价格和规范价格区间单位都是元，直接比较
+  return form.price < currentPriceRange.value.minPrice || form.price > currentPriceRange.value.maxPrice
 })
 
 // 计算商品总价
@@ -1009,7 +1016,7 @@ function calculateProductsTotal(products) {
   if (!products || products.length === 0) return 0
   return products.reduce((total, item) => {
     return total + (item.productPrice || 0) * (item.quantity || 1)
-  }, 0) / 100
+  }, 0)
 }
 
 // 方法
@@ -1080,14 +1087,16 @@ const handleFilterChange = () => {
 
 // 套餐类型变化
 const handleStandardChange = (standardId) => {
-  const standard = availableStandards.value.find(s => s._id === standardId)
+  console.log('套餐类型变化，standardId:', standardId)
+  console.log('可用的套餐类型:', availableStandards.value)
+  const standard = availableStandards.value.find(s => String(s._id) === String(standardId))
+  console.log('找到的套餐类型:', standard)
   if (standard) {
     form.vehicleGroup = standard.vehicleGroup
     form.tier = standard.tier
-
-    // 获取价格区间参考
-    // 这里简化处理，实际应该从门店地址获取
-    // 暂时不自动填充价格区间，让用户自己输入价格
+    console.log('设置 form.vehicleGroup:', form.vehicleGroup, 'form.tier:', form.tier)
+  } else {
+    console.error('未找到匹配的套餐类型，standardId:', standardId)
   }
 }
 
@@ -1123,7 +1132,7 @@ const handleEdit = (row) => {
     mileageRangeMin: row.mileageRange?.min || 0,
     mileageRangeMax: row.mileageRange?.max || 999999,
     tier: row.tier,
-    price: row.price / 100,
+    price: row.price,
     estimatedDuration: row.estimatedDuration || 2,
     serviceItems: row.serviceItems ? [...row.serviceItems] : [],
     products: row.products ? row.products.map(p => ({
@@ -1140,6 +1149,10 @@ const handleEdit = (row) => {
 }
 
 const handleSubmitForm = async () => {
+  // 清除 price 字段的验证状态（因为 price 是可选的）
+  formRef.value.clearValidate('price')
+
+  // 验证表单
   await formRef.value.validate()
 
   submitting.value = true
@@ -1152,7 +1165,8 @@ const handleSubmitForm = async () => {
       mileageRangeMin: form.mileageRangeMin,
       mileageRangeMax: form.mileageRangeMax,
       tier: form.tier,
-      price: form.price,
+      // price 为空时不发送，后端会使用原价作为默认值
+      ...(form.price != null && form.price !== '' && { price: form.price }),
       estimatedDuration: form.estimatedDuration,
       serviceItems: form.serviceItems,
       products: form.products.map(p => ({
@@ -1346,10 +1360,20 @@ const confirmProductSelection = () => {
   })
   productSelectorVisible.value = false
   ElMessage.success(`已添加 ${tempSelectedProducts.value.length} 件商品`)
+  // 自动更新价格为原价
+  updatePriceToOriginal()
 }
 
 const removeProduct = (index) => {
   form.products.splice(index, 1)
+  // 自动更新价格为原价
+  updatePriceToOriginal()
+}
+
+// 自动更新价格为原价（商品总价）
+const updatePriceToOriginal = () => {
+  const originalPrice = calculateProductsTotal(form.products)
+  form.price = originalPrice > 0 ? originalPrice : null
 }
 
 // 服务项目相关
@@ -1381,8 +1405,8 @@ const removeTag = (index) => {
 
 const getPriceTagType = (price) => {
   if (!currentPriceRange.value || !price) return 'info'
-  const priceInCents = Math.round(price * 100)
-  if (priceInCents < currentPriceRange.value.minPrice || priceInCents > currentPriceRange.value.maxPrice) {
+  // 套餐价格和规范价格区间单位都是元，直接比较
+  if (price < currentPriceRange.value.minPrice || price > currentPriceRange.value.maxPrice) {
     return 'warning'
   }
   return 'success'

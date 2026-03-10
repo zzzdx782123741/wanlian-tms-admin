@@ -465,7 +465,7 @@
                     :key="index"
                     class="error-item"
                   >
-                    第 {{ error.row }} 行: {{ error.error }}
+                    {{ formatImportError(error) }}
                   </div>
                   <div
                     v-if="importResult.errors.length > 50"
@@ -501,6 +501,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, ArrowDown, Delete, InfoFilled, Download, UploadFilled, Refresh } from '@element-plus/icons-vue'
 import request from '@/utils/request'
+import { batchImportTechnicians } from '@/api/batch'
 import dayjs from 'dayjs'
 
 const loading = ref(false)
@@ -517,6 +518,73 @@ const importResult = ref({
   failedCount: 0,
   errors: []
 })
+
+const resetImportState = () => ({
+  message: '',
+  total: 0,
+  successCount: 0,
+  failedCount: 0,
+  errors: []
+})
+
+const buildImportMessage = ({ message, total, successCount, failedCount }) => {
+  if (message) {
+    return message
+  }
+
+  return `共 ${total} 条，成功 ${successCount} 条，失败 ${failedCount} 条`
+}
+
+const normalizeImportErrors = (errors = []) => {
+  if (!Array.isArray(errors)) {
+    return []
+  }
+
+  return errors.map((item, index) => ({
+    id: `${item?.row || '-'}-${index}`,
+    row: item?.row || '-',
+    field: item?.field || '',
+    value: item?.value ?? '',
+    identifier: item?.identifier || item?.phone || '',
+    identifierLabel: item?.identifierLabel || (item?.phone ? '手机号' : ''),
+    error: item?.error || item?.message || '导入失败',
+    summary: item?.summary || ''
+  }))
+}
+
+const formatImportError = (error) => {
+  if (!error) {
+    return '导入失败'
+  }
+
+  if (error.summary) {
+    return error.summary
+  }
+
+  const segments = [`第 ${error.row} 行`]
+
+  // 用于标识记录的字段（手机号/姓名）
+  if (error.identifier && error.identifierLabel) {
+    segments.push(`${error.identifierLabel}：${error.identifier}`)
+  }
+
+  // 如果错误字段不是标识字段，显示字段名和值
+  const isIdentifierField = error.field && (
+    error.field === 'phone' && error.identifierLabel === '手机号' ||
+    error.field === 'name' && error.identifierLabel === '姓名'
+  )
+
+  if (error.field && !isIdentifierField) {
+    segments.push(`字段：${error.field}`)
+  }
+
+  // 只有在非标识字段且有值时才显示当前值
+  if (!isIdentifierField && error.value !== '' && error.value !== undefined && error.value !== null) {
+    segments.push(`当前值：${error.value}`)
+  }
+
+  return `${segments.join('，')}：${error.error}`
+}
 const technicians = ref([])
 const total = ref(0)
 const stats = ref({
@@ -559,7 +627,7 @@ const formRules = {
 }
 
 // 显示OpenID帮助信息（已废弃，保留用于兼容）
-function showOpenidHelp() {
+function showOpenidHelpLegacy() {
   ElMessageBox.alert(
     `新版本已支持手机号自动激活！
 
@@ -576,7 +644,7 @@ function showOpenidHelp() {
 }
 
 // 获取激活状态类型
-function getActivationStatusType(row) {
+function getActivationStatusTypeLegacy(row) {
   if (row.activationStatus === 'activated' || row.userId) {
     return 'success'
   }
@@ -584,11 +652,41 @@ function getActivationStatusType(row) {
 }
 
 // 获取激活状态文本
-function getActivationStatusText(row) {
+function getActivationStatusTextLegacy(row) {
   if (row.activationStatus === 'activated' || row.userId) {
     return '已激活'
   }
   return '待激活'
+}
+
+function showOpenidHelp() {
+  ElMessageBox.alert(
+    `新版本已支持微信手机号自动绑定。
+
+无需手动获取 OpenID，流程如下：
+1. 门店添加技师，只需姓名和手机号
+2. 技师首次进入小程序，点击微信手机号快捷登录
+3. 系统校验微信手机号与后台维护手机号一致
+4. 自动绑定微信并完成首次激活登录`,
+    '技师绑定说明',
+    {
+      confirmButtonText: '知道了'
+    }
+  )
+}
+
+function getActivationStatusType(row) {
+  if (row.activationStatus === 'activated' || row.userId || row.hasOpenid) {
+    return 'success'
+  }
+  return 'warning'
+}
+
+function getActivationStatusText(row) {
+  if (row.activationStatus === 'activated' || row.userId || row.hasOpenid) {
+    return '已绑定'
+  }
+  return '未绑定'
 }
 
 onMounted(() => {
@@ -664,7 +762,7 @@ async function confirmSave() {
 
       // 根据返回结果显示不同的提示
       if (response.data?.isNewUser) {
-        ElMessage.success('已创建待激活技师账号，请通知技师使用手机号登录小程序激活')
+        ElMessage.success('已创建待绑定技师账号，请通知技师使用微信手机号快捷登录完成绑定')
       } else {
         ElMessage.success('添加成功')
       }
@@ -680,6 +778,47 @@ async function confirmSave() {
     loadTechnicians()
   } catch (error) {
     console.error('保存技师失败:', error)
+
+    // 检查是否是openid与司机账号冲突
+    if (error.response?.data?.code === 'OPENID_CONFLICT_WITH_DRIVER') {
+      saving.value = false
+      const conflictUser = error.response.data.conflictUser
+      try {
+        await ElMessageBox.confirm(
+          `该微信已绑定司机账号（${conflictUser.name || conflictUser.phone}）。\n\n是否将司机账号转换为技师？转换后司机身份将被移除。`,
+          '账号冲突',
+          {
+            confirmButtonText: '确认转换',
+            cancelButtonText: '取消',
+            type: 'warning',
+            distinguishCancelAndClose: true
+          }
+        )
+
+        // 用户确认转换，调用转换API
+        saving.value = true
+        try {
+          await request({
+            url: '/store/technicians/convert-driver',
+            method: 'post',
+            data: {
+              userId: conflictUser.id,
+              name: technicianForm.name,
+              phone: technicianForm.phone,
+              permissions: technicianForm.permissions
+            }
+          })
+          ElMessage.success('角色转换成功，该司机已转换为技师')
+          formDialogVisible.value = false
+          loadTechnicians()
+        } catch (convertError) {
+          ElMessage.error(convertError.message || '角色转换失败')
+        }
+      } catch {
+        // 用户取消转换
+      }
+      return
+    }
 
     // 提供更友好的错误提示
     let errorMessage = '保存失败'
@@ -782,26 +921,14 @@ function formatDate(date) {
 // 打开批量导入对话框
 function handleBatchImport() {
   uploadFile.value = null
-  importResult.value = {
-    message: '',
-    total: 0,
-    successCount: 0,
-    failedCount: 0,
-    errors: []
-  }
+  importResult.value = resetImportState()
   batchDialogVisible.value = true
 }
 
 // 重置导入状态
 function resetImport() {
   uploadFile.value = null
-  importResult.value = {
-    message: '',
-    total: 0,
-    successCount: 0,
-    failedCount: 0,
-    errors: []
-  }
+  importResult.value = resetImportState()
 }
 
 // 下载模板
@@ -852,34 +979,47 @@ async function startImport() {
     const formData = new FormData()
     formData.append('file', uploadFile.value)
 
-    const res = await request({
-      url: '/batch/technicians',
-      method: 'post',
-      data: formData,
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    })
+    const res = await batchImportTechnicians(formData)
+    const errors = normalizeImportErrors(res.data?.errors)
+    const total = res.data?.total || 0
+    const successCount = res.data?.success || 0
+    const failedCount = res.data?.failed || errors.length
 
     importResult.value = {
-      message: res.data.message || '导入完成',
-      total: res.data.total,
-      successCount: res.data.success,
-      failedCount: res.data.failed,
-      errors: res.data.errors || []
+      message: buildImportMessage({
+        message: res.message || res.data?.message,
+        total,
+        successCount,
+        failedCount
+      }),
+      total,
+      successCount,
+      failedCount,
+      errors
     }
 
-    if (res.data.success > 0) {
+    if (successCount > 0) {
       loadTechnicians()
     }
   } catch (error) {
     console.error('导入失败:', error)
+    const errorMessage = error.response?.data?.message || error.message || '导入失败'
+    const backendErrors = normalizeImportErrors(
+      error.response?.data?.errors || error.response?.data?.data?.errors || []
+    )
+    const failedCount = error.response?.data?.failed || error.response?.data?.data?.failed || backendErrors.length
+    const total = error.response?.data?.total || error.response?.data?.data?.total || failedCount
     importResult.value = {
-      message: error.message || '导入失败',
-      total: 0,
+      message: buildImportMessage({
+        message: errorMessage,
+        total,
+        successCount: 0,
+        failedCount
+      }),
+      total,
       successCount: 0,
-      failedCount: 0,
-      errors: []
+      failedCount,
+      errors: backendErrors
     }
   } finally {
     importing.value = false

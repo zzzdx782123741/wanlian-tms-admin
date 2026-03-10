@@ -524,21 +524,6 @@
             style="width: 100%"
           />
         </el-form-item>
-        <el-form-item label="当前司机">
-          <el-select
-            v-model="vehicleForm.currentDriverId"
-            placeholder="请选择司机（可选）"
-            clearable
-            style="width: 100%"
-          >
-            <el-option
-              v-for="driver in driverList"
-              :key="driver._id"
-              :label="`${driver.nickname} (${driver.phone || '无电话'})`"
-              :value="driver._id"
-            />
-          </el-select>
-        </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="formDialogVisible = false">
@@ -622,7 +607,13 @@
                 车牌号、车辆类型、VIN码、发动机号、发动机品牌、发动机型号、品牌、车型、年份
               </el-descriptions-item>
               <el-descriptions-item label="选填字段">
-                驱动形式、当前司机（可填姓名或手机号）
+                驱动形式、颜色
+              </el-descriptions-item>
+              <el-descriptions-item
+                label="注意事项"
+                :span="2"
+              >
+                司机-车辆关联请在司机管理中进行分配
               </el-descriptions-item>
               <el-descriptions-item
                 label="数据限制"
@@ -684,7 +675,7 @@
                     :key="index"
                     class="error-item"
                   >
-                    第 {{ error.row }} 行: {{ error.error }}
+                    {{ formatImportError(error) }}
                   </div>
                   <div
                     v-if="importResult.errors.length > 50"
@@ -720,13 +711,13 @@ import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Download, Upload, UploadFilled, InfoFilled, Refresh, ArrowDown } from '@element-plus/icons-vue'
 import request from '@/utils/request'
+import { batchImportVehicles } from '@/api/batch'
 import {
   getFleetVehicles,
   addVehicle,
   updateVehicle,
   updateVehicleStatus,
   deleteVehicle,
-  getFleetDrivers,
   getVehicleStats,
   exportVehicles
 } from '@/api/fleetVehicle'
@@ -738,7 +729,6 @@ const userRole = localStorage.getItem('role') || ''
 const loading = ref(false)
 const saving = ref(false)
 const vehicleList = ref([])
-const driverList = ref([])
 const total = ref(0)
 const stats = ref({
   total: 0,
@@ -771,8 +761,7 @@ const vehicleForm = ref({
   brandOther: '',
   model: '',
   driveType: '',
-  year: null,
-  currentDriverId: null
+  year: null
 })
 
 const formRules = {
@@ -843,12 +832,98 @@ const importResult = ref({
   errors: []
 })
 
+const resetImportState = () => ({
+  message: '',
+  total: 0,
+  successCount: 0,
+  failedCount: 0,
+  errors: []
+})
+
+const buildImportMessage = ({ message, total, successCount, failedCount }) => {
+  if (message) {
+    return message
+  }
+
+  return `共 ${total} 条，成功 ${successCount} 条，失败 ${failedCount} 条`
+}
+
+const normalizeImportErrors = (errors = []) => {
+  if (!Array.isArray(errors)) {
+    return []
+  }
+
+  return errors.map((item, index) => {
+    const fallbackMessage = item?.error || item?.message || '导入失败'
+    const row = item?.row || '-'
+
+    return {
+      id: `${row}-${index}`,
+      row,
+      field: item?.field || '',
+      value: item?.value ?? '',
+      plateNumber: item?.plateNumber || item?.data?.plateNumber || '',
+      vin: item?.vin || item?.data?.vin || '',
+      error: fallbackMessage,
+      summary: item?.summary || ''
+    }
+  })
+}
+
+const formatImportError = (error) => {
+  if (!error) {
+    return '导入失败'
+  }
+
+  if (error.summary) {
+    return error.summary
+  }
+
+  const segments = [`第 ${error.row} 行`]
+
+  // 用于标识记录的字段（车牌号/VIN）
+  if (error.plateNumber) {
+    segments.push(`车牌号：${error.plateNumber}`)
+  } else if (error.vin) {
+    segments.push(`VIN：${error.vin}`)
+  }
+
+  // 如果错误字段不是标识字段，显示字段名和值
+  const identifierFields = ['plateNumber', 'vin']
+  const isIdentifierField = error.field && identifierFields.includes(error.field)
+
+  if (error.field && !isIdentifierField) {
+    segments.push(`字段：${error.field}`)
+  }
+
+  // 只有在非标识字段且有值时才显示当前值
+  if (!isIdentifierField && error.value !== '' && error.value !== undefined && error.value !== null) {
+    segments.push(`当前值：${error.value}`)
+  }
+
+  return `${segments.join('，')}：${error.error}`
+}
+
 // 获取车辆列表
+const normalizeDriverOption = (driver) => {
+  if (!driver || typeof driver !== 'object') {
+    return driver
+  }
+
+  return {
+    ...driver,
+    nickname: driver.nickname || driver.name || driver.phone || ''
+  }
+}
+
 const fetchVehicles = async () => {
   loading.value = true
   try {
     const res = await getFleetVehicles(queryParams.value)
-    vehicleList.value = res.data.vehicles || []
+    vehicleList.value = (res.data.vehicles || []).map(vehicle => ({
+      ...vehicle,
+      currentDriverId: normalizeDriverOption(vehicle.currentDriverId)
+    }))
     total.value = res.data.total || 0
   } catch (error) {
     console.error('获取车辆列表失败:', error)
@@ -864,16 +939,6 @@ const fetchStats = async () => {
     stats.value = res.data
   } catch (error) {
     console.error('获取统计失败:', error)
-  }
-}
-
-// 获取司机列表
-const fetchDrivers = async () => {
-  try {
-    const res = await getFleetDrivers()
-    driverList.value = res.data.drivers || []
-  } catch (error) {
-    console.error('获取司机列表失败:', error)
   }
 }
 
@@ -910,8 +975,7 @@ const handleAdd = () => {
     brandOther: '',
     model: '',
     driveType: '',
-    year: null,
-    currentDriverId: null
+    year: null
   }
   formDialogVisible.value = true
 }
@@ -944,8 +1008,7 @@ const handleEdit = (row) => {
     model: row.model || '',
     driveType: row.driveType || '',
     // 将数字格式的年份转换为字符串，以匹配 el-date-picker 的 value-format="YYYY"
-    year: row.year ? String(row.year) : null,
-    currentDriverId: row.currentDriverId?._id || null
+    year: row.year ? String(row.year) : null
   }
   formDialogVisible.value = true
 }
@@ -1076,26 +1139,14 @@ const formatDate = (date) => {
 // 打开批量导入对话框
 const handleBatchImport = () => {
   uploadFile.value = null
-  importResult.value = {
-    message: '',
-    total: 0,
-    successCount: 0,
-    failedCount: 0,
-    errors: []
-  }
+  importResult.value = resetImportState()
   batchDialogVisible.value = true
 }
 
 // 重置导入状态
 const resetImport = () => {
   uploadFile.value = null
-  importResult.value = {
-    message: '',
-    total: 0,
-    successCount: 0,
-    failedCount: 0,
-    errors: []
-  }
+  importResult.value = resetImportState()
 }
 
 // 导出车辆列表
@@ -1184,38 +1235,50 @@ const startImport = async () => {
     const formData = new FormData()
     formData.append('file', uploadFile.value)
 
-    const res = await request({
-      url: '/batch/vehicles',
-      method: 'post',
-      data: formData,
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    })
+    const res = await batchImportVehicles(formData)
+    const errors = normalizeImportErrors(res.data?.errors)
+    const total = res.data?.total || 0
+    const successCount = res.data?.success || 0
+    const failedCount = res.data?.failed || errors.length
 
     // 处理导入结果
     importResult.value = {
-      message: res.message || '导入完成',
-      total: res.data.total,
-      successCount: res.data.success,
-      failedCount: res.data.failed,
-      errors: res.data.errors || []
+      message: buildImportMessage({
+        message: res.message,
+        total,
+        successCount,
+        failedCount
+      }),
+      total,
+      successCount,
+      failedCount,
+      errors
     }
 
     // 如果有成功的，刷新列表
-    if (res.data.success > 0) {
+    if (successCount > 0) {
       fetchVehicles()
       fetchStats()
     }
   } catch (error) {
     console.error('导入失败:', error)
     const errorMessage = error.response?.data?.message || error.message || '导入失败'
+    const backendErrors = normalizeImportErrors(
+      error.response?.data?.errors || error.response?.data?.data?.errors || []
+    )
+    const failedCount = error.response?.data?.failed || error.response?.data?.data?.failed || backendErrors.length
+    const total = error.response?.data?.total || error.response?.data?.data?.total || failedCount
     importResult.value = {
-      message: errorMessage,
-      total: 0,
+      message: buildImportMessage({
+        message: errorMessage,
+        total,
+        successCount: 0,
+        failedCount
+      }),
+      total,
       successCount: 0,
-      failedCount: 0,
-      errors: []
+      failedCount,
+      errors: backendErrors
     }
   } finally {
     importing.value = false
@@ -1225,7 +1288,6 @@ const startImport = async () => {
 onMounted(() => {
   fetchVehicles()
   fetchStats()
-  fetchDrivers()
 })
 </script>
 

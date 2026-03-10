@@ -1,17 +1,17 @@
-// 全局样式
+// Global styles
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
   width: 100%;
   height: 100%;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
-// 自定义主题色
 :root {
   --primary-color: #667eea;
   --success-color: #67c23a;
@@ -20,7 +20,6 @@ html, body {
   --info-color: #909399;
 }
 
-// 自定义滚动条
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -35,19 +34,27 @@ html, body {
   background: #f5f7fa;
 }
 
-// 下拉框通用宽度类
 .filter-select {
-  width: 180px;  // 筛选条件中的下拉框
+  width: 180px;
 }
 
 .filter-select-wide {
-  width: 220px;  // 筛选条件下拉框（用于长文本选项）
+  width: 220px;
 }
 
-.form-select {
-  width: 100%;   // 表单中的下拉框（自适应）
-}
-
+.form-select,
 .dialog-select {
-  width: 100%;   // 对话框中的下拉框（自适应）
+  width: 100%;
+}
+
+.el-table .cell > .el-button,
+.el-table .cell > .el-dropdown {
+  vertical-align: middle;
+}
+
+.el-table .cell > .el-dropdown > .el-button,
+.el-table .cell > .el-dropdown .el-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }

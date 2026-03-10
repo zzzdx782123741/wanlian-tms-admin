@@ -96,6 +96,18 @@ export function getStoreIncome(params) {
 }
 
 /**
+ * 门店端 - 导出服务收入明细
+ */
+export function exportStoreIncome(params) {
+  return request({
+    url: '/store/income/export',
+    method: 'get',
+    params,
+    responseType: 'blob'
+  })
+}
+
+/**
  * 门店端 - 获取结算记录
  */
 export function getStoreSettlements(params) {
@@ -103,6 +115,18 @@ export function getStoreSettlements(params) {
     url: '/store/settlements',
     method: 'get',
     params
+  })
+}
+
+/**
+ * 门店端 - 导出结算记录
+ */
+export function exportStoreSettlements(params) {
+  return request({
+    url: '/store/settlements/export',
+    method: 'get',
+    params,
+    responseType: 'blob'
   })
 }
 

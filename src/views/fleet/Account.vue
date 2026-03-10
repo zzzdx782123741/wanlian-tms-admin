@@ -364,6 +364,7 @@ const formatDate = (date) => {
 const getTransactionTypeTag = (type) => {
   const map = {
     'recharge': 'success',
+    'deduct': 'danger',
     'payment': 'danger',
     'refund': 'warning',
     'freeze': 'info',
@@ -376,6 +377,7 @@ const getTransactionTypeTag = (type) => {
 const getTransactionTypeText = (type) => {
   const map = {
     'recharge': '充值',
+    'deduct': '扣款',
     'payment': '支付',
     'refund': '退款',
     'freeze': '冻结',
@@ -388,6 +390,7 @@ const getTransactionTypeText = (type) => {
 const getTransactionAmountColor = (type) => {
   const map = {
     'recharge': '#67c23a',
+    'deduct': '#f56c6c',
     'payment': '#f56c6c',
     'refund': '#e6a23c',
     'freeze': '#909399',
@@ -400,6 +403,7 @@ const getTransactionAmountColor = (type) => {
 const getTransactionAmountPrefix = (type) => {
   const map = {
     'recharge': '+',
+    'deduct': '-',
     'payment': '-',
     'refund': '+',
     'freeze': '',

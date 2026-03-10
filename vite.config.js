@@ -17,6 +17,13 @@ export default defineConfig(({ command }) => {
         '/api': {
           target: 'http://localhost:3000',
           changeOrigin: true
+        },
+        // 代理上传的静态文件（通过 /api/uploads 访问，避免跨域问题）
+        '/api/uploads': {
+          target: 'http://localhost:3000',
+          changeOrigin: true,
+          // 重写路径：/api/uploads/xxx -> /uploads/xxx
+          rewrite: (path) => path.replace(/^\/api\/uploads/, '/uploads')
         }
       }
     }

@@ -140,7 +140,7 @@
           width="140"
         >
           <template #default="{ row }">
-            <span style="color: #f56c6c; font-weight: bold;">¥{{ row.price / 100 }}</span>
+            <span style="color: #f56c6c; font-weight: bold;">¥{{ row.price }}</span>
           </template>
         </el-table-column>
 
@@ -150,9 +150,9 @@
         >
           <template #default="{ row }">
             <div v-if="row.priceRangeRef">
-              <span style="color: #67c23a;">¥{{ row.priceRangeRef.minPrice / 100 }}</span>
+              <span style="color: #67c23a;">¥{{ row.priceRangeRef.minPrice }}</span>
               <span> - </span>
-              <span style="color: #67c23a;">¥{{ row.priceRangeRef.maxPrice / 100 }}</span>
+              <span style="color: #67c23a;">¥{{ row.priceRangeRef.maxPrice }}</span>
             </div>
             <span
               v-else
@@ -172,6 +172,30 @@
             >
               {{ getPriceLevelText(row.priceLevel) }}
             </el-tag>
+          </template>
+        </el-table-column>
+
+        <el-table-column
+          label="审核通道"
+          width="100"
+          align="center"
+        >
+          <template #default="{ row }">
+            <el-tag
+              v-if="row.fastTrack === true"
+              type="success"
+              size="small"
+            >
+              ⚡ 快速
+            </el-tag>
+            <el-tag
+              v-else-if="row.fastTrack === false"
+              type="warning"
+              size="small"
+            >
+              人工审核
+            </el-tag>
+            <span v-else>-</span>
           </template>
         </el-table-column>
 
@@ -292,14 +316,14 @@
             {{ currentPackage.tier }}
           </el-descriptions-item>
           <el-descriptions-item label="套餐价格">
-            <span style="color: #f56c6c; font-weight: bold;">¥{{ currentPackage.price / 100 }}</span>
+            <span style="color: #f56c6c; font-weight: bold;">¥{{ currentPackage.price }}</span>
           </el-descriptions-item>
           <el-descriptions-item label="原价">
             <span
               v-if="currentPackage.originalPrice"
               style="color: #909399;"
             >
-              ¥{{ currentPackage.originalPrice / 100 }}
+              ¥{{ currentPackage.originalPrice.toFixed(2) }}
             </span>
             <span v-else>-</span>
           </el-descriptions-item>
@@ -319,11 +343,11 @@
           >
             <div class="price-item">
               <span class="label">规范最低价：</span>
-              <span class="value low">¥{{ currentPackage.priceRangeRef.minPrice / 100 }}</span>
+              <span class="value low">¥{{ currentPackage.priceRangeRef.minPrice }}</span>
             </div>
             <div class="price-item">
               <span class="label">规范最高价：</span>
-              <span class="value high">¥{{ currentPackage.priceRangeRef.maxPrice / 100 }}</span>
+              <span class="value high">¥{{ currentPackage.priceRangeRef.maxPrice }}</span>
             </div>
             <div class="price-item">
               <span class="label">门店定价：</span>
@@ -331,7 +355,7 @@
                 class="value"
                 :class="getPriceClass(currentPackage)"
               >
-                ¥{{ currentPackage.price / 100 }}
+                ¥{{ currentPackage.price }}
               </span>
             </div>
           </div>
@@ -616,10 +640,10 @@ const getPriceLevelText = (level) => {
 
 const getPriceClass = (pkg) => {
   if (!pkg.priceRangeRef) return ''
-  const price = pkg.price
+  // 套餐价格和规范价格区间单位都是元，直接比较
   const { minPrice, maxPrice } = pkg.priceRangeRef
-  if (price < minPrice) return 'low'
-  if (price > maxPrice) return 'high'
+  if (pkg.price < minPrice) return 'low'
+  if (pkg.price > maxPrice) return 'high'
   return 'medium'
 }
 

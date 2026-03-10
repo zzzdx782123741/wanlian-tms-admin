@@ -107,16 +107,24 @@
               value="awaiting_fleet_approval"
             />
             <el-option
-              label="待评估"
+              label="待确认时间"
+              value="awaiting_time_confirmation"
+            />
+            <el-option
+              label="待接车检查"
               value="pending_assessment"
             />
             <el-option
-              label="待审批"
+              label="待审批报价"
               value="awaiting_approval"
             />
             <el-option
               label="维修中"
               value="in_repair"
+            />
+            <el-option
+              label="增项待审批"
+              value="awaiting_addon_approval"
             />
             <el-option
               label="待确认"
@@ -125,6 +133,10 @@
             <el-option
               label="已完成"
               value="completed"
+            />
+            <el-option
+              label="已退款"
+              value="refunded"
             />
             <el-option
               label="已拒绝"
@@ -201,7 +213,7 @@
               v-if="row.quote"
               style="color: #f56c6c; font-weight: 600"
             >
-              ¥{{ row.quote.total }}
+              ¥{{ formatAmount(row.quote.actualTotal || row.quote.total) }}
             </span>
             <span v-else>-</span>
           </template>
@@ -246,15 +258,6 @@
               @click="handleViewDetail(row)"
             >
               详情
-            </el-button>
-            <el-button
-              v-if="row.status === 'awaiting_fleet_approval'"
-              type="success"
-              size="small"
-              link
-              @click="handleApprove(row)"
-            >
-              审批
             </el-button>
           </template>
         </el-table-column>
@@ -313,7 +316,7 @@
           label="报价金额"
         >
           <span style="color: #f56c6c; font-weight: 600; font-size: 18px">
-            ¥{{ currentOrder.quote.total }}
+            ¥{{ formatAmount(currentOrder.quote.actualTotal || currentOrder.quote.total) }}
           </span>
         </el-descriptions-item>
         <el-descriptions-item label="订单状态">
@@ -349,7 +352,7 @@
             width="100"
           >
             <template #default="{ row }">
-              ¥{{ row.price }}
+              ¥{{ formatAmount(row.price) }}
             </template>
           </el-table-column>
           <el-table-column
@@ -362,7 +365,7 @@
             width="100"
           >
             <template #default="{ row }">
-              ¥{{ row.price * row.quantity }}
+              ¥{{ formatAmount(row.price * row.quantity) }}
             </template>
           </el-table-column>
         </el-table>
@@ -370,7 +373,7 @@
           <el-col :span="24">
             <span style="font-size: 16px">合计：</span>
             <span style="color: #f56c6c; font-size: 20px; font-weight: bold">
-              ¥{{ currentOrder.quote.total }}
+              ¥{{ formatAmount(currentOrder.quote.actualTotal || currentOrder.quote.total) }}
             </span>
           </el-col>
         </el-row>
@@ -406,78 +409,6 @@
         </el-timeline>
       </template>
     </el-dialog>
-
-    <!-- 审批对话框 -->
-    <el-dialog
-      v-model="approveDialogVisible"
-      title="订单初审"
-      width="600px"
-    >
-      <el-form
-        :model="approveForm"
-        label-width="100px"
-      >
-        <el-form-item label="订单号">
-          <el-input
-            :value="currentOrder.orderNumber"
-            disabled
-          />
-        </el-form-item>
-        <el-form-item label="车牌号">
-          <el-input
-            :value="currentOrder.vehicleId?.plateNumber"
-            disabled
-          />
-        </el-form-item>
-        <el-form-item label="故障描述">
-          <el-input
-            :value="currentOrder.faultDescription"
-            type="textarea"
-            :rows="2"
-            disabled
-          />
-        </el-form-item>
-        <el-form-item label="报价金额">
-          <el-input
-            :value="`¥${currentOrder.quote?.total || 0}`"
-            disabled
-          >
-            <template #prepend>
-              总计
-            </template>
-          </el-input>
-        </el-form-item>
-        <el-form-item label="审批结果">
-          <el-radio-group v-model="approveForm.approved">
-            <el-radio :label="true">
-              通过
-            </el-radio>
-            <el-radio :label="false">
-              拒绝
-            </el-radio>
-          </el-radio-group>
-        </el-form-item>
-        <el-form-item label="审批意见">
-          <el-input
-            v-model="approveForm.remark"
-            type="textarea"
-            :rows="3"
-            placeholder="请输入审批意见"
-          />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="approveDialogVisible = false">
-          取消
-        </el-button>
-        <el-button
-          type="primary"
-          @click="confirmApprove"
-        >
-          确定
-        </el-button>
-      </template>
-    </el-dialog>
   </div>
 </template>
 
@@ -485,7 +416,7 @@
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Download, Refresh } from '@element-plus/icons-vue'
-import { getOrders, getOrderDetail, approveQuote, exportOrders } from '@/api/order'
+import { getOrders, getOrderDetail, exportOrders } from '@/api/order'
 import { getOverview } from '@/api/stats'
 import dayjs from 'dayjs'
 
@@ -530,12 +461,7 @@ const queryParams = ref({
 })
 
 const detailDialogVisible = ref(false)
-const approveDialogVisible = ref(false)
 const currentOrder = ref({})
-const approveForm = ref({
-  approved: true,
-  remark: ''
-})
 
 // 获取订单列表
 const fetchOrders = async () => {
@@ -639,28 +565,6 @@ const handleViewDetail = async (row) => {
   }
 }
 
-// 审批
-const handleApprove = (row) => {
-  currentOrder.value = row
-  approveForm.value = {
-    approved: true,
-    remark: ''
-  }
-  approveDialogVisible.value = true
-}
-
-// 确认审批
-const confirmApprove = async () => {
-  try {
-    await approveQuote(currentOrder.value._id, approveForm.value)
-    ElMessage.success('审批成功')
-    approveDialogVisible.value = false
-    await fetchOrders()
-  } catch (error) {
-    console.error('审批失败:', error)
-  }
-}
-
 // 获取状态类型
 const getStatusType = (status) => {
   const typeMap = {
@@ -683,8 +587,8 @@ const getStatusText = (status) => {
   const textMap = {
     'awaiting_fleet_approval': '待车队审批',
     'awaiting_time_confirmation': '待确认时间',
-    'pending_assessment': '待评估',
-    'awaiting_approval': '待审批',
+    'pending_assessment': '待接车检查',
+    'awaiting_approval': '待审批报价',
     'in_repair': '维修中',
     'awaiting_addon_approval': '增项待审批',
     'pending_confirmation': '待确认',
@@ -703,6 +607,14 @@ const formatDate = (date) => {
 // 格式化日期时间
 const formatDateTime = (date) => {
   return dayjs(date).format('YYYY-MM-DD HH:mm:ss')
+}
+
+const formatAmount = (amount) => {
+  if (!amount) return '0.00'
+  return (Number(amount) / 100).toLocaleString('zh-CN', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  })
 }
 
 onMounted(() => {

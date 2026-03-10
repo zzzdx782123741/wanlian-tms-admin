@@ -188,7 +188,7 @@ const routes = [
         path: 'maintenance-packages',
         name: 'PlatformMaintenancePackages',
         component: () => import('@/views/platform/MaintenancePackages.vue'),
-        meta: { title: '保养套餐管理', icon: 'Box', roles: ['PLATFORM_OPERATOR'] }
+        meta: { title: '保养套餐管理', icon: 'Box', roles: ['PLATFORM_OPERATOR'], hideInMenu: true }
       },
       {
         path: 'package-standards',
@@ -201,12 +201,6 @@ const routes = [
         name: 'StorePackageAudit',
         component: () => import('@/views/platform/StorePackageAudit.vue'),
         meta: { title: '门店套餐审核', icon: 'Select', roles: ['PLATFORM_OPERATOR'] }
-      },
-      {
-        path: 'fleet-order-center',
-        name: 'FleetOrderCenter',
-        component: () => import('@/views/fleet/OrderCenter.vue'),
-        meta: { title: '订单中心', icon: 'DataAnalysis', roles: ['FLEET_MANAGER'] }
       },
       {
         path: 'fleet-orders',

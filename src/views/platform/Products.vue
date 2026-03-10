@@ -31,6 +31,7 @@
             v-model="filters.category"
             placeholder="全部分类"
             clearable
+            style="width: 140px"
             @change="loadProducts"
           >
             <el-option
@@ -60,6 +61,7 @@
             v-model="filters.status"
             placeholder="全部状态"
             clearable
+            style="width: 140px"
             @change="loadProducts"
           >
             <el-option
@@ -89,7 +91,8 @@
             v-model="filters.source"
             placeholder="全部来源"
             clearable
-            @change="loadProducts"
+            style="width: 140px"
+            @change="handleSourceChange"
           >
             <el-option
               label="全部"
@@ -106,7 +109,7 @@
           </el-select>
         </el-form-item>
         <el-form-item
-          v-if="isPlatformOperator"
+          v-if="isPlatformOperator && shouldShowStoreFilter"
           label="所属门店"
         >
           <el-select
@@ -165,10 +168,21 @@
           min-width="180"
         />
         <el-table-column
-          prop="code"
-          label="商品编码"
-          width="160"
-        />
+          label="内部SKU"
+          width="140"
+        >
+          <template #default="{ row }">
+            <span class="sku-code">{{ row.sku || '-' }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column
+          label="外部编码"
+          width="140"
+        >
+          <template #default="{ row }">
+            <span class="external-code">{{ row.externalCode || '-' }}</span>
+          </template>
+        </el-table-column>
         <el-table-column
           label="分类"
           width="100"
@@ -328,8 +342,11 @@
         <el-descriptions-item label="商品名称">
           {{ currentProduct.name }}
         </el-descriptions-item>
-        <el-descriptions-item label="商品编码">
-          {{ currentProduct.code || '-' }}
+        <el-descriptions-item label="内部SKU">
+          <span class="sku-code">{{ currentProduct.sku || '-' }}</span>
+        </el-descriptions-item>
+        <el-descriptions-item label="外部编码">
+          {{ currentProduct.externalCode || '-' }}
         </el-descriptions-item>
         <el-descriptions-item label="分类">
           {{ currentProduct.categoryText || '-' }}
@@ -423,14 +440,24 @@
             placeholder="请输入商品名称"
           />
         </el-form-item>
-        <el-form-item
-          label="商品编码"
-          prop="code"
-        >
+        <el-form-item label="内部SKU">
           <el-input
-            v-model="form.code"
-            placeholder="请输入商品编码（可选）"
+            :value="isEdit ? currentProduct?.sku : '系统自动生成'"
+            disabled
+            placeholder="系统自动生成"
           />
+          <div class="form-tip">
+            内部SKU由系统自动生成，无需手动填写
+          </div>
+        </el-form-item>
+        <el-form-item label="外部编码">
+          <el-input
+            v-model="form.externalCode"
+            placeholder="请输入供应商OE码/厂家编码（可选）"
+          />
+          <div class="form-tip">
+            可选填写，用于与供应商对接
+          </div>
         </el-form-item>
         <el-form-item
           label="商品分类"
@@ -733,7 +760,7 @@
                     :key="index"
                     class="error-item"
                   >
-                    第 {{ error.row }} 行：{{ error.error }}
+                    {{ formatImportError(error) }}
                   </div>
                 </el-scrollbar>
               </div>
@@ -759,17 +786,26 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Upload, Download, UploadFilled, InfoFilled, Refresh } from '@element-plus/icons-vue'
 import * as productApi from '@/api/product'
 import { getStores } from '@/api/store'
 import request from '@/utils/request'
+import { batchImportProducts } from '@/api/batch'
 
 const userRole = localStorage.getItem('role') || ''
 const isPlatformOperator = userRole === 'PLATFORM_OPERATOR'
 const isStoreProductRole = ['STORE_MANAGER', 'STORE_TECHNICIAN'].includes(userRole)
 const userStoreId = localStorage.getItem('storeId') || ''
+
+// 计算属性：是否显示所属门店筛选
+// 当选择"门店录入"或"全部来源"时显示，选择"平台录入"时隐藏
+const shouldShowStoreFilter = computed(() => {
+  // 平台运营且来源为"门店录入"或"全部来源"时显示
+  if (!isPlatformOperator) return false
+  return filters.source === '' || filters.source === 'store'
+})
 
 const units = ['个', '套', '件', '台', '升', '公斤', '米', '工时', '次', '车', '其他']
 
@@ -799,7 +835,7 @@ const auditing = ref(false)
 
 const form = reactive({
   name: '',
-  code: '',
+  externalCode: '',
   category: '',
   price: 0,
   costPrice: 0,
@@ -828,7 +864,24 @@ const rules = {
   category: [{ required: true, message: '请选择商品分类', trigger: 'change' }],
   price: [{ required: true, message: '请输入销售价格', trigger: 'blur' }],
   unit: [{ required: true, message: '请选择单位', trigger: 'change' }],
-  compatibleModels: [{ required: true, message: '请输入适配车型或选择通用', trigger: 'change' }]
+  compatibleModels: [
+    {
+      validator: (rule, value, callback) => {
+        // 如果是通用型，则不需要验证适配车型
+        if (form.isUniversal) {
+          callback()
+          return
+        }
+        // 非通用型时，必须输入适配车型
+        if (!modelsText.value || modelsText.value.trim() === '') {
+          callback(new Error('请输入适配车型或选择通用'))
+          return
+        }
+        callback()
+      },
+      trigger: 'change'
+    }
+  ]
 }
 
 const formRef = ref(null)
@@ -845,6 +898,74 @@ const importResult = ref({
   failedCount: 0,
   errors: []
 })
+
+const resetImportState = () => ({
+  message: '',
+  total: 0,
+  successCount: 0,
+  failedCount: 0,
+  errors: []
+})
+
+const buildImportMessage = ({ message, total, successCount, failedCount }) => {
+  if (message) {
+    return message
+  }
+
+  return `共 ${total} 条，成功 ${successCount} 条，失败 ${failedCount} 条`
+}
+
+const normalizeImportErrors = (errors = []) => {
+  if (!Array.isArray(errors)) {
+    return []
+  }
+
+  return errors.map((item, index) => ({
+    id: `${item?.row || '-'}-${index}`,
+    row: item?.row || '-',
+    field: item?.field || '',
+    value: item?.value ?? '',
+    identifier: item?.identifier || item?.code || item?.name || '',
+    identifierLabel: item?.identifierLabel || (item?.code ? '商品编码' : item?.name ? '商品名称' : ''),
+    error: item?.error || item?.message || '导入失败',
+    summary: item?.summary || ''
+  }))
+}
+
+const formatImportError = (error) => {
+  if (!error) {
+    return '导入失败'
+  }
+
+  if (error.summary) {
+    return error.summary
+  }
+
+  const segments = [`第 ${error.row} 行`]
+
+  // 用于标识记录的字段（商品名称/SKU/外部编码）
+  if (error.identifier && error.identifierLabel) {
+    segments.push(`${error.identifierLabel}：${error.identifier}`)
+  }
+
+  // 如果错误字段不是标识字段，显示字段名和值
+  const isIdentifierField = error.field && (
+    (error.identifierLabel === '商品名称' && error.field === 'name') ||
+    (error.identifierLabel === 'SKU' && error.field === 'sku') ||
+    (error.identifierLabel === '外部编码' && error.field === 'externalCode')
+  )
+
+  if (error.field && !isIdentifierField) {
+    segments.push(`字段：${error.field}`)
+  }
+
+  // 只有在非标识字段且有值时才显示当前值
+  if (!isIdentifierField && error.value !== '' && error.value !== undefined && error.value !== null) {
+    segments.push(`当前值：${error.value}`)
+  }
+
+  return `${segments.join('，')}：${error.error}`
+}
 
 onMounted(() => {
   if (isStoreProductRole) {
@@ -882,6 +1003,16 @@ function resetFilters() {
   filters.storeId = isPlatformOperator ? '' : userStoreId
   filters.keyword = ''
   pagination.page = 1
+  loadProducts()
+}
+
+// 商品来源变化时的联动处理
+function handleSourceChange(value) {
+  // 当选择"平台录入"时，清空所属门店筛选
+  if (value === 'platform') {
+    filters.storeId = ''
+  }
+  // 当选择"全部来源"或"门店录入"时，不清空storeId，让用户自己选择
   loadProducts()
 }
 
@@ -948,7 +1079,7 @@ function editProduct(row) {
   isEdit.value = true
   Object.assign(form, {
     name: row.name,
-    code: row.code || '',
+    externalCode: row.externalCode || '',
     category: row.category,
     price: row.price,
     costPrice: row.costPrice || 0,
@@ -969,7 +1100,7 @@ function editProduct(row) {
 function resetForm() {
   Object.assign(form, {
     name: '',
-    code: '',
+    externalCode: '',
     category: '',
     price: 0,
     costPrice: 0,
@@ -990,6 +1121,9 @@ function handleUniversalChange(val) {
   if (val) {
     form.compatibleModels = ['通用']
     modelsText.value = ''
+  } else {
+    // 取消通用型时，清空适配车型
+    form.compatibleModels = []
   }
 }
 
@@ -1125,25 +1259,13 @@ function formatDate(dateStr) {
 
 function handleBatchImport() {
   uploadFile.value = null
-  importResult.value = {
-    message: '',
-    total: 0,
-    successCount: 0,
-    failedCount: 0,
-    errors: []
-  }
+  importResult.value = resetImportState()
   batchVisible.value = true
 }
 
 function resetImport() {
   uploadFile.value = null
-  importResult.value = {
-    message: '',
-    total: 0,
-    successCount: 0,
-    failedCount: 0,
-    errors: []
-  }
+  importResult.value = resetImportState()
 }
 
 async function downloadTemplate() {
@@ -1188,21 +1310,23 @@ async function startImport() {
     const formData = new FormData()
     formData.append('file', uploadFile.value)
 
-    const res = await request({
-      url: '/batch/products',
-      method: 'post',
-      data: formData,
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    })
+    const res = await batchImportProducts(formData)
+    const errors = normalizeImportErrors(res.data?.errors)
+    const total = res.data?.total || 0
+    const successCount = res.data?.success || 0
+    const failedCount = res.data?.failed || errors.length
 
     importResult.value = {
-      message: res.message || '导入完成',
-      total: res.data.total || 0,
-      successCount: res.data.success || 0,
-      failedCount: res.data.failed || 0,
-      errors: res.data.errors || []
+      message: buildImportMessage({
+        message: res.message,
+        total,
+        successCount,
+        failedCount
+      }),
+      total,
+      successCount,
+      failedCount,
+      errors
     }
 
     if (importResult.value.successCount > 0) {
@@ -1210,12 +1334,23 @@ async function startImport() {
     }
   } catch (error) {
     console.error('导入失败:', error)
+    const errorMessage = error.response?.data?.message || error.message || '导入失败'
+    const backendErrors = normalizeImportErrors(
+      error.response?.data?.errors || error.response?.data?.data?.errors || []
+    )
+    const failedCount = error.response?.data?.failed || error.response?.data?.data?.failed || backendErrors.length
+    const total = error.response?.data?.total || error.response?.data?.data?.total || failedCount
     importResult.value = {
-      message: error.message || '导入失败',
-      total: 0,
+      message: buildImportMessage({
+        message: errorMessage,
+        total,
+        successCount: 0,
+        failedCount
+      }),
+      total,
       successCount: 0,
-      failedCount: 0,
-      errors: []
+      failedCount,
+      errors: backendErrors
     }
   } finally {
     importing.value = false
@@ -1254,6 +1389,23 @@ async function startImport() {
 .price {
   color: #e85d5d;
   font-weight: 600;
+}
+
+.sku-code {
+  font-family: 'Consolas', 'Monaco', monospace;
+  color: #409eff;
+  font-weight: 500;
+}
+
+.external-code {
+  font-family: 'Consolas', 'Monaco', monospace;
+  color: #606266;
+}
+
+.form-tip {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 4px;
 }
 
 .pagination {

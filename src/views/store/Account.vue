@@ -49,6 +49,14 @@
           <span>服务收入明细</span>
           <div class="header-actions">
             <el-button
+              type="success"
+              size="small"
+              @click="handleExportIncome"
+            >
+              <el-icon><Download /></el-icon>
+              导出
+            </el-button>
+            <el-button
               type="primary"
               size="small"
               @click="handleRefresh"
@@ -194,6 +202,14 @@
           <span>结算记录</span>
           <div class="header-actions">
             <el-button
+              type="success"
+              size="small"
+              @click="handleExportSettlements"
+            >
+              <el-icon><Download /></el-icon>
+              导出
+            </el-button>
+            <el-button
               type="primary"
               size="small"
               @click="fetchSettlements"
@@ -318,7 +334,8 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { getStoreAccount, getStoreIncome, getStoreSettlements } from '@/api/store'
+import { Download, Refresh, Search } from '@element-plus/icons-vue'
+import { getStoreAccount, getStoreIncome, getStoreSettlements, exportStoreIncome, exportStoreSettlements } from '@/api/store'
 import dayjs from 'dayjs'
 
 const loading = ref(false)
@@ -426,6 +443,75 @@ const handleRefresh = () => {
 // 查看结算详情
 const viewSettlementDetail = (row) => {
   ElMessage.info('结算详情功能开发中')
+}
+
+// 导出收入明细
+const handleExportIncome = async () => {
+  try {
+    const params = {}
+
+    if (dateRange.value && dateRange.value.length === 2) {
+      params.startDate = dateRange.value[0]
+      params.endDate = dateRange.value[1]
+    }
+
+    const blob = await exportStoreIncome(params)
+
+    // 从响应头获取文件名
+    const contentDisposition = blob.headers?.['content-disposition'] || ''
+    let filename = `服务收入明细_${dayjs().format('YYYY-MM-DD')}.xlsx`
+
+    const match = contentDisposition.match(/filename\*?=['"]*UTF-8['"]*''([^;]+)/i)
+    if (match && match[1]) {
+      filename = decodeURIComponent(match[1])
+    }
+
+    // 创建下载链接
+    const url = window.URL.createObjectURL(new Blob([blob.data]))
+    const link = document.createElement('a')
+    link.href = url
+    link.download = filename
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+
+    ElMessage.success('导出成功')
+  } catch (error) {
+    console.error('导出失败:', error)
+    ElMessage.error('导出失败')
+  }
+}
+
+// 导出结算记录
+const handleExportSettlements = async () => {
+  try {
+    const blob = await exportStoreSettlements()
+
+    // 从响应头获取文件名
+    const contentDisposition = blob.headers?.['content-disposition'] || ''
+    let filename = `结算记录_${dayjs().format('YYYY-MM-DD')}.xlsx`
+
+    const match = contentDisposition.match(/filename\*?=['"]*UTF-8['"]*''([^;]+)/i)
+    if (match && match[1]) {
+      filename = decodeURIComponent(match[1])
+    }
+
+    // 创建下载链接
+    const url = window.URL.createObjectURL(new Blob([blob.data]))
+    const link = document.createElement('a')
+    link.href = url
+    link.download = filename
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+
+    ElMessage.success('导出成功')
+  } catch (error) {
+    console.error('导出失败:', error)
+    ElMessage.error('导出失败')
+  }
 }
 
 // 获取结算状态类型

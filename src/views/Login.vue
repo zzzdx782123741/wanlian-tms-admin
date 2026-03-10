@@ -134,12 +134,10 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { User, Lock, Van } from '@element-plus/icons-vue'
 import { login, testLogin } from '@/api/auth'
 
-const router = useRouter()
 const loginFormRef = ref()
 const loading = ref(false)
 
@@ -187,7 +185,7 @@ const handleLogin = async () => {
     })
 
     if (response.success) {
-      const { token, user } = response.data
+      const { token, user, requirePasswordChange } = response.data
 
       // 清理旧的登录信息，避免角色混乱
       localStorage.removeItem('token')
@@ -198,6 +196,11 @@ const handleLogin = async () => {
       localStorage.setItem('token', token)
       localStorage.setItem('userInfo', JSON.stringify(user))
       localStorage.setItem('role', user.role?.type)
+      if (requirePasswordChange) {
+        localStorage.setItem('forceChangePassword', 'true')
+      } else {
+        localStorage.removeItem('forceChangePassword')
+      }
 
       console.log('登录成功，用户信息:', {
         username: user.username,
@@ -212,7 +215,7 @@ const handleLogin = async () => {
       // 跳转到首页
       setTimeout(async () => {
         try {
-          await router.push('/dashboard')
+          window.location.replace('/dashboard')
         } catch (navError) {
           console.error('路由跳转失败，尝试强制刷新:', navError)
           window.location.assign('/dashboard')

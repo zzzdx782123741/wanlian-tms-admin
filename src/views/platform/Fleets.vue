@@ -156,7 +156,7 @@
         >
           <template #default="{ row }">
             <span style="color: #67c23a; font-weight: 600">
-              ¥{{ row.accountBalance?.toLocaleString() || 0 }}
+              ¥{{ formatAmount(row.accountBalance) }}
             </span>
           </template>
         </el-table-column>
@@ -319,7 +319,7 @@
         </el-descriptions-item>
         <el-descriptions-item label="账户余额">
           <span style="color: #67c23a; font-weight: 600; font-size: 18px">
-            ¥{{ currentFleet.account?.balance?.toLocaleString() || 0 }}
+            ¥{{ formatAmount(currentFleet.account?.balance) }}
           </span>
         </el-descriptions-item>
         <el-descriptions-item label="车辆统计">
@@ -675,6 +675,14 @@ const formatDate = (date) => {
 // 格式化日期时间
 const formatDateTime = (date) => {
   return dayjs(date).format('YYYY-MM-DD HH:mm:ss')
+}
+
+const formatAmount = (amount) => {
+  if (!amount) return '0.00'
+  return (Number(amount) / 100).toLocaleString('zh-CN', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  })
 }
 
 onMounted(() => {

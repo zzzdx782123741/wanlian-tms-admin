@@ -810,7 +810,7 @@
               </el-col>
               <el-col :span="4">
                 <el-statistic
-                  title="技术专业度"
+                  title="维修技术"
                   :value="storeForm.ratingStats?.ratings?.technicalSkill || 0"
                   :precision="1"
                 >
@@ -821,7 +821,7 @@
               </el-col>
               <el-col :span="4">
                 <el-statistic
-                  title="服务效率"
+                  title="服务质量"
                   :value="storeForm.ratingStats?.ratings?.serviceEfficiency || 0"
                   :precision="1"
                 >
@@ -832,7 +832,7 @@
               </el-col>
               <el-col :span="4">
                 <el-statistic
-                  title="收费透明度"
+                  title="收费透明"
                   :value="storeForm.ratingStats?.ratings?.pricingTransparency || 0"
                   :precision="1"
                 >
@@ -1004,6 +1004,31 @@ const hasStore = computed(() => {
   return !!userStoreId.value
 })
 
+// 处理图片URL，确保是完整的URL
+const getImageUrl = (url) => {
+  if (!url) return ''
+
+  // 开发环境：如果是 localhost:3000 的完整URL，转换为通过代理访问的路径
+  // 这样可以避免跨域问题，并且通过统一的代理端口访问
+  const isDev = import.meta.env.DEV
+  if (isDev && url.includes('://localhost:3000/uploads/')) {
+    // 提取 /uploads/ 之后的部分，通过 /api/uploads 访问
+    const pathMatch = url.match(/\/uploads\/(.+)$/)
+    if (pathMatch) {
+      return `/api/uploads/${pathMatch[1]}`
+    }
+  }
+
+  // 生产环境或其他完整URL：如果是 http/https 开头，直接返回
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url
+  }
+
+  // 相对路径：添加后端API的基础URL（使用环境变量 VITE_API_URL）
+  const baseURL = import.meta.env.VITE_API_URL || '/api'
+  return `${baseURL}${url.startsWith('/') ? '' : '/'}${url}`
+}
+
 // 获取门店信息
 const fetchStoreInfo = async () => {
   if (!hasStore.value) {
@@ -1038,19 +1063,19 @@ const fetchStoreInfo = async () => {
         serviceRange: store.serviceRange || 50,
         businessLicense: {
           number: store.businessLicense?.number || '',
-          url: store.businessLicense?.url || ''
+          url: getImageUrl(store.businessLicense?.url)
         },
         organizationCode: {
           number: store.organizationCode?.number || '',
-          url: store.organizationCode?.url || ''
+          url: getImageUrl(store.organizationCode?.url)
         },
         transportLicense: {
           number: store.transportLicense?.number || '',
-          url: store.transportLicense?.url || ''
+          url: getImageUrl(store.transportLicense?.url)
         },
         repairLicense: {
           number: store.repairLicense?.number || '',
-          url: store.repairLicense?.url || ''
+          url: getImageUrl(store.repairLicense?.url)
         },
         serviceCapabilities: {
           serviceTypes: store.serviceCapabilities?.serviceTypes || [],
@@ -1105,6 +1130,29 @@ const fetchStoreInfo = async () => {
         businessHoursArray.value = [start, end]
       }
 
+      // 解析工作日：后端格式 -> 前端格式
+      // 后端：{ weekdays: ['Monday',...], saturday: true, sunday: false }
+      // 前端：['1', '2', '3', '4', '5'] (1-7表示周一到周日)
+      if (store.workingDays) {
+        const days = []
+        const weekdayMap = { 'Monday': '1', 'Tuesday': '2', 'Wednesday': '3', 'Thursday': '4', 'Friday': '5' }
+        // 工作日
+        if (store.workingDays.weekdays && Array.isArray(store.workingDays.weekdays)) {
+          store.workingDays.weekdays.forEach(day => {
+            if (weekdayMap[day]) days.push(weekdayMap[day])
+          })
+        }
+        // 周六
+        if (store.workingDays.saturday) {
+          days.push('6')
+        }
+        // 周日
+        if (store.workingDays.sunday) {
+          days.push('7')
+        }
+        workingDays.value = days
+      }
+
       // 设置图片列表
       if (store.photos && store.photos.length > 0) {
         imageList.value = store.photos.map((url, index) => ({
@@ -1154,6 +1202,30 @@ const handleSaveBasicInfo = async () => {
 
   saving.value = true
   try {
+    // 转换工作日格式：前端 -> 后端
+    // 前端：['1', '2', '3', '4', '5'] (1-7表示周一到周日)
+    // 后端：{ weekdays: ['Monday',...], saturday: true, sunday: false }
+    const weekdayMap = { '1': 'Monday', '2': 'Tuesday', '3': 'Wednesday', '4': 'Thursday', '5': 'Friday' }
+    const weekdays = []
+    let saturday = false
+    let sunday = false
+
+    workingDays.value.forEach(day => {
+      if (day === '6') {
+        saturday = true
+      } else if (day === '7') {
+        sunday = true
+      } else if (weekdayMap[day]) {
+        weekdays.push(weekdayMap[day])
+      }
+    })
+
+    const workingDaysData = {
+      weekdays,
+      saturday,
+      sunday
+    }
+
     await request({
       url: `/stores/${userStoreId.value}`,
       method: 'put',
@@ -1162,6 +1234,7 @@ const handleSaveBasicInfo = async () => {
         contact: storeForm.value.contact,
         address: storeForm.value.address,
         businessHours: storeForm.value.businessHours,
+        workingDays: workingDaysData,
         serviceRange: storeForm.value.serviceRange
       }
     })
@@ -1315,7 +1388,8 @@ const handleUpload = async (options, type) => {
     uploading.value = false
 
     if (response.data.success) {
-      storeForm.value[type].url = response.data.data.url
+      // 处理图片URL，确保是完整的URL
+      storeForm.value[type].url = getImageUrl(response.data.data.url)
       ElMessage.success('上传成功')
       onSuccess(response.data, file)
     } else {

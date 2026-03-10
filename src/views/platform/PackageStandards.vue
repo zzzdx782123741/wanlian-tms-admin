@@ -326,17 +326,19 @@
               </el-select>
               <el-input-number
                 v-model="priceRange.minPrice"
-                placeholder="最低价（分）"
+                placeholder="最低价（元）"
                 :min="0"
-                :step="100"
+                :step="1"
+                :precision="2"
                 style="width: 180px; margin-right: 8px;"
               />
               <span style="margin-right: 8px;">-</span>
               <el-input-number
                 v-model="priceRange.maxPrice"
-                placeholder="最高价（分）"
+                placeholder="最高价（元）"
                 :min="0"
-                :step="100"
+                :step="1"
+                :precision="2"
                 style="width: 180px; margin-right: 8px;"
               />
               <el-button
@@ -409,7 +411,7 @@
         <el-form-item label="是否启用">
           <el-switch v-model="form.enabled" />
           <div class="form-item-tip">
-            启用后，门店管理员创建套餐时价格必须在区间内进行强校验；不启用则仅作为参考提示
+            启用后，价格区间将作为门店定价参考。价格在区间内可快速审核，超出区间需人工审核
           </div>
         </el-form-item>
       </el-form>
@@ -517,17 +519,19 @@
                 </el-select>
                 <el-input-number
                   v-model="priceRange.minPrice"
-                  placeholder="最低价（分）"
+                  placeholder="最低价（元）"
                   :min="0"
-                  :step="100"
+                  :step="1"
+                  :precision="2"
                   style="width: 150px; margin-right: 8px;"
                 />
                 <span style="margin-right: 8px;">-</span>
                 <el-input-number
                   v-model="priceRange.maxPrice"
-                  placeholder="最高价（分）"
+                  placeholder="最高价（元）"
                   :min="0"
-                  :step="100"
+                  :step="1"
+                  :precision="2"
                   style="width: 150px; margin-right: 8px;"
                 />
                 <el-button
@@ -688,8 +692,8 @@ const batchForm = reactive({
     {
       province: '广东省',
       city: '全省',
-      minPrice: 30000,
-      maxPrice: 50000
+      minPrice: 300,
+      maxPrice: 500
     }
   ]
 })
@@ -746,7 +750,9 @@ const handleCreate = () => {
     name: '',
     vehicleGroup: '',
     tier: '',
-    priceRanges: [],
+    priceRanges: [
+      { province: '', city: '全省', minPrice: null, maxPrice: null }
+    ],
     suggestedServiceItems: [],
     enabled: true
   })
@@ -882,8 +888,8 @@ const handleBatchCreate = () => {
     {
       province: '广东省',
       city: '全省',
-      minPrice: 30000,
-      maxPrice: 50000
+      minPrice: 300,
+      maxPrice: 500
     }
   ]
   batchDialogVisible.value = true

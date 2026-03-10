@@ -170,12 +170,12 @@
           <template #default="{ row }">
             <div v-if="row.vehicles && row.vehicles.length > 0">
               <el-tag
-                v-for="v in row.vehicles"
-                :key="v._id"
+                v-for="(v, index) in row.vehicles"
+                :key="`${getVehicleId(v) || getVehicleDisplayText(v) || 'vehicle'}-${index}`"
                 size="small"
                 style="margin-right: 5px; margin-bottom: 5px"
               >
-                {{ v.plateNumber || v }}
+                {{ getVehicleDisplayText(v) }}
               </el-tag>
             </div>
             <span v-else>-</span>
@@ -318,12 +318,6 @@
             :disabled="isEdit"
           />
         </el-form-item>
-        <el-form-item label="OpenID">
-          <el-input
-            v-model="driverForm.openid"
-            placeholder="微信OpenID（可选）"
-          />
-        </el-form-item>
         <el-form-item label="年龄">
           <el-input-number
             v-model="driverForm.age"
@@ -335,7 +329,7 @@
         <el-form-item label="关联车辆">
           <el-select
             v-model="driverForm.vehicleIds"
-            placeholder="请选择关联车辆（可多选）"
+            placeholder="请选择关联车辆（可多选，可选填）"
             clearable
             multiple
             filterable
@@ -432,7 +426,7 @@
                 姓名、手机号
               </el-descriptions-item>
               <el-descriptions-item label="选填字段">
-                年龄、OpenID（微信）、关联车辆（可填车牌号，多个用逗号分隔）
+                年龄、关联车辆（车牌号，多个用顿号或逗号分隔）
               </el-descriptions-item>
               <el-descriptions-item
                 label="数据限制"
@@ -494,7 +488,7 @@
                     :key="index"
                     class="error-item"
                   >
-                    第 {{ error.row }} 行: {{ error.error }}
+                    {{ formatImportError(error) }}
                   </div>
                   <div
                     v-if="importResult.errors.length > 50"
@@ -530,6 +524,7 @@ import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Download, Upload, UploadFilled, Plus, Search, ArrowDown, Delete, InfoFilled, Refresh } from '@element-plus/icons-vue'
 import request from '@/utils/request'
+import { batchImportDrivers } from '@/api/batch'
 import { getFleetVehicles } from '@/api/fleetVehicle'
 import dayjs from 'dayjs'
 
@@ -565,7 +560,6 @@ const currentDriverId = ref('')
 const driverForm = ref({
   name: '',
   phone: '',
-  openid: '',
   age: null,
   vehicleIds: []
 })
@@ -593,6 +587,73 @@ const importResult = ref({
   failedCount: 0,
   errors: []
 })
+
+const resetImportState = () => ({
+  message: '',
+  total: 0,
+  successCount: 0,
+  failedCount: 0,
+  errors: []
+})
+
+const buildImportMessage = ({ message, total, successCount, failedCount }) => {
+  if (message) {
+    return message
+  }
+
+  return `共 ${total} 条，成功 ${successCount} 条，失败 ${failedCount} 条`
+}
+
+const normalizeImportErrors = (errors = []) => {
+  if (!Array.isArray(errors)) {
+    return []
+  }
+
+  return errors.map((item, index) => ({
+    id: `${item?.row || '-'}-${index}`,
+    row: item?.row || '-',
+    field: item?.field || '',
+    value: item?.value ?? '',
+    identifier: item?.identifier || item?.phone || '',
+    identifierLabel: item?.identifierLabel || (item?.phone ? '手机号' : ''),
+    error: item?.error || item?.message || '导入失败',
+    summary: item?.summary || ''
+  }))
+}
+
+const formatImportError = (error) => {
+  if (!error) {
+    return '导入失败'
+  }
+
+  if (error.summary) {
+    return error.summary
+  }
+
+  const segments = [`第 ${error.row} 行`]
+
+  // 用于标识记录的字段（手机号/姓名）
+  if (error.identifier && error.identifierLabel) {
+    segments.push(`${error.identifierLabel}：${error.identifier}`)
+  }
+
+  // 如果错误字段不是标识字段，显示字段名和值
+  const isIdentifierField = error.field && (
+    error.field === 'phone' && error.identifierLabel === '手机号' ||
+    error.field === 'name' && error.identifierLabel === '姓名'
+  )
+
+  if (error.field && !isIdentifierField) {
+    segments.push(`字段：${error.field}`)
+  }
+
+  // 只有在非标识字段且有值时才显示当前值
+  if (!isIdentifierField && error.value !== '' && error.value !== undefined && error.value !== null) {
+    segments.push(`当前值：${error.value}`)
+  }
+
+  return `${segments.join('，')}：${error.error}`
+}
 
 // 获取司机列表
 const fetchDrivers = async () => {
@@ -660,7 +721,6 @@ const handleAdd = () => {
   driverForm.value = {
     name: '',
     phone: '',
-    openid: '',
     age: null,
     vehicleIds: []
   }
@@ -674,9 +734,8 @@ const handleEdit = (row) => {
   driverForm.value = {
     name: row.name || '',
     phone: row.phone || '',
-    openid: row.openid || '',
     age: row.age || null,
-    vehicleIds: row.vehicles?.map(v => v._id || v) || []
+    vehicleIds: row.vehicles?.map(v => v._id || v.vehicleId || v).filter(Boolean) || []
   }
   formDialogVisible.value = true
 }
@@ -762,26 +821,14 @@ const handleDelete = async (row) => {
 // 打开批量导入对话框
 const handleBatchImport = () => {
   uploadFile.value = null
-  importResult.value = {
-    message: '',
-    total: 0,
-    successCount: 0,
-    failedCount: 0,
-    errors: []
-  }
+  importResult.value = resetImportState()
   batchDialogVisible.value = true
 }
 
 // 重置导入状态
 const resetImport = () => {
   uploadFile.value = null
-  importResult.value = {
-    message: '',
-    total: 0,
-    successCount: 0,
-    failedCount: 0,
-    errors: []
-  }
+  importResult.value = resetImportState()
 }
 
 // 下载模板
@@ -833,37 +880,50 @@ const startImport = async () => {
     const formData = new FormData()
     formData.append('file', uploadFile.value)
 
-    const res = await request({
-      url: '/batch/drivers',
-      method: 'post',
-      data: formData,
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    })
+    const res = await batchImportDrivers(formData)
+    const errors = normalizeImportErrors(res.data?.errors)
+    const total = res.data?.total || 0
+    const successCount = res.data?.success || 0
+    const failedCount = res.data?.failed || errors.length
 
     // 处理导入结果
     importResult.value = {
-      message: res.message || '导入完成',
-      total: res.data.total,
-      successCount: res.data.success,
-      failedCount: res.data.failed,
-      errors: res.data.errors || []
+      message: buildImportMessage({
+        message: res.message,
+        total,
+        successCount,
+        failedCount
+      }),
+      total,
+      successCount,
+      failedCount,
+      errors
     }
 
     // 如果有成功的，刷新列表
-    if (res.data.success > 0) {
+    if (successCount > 0) {
       fetchDrivers()
       fetchStats()
     }
   } catch (error) {
     console.error('导入失败:', error)
+    const errorMessage = error.response?.data?.message || error.message || '导入失败'
+    const backendErrors = normalizeImportErrors(
+      error.response?.data?.errors || error.response?.data?.data?.errors || []
+    )
+    const failedCount = error.response?.data?.failed || error.response?.data?.data?.failed || backendErrors.length
+    const total = error.response?.data?.total || error.response?.data?.data?.total || failedCount
     importResult.value = {
-      message: error.message || '导入失败',
-      total: 0,
+      message: buildImportMessage({
+        message: errorMessage,
+        total,
+        successCount: 0,
+        failedCount
+      }),
+      total,
       successCount: 0,
-      failedCount: 0,
-      errors: []
+      failedCount,
+      errors: backendErrors
     }
   } finally {
     importing.value = false
@@ -983,6 +1043,19 @@ const handleBatchExport = async () => {
 // 格式化日期
 const formatDate = (date) => {
   return dayjs(date).format('YYYY-MM-DD')
+}
+
+// 获取车辆ID（用于key）
+const getVehicleId = (vehicle) => {
+  if (!vehicle) return ''
+  return vehicle._id || vehicle.vehicleId || vehicle.id || ''
+}
+
+// 获取车辆显示文本
+const getVehicleDisplayText = (vehicle) => {
+  if (!vehicle) return '-'
+  if (typeof vehicle === 'string') return vehicle
+  return vehicle.plateNumber || vehicle.vehicleId || JSON.stringify(vehicle)
 }
 
 onMounted(() => {

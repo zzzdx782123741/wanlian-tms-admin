@@ -468,7 +468,7 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRouter } from 'vue-router'
 import { OfficeBuilding, Upload } from '@element-plus/icons-vue'
@@ -613,6 +613,13 @@ const accountRules = {
   ]
 }
 
+watch(
+  () => formData.createdBy.phone,
+  (phone) => {
+    formData.createdBy.username = phone ? phone.trim() : ''
+  }
+)
+
 // 上传前验证
 const beforeUpload = (file) => {
   const isImage = file.type.startsWith('image/')
@@ -755,6 +762,7 @@ const handlePrev = () => {
 const handleSubmit = async () => {
   try {
     submitting.value = true
+    formData.createdBy.username = formData.createdBy.phone.trim()
 
     const res = await request({
       url: '/fleets/register',

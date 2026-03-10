@@ -33,6 +33,16 @@ export function getRechargeStats() {
 }
 
 /**
+ * 车队端 - 获取活跃的平台收款账户
+ */
+export function getActivePlatformAccounts() {
+  return request({
+    url: '/recharge/active-platform-accounts',
+    method: 'get'
+  })
+}
+
+/**
  * 平台运营 - 代客充值申请
  */
 export function createAgentRecharge(data) {

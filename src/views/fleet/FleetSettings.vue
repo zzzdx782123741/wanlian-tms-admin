@@ -11,17 +11,36 @@
         label-width="180px"
         style="max-width: 600px"
       >
-        <el-form-item label="门店选择权限">
+        <!-- 门店选择权限配置 -->
+        <el-divider content-position="left">
+          门店选择权限
+        </el-divider>
+
+        <el-form-item label="维修订单">
           <el-switch
-            v-model="fleetConfig.allowDriverSelectStore"
+            v-model="fleetConfig.storeSelectionConfig.repair"
             active-text="司机选择"
             inactive-text="车队管理选择"
             @change="handleConfigChange"
           />
           <div class="form-item-tip">
-            {{ fleetConfig.allowDriverSelectStore
-              ? '司机提交报修单时可自行选择门店'
-              : '司机提交报修单后，由车队管理员审批时选择门店' }}
+            {{ fleetConfig.storeSelectionConfig.repair
+              ? '司机提交维修单时可自行选择门店'
+              : '司机提交维修单后，由车队管理员审批时选择门店' }}
+          </div>
+        </el-form-item>
+
+        <el-form-item label="保养订单">
+          <el-switch
+            v-model="fleetConfig.storeSelectionConfig.maintenance"
+            active-text="司机选择"
+            inactive-text="车队管理选择"
+            @change="handleConfigChange"
+          />
+          <div class="form-item-tip">
+            {{ fleetConfig.storeSelectionConfig.maintenance
+              ? '司机提交保养单时可自行选择门店'
+              : '司机提交保养单后，由车队管理员审批时选择门店' }}
           </div>
         </el-form-item>
 
@@ -70,10 +89,16 @@
             :size="8"
           >
             <el-tag
-              :type="fleetConfig.allowDriverSelectStore ? 'success' : 'info'"
+              :type="fleetConfig.storeSelectionConfig.repair ? 'success' : 'info'"
               size="large"
             >
-              门店选择: {{ fleetConfig.allowDriverSelectStore ? '司机选择' : '车队管理选择' }}
+              维修门店: {{ fleetConfig.storeSelectionConfig.repair ? '司机选择' : '车队管理选择' }}
+            </el-tag>
+            <el-tag
+              :type="fleetConfig.storeSelectionConfig.maintenance ? 'success' : 'info'"
+              size="large"
+            >
+              保养门店: {{ fleetConfig.storeSelectionConfig.maintenance ? '司机选择' : '车队管理选择' }}
             </el-tag>
             <el-tag
               :type="fleetConfig.maintenanceProductPermission === 'driver_select' ? 'success' : 'warning'"
@@ -161,6 +186,19 @@
           label="订单号"
           width="180"
         />
+        <el-table-column
+          label="类型"
+          width="80"
+        >
+          <template #default="{ row }">
+            <el-tag
+              :type="row.type === 'maintenance' ? 'warning' : 'danger'"
+              size="small"
+            >
+              {{ row.type === 'maintenance' ? '保养' : '维修' }}
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column
           label="车辆"
           width="150"
@@ -260,6 +298,14 @@
           <el-descriptions-item label="订单号">
             {{ currentOrder.orderNumber }}
           </el-descriptions-item>
+          <el-descriptions-item label="类型">
+            <el-tag
+              :type="currentOrder.type === 'maintenance' ? 'warning' : 'danger'"
+              size="small"
+            >
+              {{ currentOrder.type === 'maintenance' ? '保养' : '维修' }}
+            </el-tag>
+          </el-descriptions-item>
           <el-descriptions-item label="车辆">
             {{ currentOrder.vehicleId?.plateNumber }}
           </el-descriptions-item>
@@ -291,7 +337,7 @@
 
         <!-- 选择门店（如果车队配置为车队管理选择门店） -->
         <el-form
-          v-if="!fleetConfig.allowDriverSelectStore"
+          v-if="!currentOrderTypeAllowSelect"
           :model="approveForm"
           label-width="100px"
         >
@@ -301,7 +347,7 @@
           >
             <el-select
               v-model="approveForm.storeId"
-              placeholder="请选择维修门店"
+              placeholder="请选择门店"
               style="width: 100%"
               filterable
             >
@@ -351,7 +397,7 @@
 
         <!-- 司机已选择门店的情况 -->
         <el-alert
-          v-if="fleetConfig.allowDriverSelectStore && currentOrder.storeId"
+          v-if="currentOrderTypeAllowSelect && currentOrder.storeId"
           title="司机已选择门店"
           type="info"
           :closable="false"
@@ -368,7 +414,7 @@
         <el-button
           type="primary"
           :loading="approving"
-          :disabled="!fleetConfig.allowDriverSelectStore && !approveForm.storeId"
+          :disabled="!currentOrderTypeAllowSelect && !approveForm.storeId"
           @click="confirmApprove"
         >
           审批通过
@@ -447,7 +493,10 @@ const stats = ref({
 })
 
 const fleetConfig = ref({
-  allowDriverSelectStore: false,
+  storeSelectionConfig: {
+    repair: false,
+    maintenance: true
+  },
   maintenanceProductPermission: 'fleet_control',
   maintenanceBudgetThreshold: 5000
 })
@@ -464,6 +513,17 @@ const rejectForm = ref({
   reason: ''
 })
 
+// 根据当前订单类型判断是否允许司机选择门店
+const currentOrderTypeAllowSelect = computed(() => {
+  if (!currentOrder.value) return false
+  const orderType = currentOrder.value.type || 'repair'
+  if (orderType === 'maintenance') {
+    return fleetConfig.value.storeSelectionConfig?.maintenance ?? true
+  } else {
+    return fleetConfig.value.storeSelectionConfig?.repair ?? false
+  }
+})
+
 // 获取用户所属车队ID
 const userFleetId = computed(() => {
   const user = JSON.parse(localStorage.getItem('userInfo') || '{}')
@@ -477,10 +537,29 @@ const fetchFleetConfig = async () => {
       url: `/fleets/${userFleetId.value}`,
       method: 'get'
     })
-    fleetConfig.value = {
-      allowDriverSelectStore: res.data.fleet?.allowDriverSelectStore || false,
-      maintenanceProductPermission: res.data.fleet?.maintenanceProductPermission || 'fleet_control',
-      maintenanceBudgetThreshold: res.data.fleet?.maintenanceBudgetThreshold || 5000
+    const fleet = res.data.fleet || {}
+
+    // 支持新旧配置结构
+    if (fleet.storeSelectionConfig) {
+      fleetConfig.value = {
+        storeSelectionConfig: {
+          repair: fleet.storeSelectionConfig.repair ?? false,
+          maintenance: fleet.storeSelectionConfig.maintenance ?? true
+        },
+        maintenanceProductPermission: fleet.maintenanceProductPermission || 'fleet_control',
+        maintenanceBudgetThreshold: fleet.maintenanceBudgetThreshold || 5000
+      }
+    } else {
+      // 兼容旧配置
+      const allowDriverSelectStore = fleet.allowDriverSelectStore || false
+      fleetConfig.value = {
+        storeSelectionConfig: {
+          repair: allowDriverSelectStore,
+          maintenance: allowDriverSelectStore
+        },
+        maintenanceProductPermission: fleet.maintenanceProductPermission || 'fleet_control',
+        maintenanceBudgetThreshold: fleet.maintenanceBudgetThreshold || 5000
+      }
     }
   } catch (error) {
     console.error('获取车队配置失败:', error)
@@ -491,7 +570,7 @@ const fetchFleetConfig = async () => {
 const handleConfigChange = async () => {
   try {
     await updateFleetStoreConfig(userFleetId.value, {
-      allowDriverSelectStore: fleetConfig.value.allowDriverSelectStore,
+      storeSelectionConfig: fleetConfig.value.storeSelectionConfig,
       maintenanceProductPermission: fleetConfig.value.maintenanceProductPermission,
       maintenanceBudgetThreshold: fleetConfig.value.maintenanceBudgetThreshold
     })
@@ -567,7 +646,7 @@ const handleApprove = async (order) => {
 // 确认审批
 const confirmApprove = async () => {
   // 如果司机没有选择门店，车队必须选择
-  if (!fleetConfig.value.allowDriverSelectStore && !approveForm.value.storeId) {
+  if (!currentOrderTypeAllowSelect.value && !approveForm.value.storeId) {
     ElMessage.warning('请选择门店')
     return
   }

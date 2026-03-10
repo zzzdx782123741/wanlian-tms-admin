@@ -42,14 +42,25 @@
       <template #header>
         <div class="card-header">
           <span>订单管理</span>
-          <el-button
-            type="primary"
-            size="small"
-            @click="handleRefresh"
-          >
-            <el-icon><Refresh /></el-icon>
-            刷新
-          </el-button>
+          <div class="header-actions">
+            <el-button
+              type="success"
+              size="small"
+              :loading="exporting"
+              @click="exportExcel"
+            >
+              <el-icon><Download /></el-icon>
+              导出Excel
+            </el-button>
+            <el-button
+              type="primary"
+              size="small"
+              @click="handleRefresh"
+            >
+              <el-icon><Refresh /></el-icon>
+              刷新
+            </el-button>
+          </div>
         </div>
       </template>
 
@@ -95,6 +106,10 @@
               value="awaiting_fleet_approval"
             />
             <el-option
+              label="待确认时间"
+              value="awaiting_time_confirmation"
+            />
+            <el-option
               label="待接车检查"
               value="pending_assessment"
             />
@@ -117,6 +132,10 @@
             <el-option
               label="已完成"
               value="completed"
+            />
+            <el-option
+              label="已退款"
+              value="refunded"
             />
             <el-option
               label="已拒绝"
@@ -215,7 +234,7 @@
             <span
               v-if="row.quote?.total"
               class="amount"
-            >¥{{ formatAmount(row.quote.total) }}</span>
+            >¥{{ formatAmount(row.quote.actualTotal || row.quote.total) }}</span>
             <span v-else>-</span>
           </template>
         </el-table-column>
@@ -581,7 +600,7 @@
                 width="100"
               >
                 <template #default="{ row }">
-                  ¥{{ row.price }}
+                  ¥{{ formatAmount(row.price) }}
                 </template>
               </el-table-column>
               <el-table-column
@@ -594,13 +613,13 @@
                 width="100"
               >
                 <template #default="{ row }">
-                  ¥{{ (row.price * row.quantity).toFixed(2) }}
+                  ¥{{ formatAmount(row.price * row.quantity) }}
                 </template>
               </el-table-column>
             </el-table>
             <div style="margin-top: 10px;">
               <strong>报价总额：</strong>
-              <span style="color: #f56c6c; font-size: 18px; font-weight: bold;">¥{{ formatAmount(currentOrder.quote.total) }}</span>
+              <span style="color: #f56c6c; font-size: 18px; font-weight: bold;">¥{{ formatAmount(currentOrder.quote.actualTotal || currentOrder.quote.total) }}</span>
             </div>
           </el-descriptions-item>
           <el-descriptions-item
@@ -631,13 +650,14 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Refresh } from '@element-plus/icons-vue'
+import { Refresh, Download } from '@element-plus/icons-vue'
 import request from '@/utils/request'
 import { getStores } from '@/api/store'
 import { getFleetConfig } from '@/api/fleet'
 import dayjs from 'dayjs'
 
 const loading = ref(false)
+const exporting = ref(false)
 const orderList = ref([])
 const total = ref(0)
 const storeList = ref([])
@@ -808,11 +828,11 @@ const fetchStatistics = async () => {
 
     const monthlyOrders = orders.filter(o => {
       const orderDate = new Date(o.createdAt)
-      return orderDate >= monthStart && o.status === 'completed' && o.quote?.total
+      return orderDate >= monthStart && o.status === 'completed' && (o.quote?.actualTotal || o.quote?.total)
     })
 
     stats.value.monthlyAmount = monthlyOrders.reduce((sum, order) => {
-      return sum + (order.quote.total || 0)
+      return sum + (order.quote?.actualTotal || order.quote?.total || 0)
     }, 0) / 100 // 分转元
   } catch (error) {
     console.error('获取统计数据失败:', error)
@@ -948,7 +968,7 @@ const getStatusText = (status) => {
 // 格式化金额
 const formatAmount = (amount) => {
   if (!amount) return '0.00'
-  return parseFloat(amount).toLocaleString('zh-CN', {
+  return parseFloat(amount / 100).toLocaleString('zh-CN', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   })
@@ -962,6 +982,42 @@ const formatDate = (date) => {
 // 格式化日期时间
 const formatDateTime = (date) => {
   return dayjs(date).format('YYYY-MM-DD HH:mm')
+}
+
+// 导出Excel
+const exportExcel = async () => {
+  try {
+    exporting.value = true
+
+    const params = {
+      type: queryParams.value.type,
+      status: queryParams.value.status,
+      keyword: queryParams.value.keyword,
+      exportExcel: 'true'
+    }
+
+    const blob = await request({
+      url: '/orders',
+      method: 'get',
+      params,
+      responseType: 'blob'
+    })
+
+    // 创建下载链接
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `车队订单记录_${dayjs().format('YYYYMMDDHHmmss')}.xlsx`
+    link.click()
+    window.URL.revokeObjectURL(url)
+
+    ElMessage.success('导出成功')
+  } catch (error) {
+    console.error('导出失败:', error)
+    ElMessage.error(error.message || '导出失败')
+  } finally {
+    exporting.value = false
+  }
 }
 
 onMounted(() => {
@@ -1001,6 +1057,11 @@ onMounted(() => {
     justify-content: space-between;
     font-weight: 600;
     color: #2c3e50;
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 10px;
   }
 
   .search-form {

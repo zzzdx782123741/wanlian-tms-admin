@@ -378,8 +378,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Plus, Download } from '@element-plus/icons-vue'
-import { createRecharge, getMyRechargeRecords } from '@/api/recharge'
-import { getPlatformBankAccounts } from '@/api/platform'
+import { createRecharge, getMyRechargeRecords, getActivePlatformAccounts } from '@/api/recharge'
 import { exportRechargeRecords } from '@/utils/export'
 import { getImageUrl, getImageUrls } from '@/utils/image'
 import dayjs from 'dayjs'
@@ -452,10 +451,11 @@ const currentRecord = ref(null)
 // 获取平台收款账户
 const fetchPlatformAccounts = async () => {
   try {
-    const res = await getPlatformBankAccounts()
-    platformAccounts.value = res.data.filter(acc => acc.status?.type === 'active')
+    const res = await getActivePlatformAccounts()
+    platformAccounts.value = res.data || []
   } catch (error) {
     console.error('获取平台收款账户失败:', error)
+    ElMessage.error('获取平台收款账户失败，请刷新页面重试')
   }
 }
 

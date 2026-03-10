@@ -299,6 +299,7 @@
               placeholder="请选择维修门店"
               style="width: 100%"
               filterable
+              @change="handleStoreChange"
             >
               <el-option
                 v-for="store in storeList"
@@ -326,7 +327,7 @@
               <el-option
                 v-for="pkg in availablePackages"
                 :key="pkg._id"
-                :label="`${pkg.name} - ¥${(pkg.price / 100).toFixed(2)}（原价¥${(pkg.originalPrice / 100).toFixed(2)}）`"
+                :label="`${pkg.name} - ¥${pkg.price.toFixed(2)}（原价¥${pkg.originalPrice.toFixed(2)}）`"
                 :value="pkg._id"
               />
             </el-select>
@@ -342,7 +343,7 @@
           >
             <div>套餐名称：{{ selectedPackage.name }}</div>
             <div>套餐档次：{{ selectedPackage.tier }}</div>
-            <div>套餐价格：¥{{ (selectedPackage.price / 100).toFixed(2) }}</div>
+            <div>套餐价格：¥{{ selectedPackage.price.toFixed(2) }}</div>
             <div>适用里程：{{ selectedPackage.mileageRange?.min }}km - {{ selectedPackage.mileageRange?.max }}km</div>
             <div>预计工时：{{ selectedPackage.estimatedDuration || '-' }}小时</div>
           </el-alert>
@@ -567,9 +568,14 @@ const fetchApplications = async () => {
 }
 
 // 获取套餐列表
-const fetchPackages = async () => {
+const fetchPackages = async (storeId = null) => {
   try {
-    const res = await getPackages({ enabled: true, limit: 100 })
+    const params = { enabled: true, limit: 100 }
+    // 如果提供了门店ID，则获取该门店的套餐和平台套餐
+    if (storeId) {
+      params.storeId = storeId
+    }
+    const res = await getPackages(params)
     availablePackages.value = res.data.packages || []
   } catch (error) {
     console.error('获取套餐列表失败:', error)
@@ -590,7 +596,22 @@ const fetchStores = async () => {
 const handlePackageChange = (packageId) => {
   const pkg = availablePackages.value.find(p => p._id === packageId)
   if (pkg) {
-    approveForm.value.finalAmount = (pkg.price / 100)
+    approveForm.value.finalAmount = pkg.price
+  }
+}
+
+// 门店变化：清空已选套餐并重新加载套餐列表
+const handleStoreChange = async (storeId) => {
+  // 清空已选套餐
+  approveForm.value.packageId = null
+  approveForm.value.finalAmount = 0
+
+  // 根据选择的门店重新加载套餐列表
+  if (storeId) {
+    await fetchPackages(storeId)
+  } else {
+    // 如果没有选择门店，加载所有套餐
+    await fetchPackages()
   }
 }
 
@@ -610,20 +631,28 @@ const handleApprove = async (application) => {
     remark: ''
   }
 
-  // 获取套餐列表
-  await fetchPackages()
+  // 确定要查询套餐的门店ID
+  let packageStoreId = null
+
+  if (fleetConfig.value.allowDriverSelectStore) {
+    // 司机已选择门店模式：使用司机选择的门店ID获取套餐
+    if (application.orderId?.storeId) {
+      packageStoreId = application.orderId.storeId
+    }
+  } else {
+    // 车队分配门店模式：需要先获取门店列表
+    await fetchStores()
+  }
+
+  // 获取套餐列表（根据门店ID过滤）
+  await fetchPackages(packageStoreId)
 
   // 如果有套餐，自动填充金额
   if (application.packageId) {
     const pkg = availablePackages.value.find(p => p._id === application.packageId)
     if (pkg) {
-      approveForm.value.finalAmount = (pkg.price / 100)
+      approveForm.value.finalAmount = pkg.price
     }
-  }
-
-  // 如果需要选择门店
-  if (!fleetConfig.value.allowDriverSelectStore) {
-    await fetchStores()
   }
 
   approveDialogVisible.value = true
