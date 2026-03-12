@@ -261,7 +261,7 @@
         </el-table-column>
         <el-table-column
           label="操作"
-          width="240"
+          width="280"
           fixed="right"
         >
           <template #default="{ row }">
@@ -282,6 +282,15 @@
               @click="handleQuoteApproval(row)"
             >
               审批报价
+            </el-button>
+            <el-button
+              v-if="row.status === 'awaiting_addon_approval'"
+              type="warning"
+              size="small"
+              link
+              @click="handleAddonApproval(row)"
+            >
+              审批增项
             </el-button>
             <el-button
               v-if="canCancelOrder(row)"
@@ -891,6 +900,50 @@
             </div>
           </el-descriptions-item>
           <el-descriptions-item
+            v-if="currentOrder.addon"
+            label="增项信息"
+            :span="2"
+          >
+            <div><strong>增项原因：</strong>{{ currentOrder.addon.reason || '-' }}</div>
+            <el-table
+              :data="currentOrder.addon.items || []"
+              size="small"
+              border
+              style="margin-top: 8px;"
+            >
+              <el-table-column
+                prop="item"
+                label="项目名称"
+              />
+              <el-table-column
+                prop="price"
+                label="单价"
+                width="100"
+              >
+                <template #default="{ row }">
+                  ¥{{ Number(row.price || 0).toFixed(2) }}
+                </template>
+              </el-table-column>
+              <el-table-column
+                prop="quantity"
+                label="数量"
+                width="80"
+              />
+              <el-table-column
+                label="小计"
+                width="100"
+              >
+                <template #default="{ row }">
+                  ¥{{ (Number(row.price || 0) * Number(row.quantity || 0)).toFixed(2) }}
+                </template>
+              </el-table-column>
+            </el-table>
+            <div style="margin-top: 10px;">
+              <strong>增项总额：</strong>
+              <span style="color: #f56c6c; font-size: 18px; font-weight: bold;">¥{{ Number(currentOrder.addon.total || 0).toFixed(2) }}</span>
+            </div>
+          </el-descriptions-item>
+          <el-descriptions-item
             v-if="currentOrder.completion"
             label="完工信息"
             :span="2"
@@ -911,6 +964,25 @@
           </el-descriptions-item>
         </el-descriptions>
       </div>
+      <template #footer>
+        <el-button @click="detailDialogVisible = false">
+          关闭
+        </el-button>
+        <el-button
+          v-if="currentOrder?.status === 'awaiting_addon_approval'"
+          type="danger"
+          @click="confirmAddonReject()"
+        >
+          拒绝增项
+        </el-button>
+        <el-button
+          v-if="currentOrder?.status === 'awaiting_addon_approval'"
+          type="primary"
+          @click="confirmAddonApprove()"
+        >
+          批准增项
+        </el-button>
+      </template>
     </el-dialog>
   </div>
 </template>
@@ -1353,6 +1425,25 @@ const handleQuoteApproval = (order) => {
   quoteApproveDialogVisible.value = true
 }
 
+const handleAddonApproval = (order) => {
+  currentOrder.value = order
+  detailDialogVisible.value = true
+}
+
+const submitAddonDecision = async (approved) => {
+  await request({
+    url: `/orders/${currentOrder.value._id}/approve-addon`,
+    method: 'post',
+    data: { approved }
+  })
+
+  const successMessage = approved ? '增项已批准，订单继续处理中' : '增项已拒绝，订单继续按原方案处理'
+  ElMessage.success(successMessage)
+  detailDialogVisible.value = false
+  fetchOrders()
+  fetchStatistics()
+}
+
 // 确认批准报价
 const confirmQuoteApprove = async () => {
   try {
@@ -1369,6 +1460,50 @@ const confirmQuoteApprove = async () => {
   } catch (error) {
     console.error('批准报价失败:', error)
     ElMessage.error(error.response?.data?.message || '批准报价失败')
+  }
+}
+
+const confirmAddonApprove = async () => {
+  try {
+    await ElMessageBox.confirm(
+      `确认批准该笔增项申请？\n增项总额：¥${Number(currentOrder.value?.addon?.total || 0).toFixed(2)}`,
+      '审批增项',
+      {
+        confirmButtonText: '批准',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+
+    await submitAddonDecision(true)
+  } catch (error) {
+    if (error === 'cancel' || error?.action === 'cancel' || error?.action === 'close') {
+      return
+    }
+    console.error('批准增项失败:', error)
+    ElMessage.error(error.response?.data?.message || '批准增项失败')
+  }
+}
+
+const confirmAddonReject = async () => {
+  try {
+    await ElMessageBox.confirm(
+      '确认拒绝该笔增项申请？拒绝后订单将继续按原方案处理。',
+      '审批增项',
+      {
+        confirmButtonText: '拒绝',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+
+    await submitAddonDecision(false)
+  } catch (error) {
+    if (error === 'cancel' || error?.action === 'cancel' || error?.action === 'close') {
+      return
+    }
+    console.error('拒绝增项失败:', error)
+    ElMessage.error(error.response?.data?.message || '拒绝增项失败')
   }
 }
 
