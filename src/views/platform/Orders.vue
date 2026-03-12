@@ -210,10 +210,10 @@
         >
           <template #default="{ row }">
             <span
-              v-if="row.quote"
+              v-if="row.quote && row.quote.total != null"
               style="color: #f56c6c; font-weight: 600"
             >
-              ¥{{ formatAmount(row.quote.actualTotal || row.quote.total) }}
+              ¥{{ Number(row.quote.total).toFixed(2) }}
             </span>
             <span v-else>-</span>
           </template>
@@ -312,11 +312,11 @@
           {{ currentOrder.technicianId?.nickname || '-' }}
         </el-descriptions-item>
         <el-descriptions-item
-          v-if="currentOrder.quote"
+          v-if="currentOrder.quote && currentOrder.quote.total != null"
           label="报价金额"
         >
           <span style="color: #f56c6c; font-weight: 600; font-size: 18px">
-            ¥{{ formatAmount(currentOrder.quote.actualTotal || currentOrder.quote.total) }}
+            ¥{{ Number(currentOrder.quote.total).toFixed(2) }}
           </span>
         </el-descriptions-item>
         <el-descriptions-item label="订单状态">
@@ -352,7 +352,7 @@
             width="100"
           >
             <template #default="{ row }">
-              ¥{{ formatAmount(row.price) }}
+              ¥{{ Number(row.price).toFixed(2) }}
             </template>
           </el-table-column>
           <el-table-column
@@ -365,7 +365,7 @@
             width="100"
           >
             <template #default="{ row }">
-              ¥{{ formatAmount(row.price * row.quantity) }}
+              ¥{{ (row.price * row.quantity).toFixed(2) }}
             </template>
           </el-table-column>
         </el-table>
@@ -373,7 +373,7 @@
           <el-col :span="24">
             <span style="font-size: 16px">合计：</span>
             <span style="color: #f56c6c; font-size: 20px; font-weight: bold">
-              ¥{{ formatAmount(currentOrder.quote.actualTotal || currentOrder.quote.total) }}
+              ¥{{ Number(currentOrder.quote.total || 0).toFixed(2) }}
             </span>
           </el-col>
         </el-row>
@@ -577,9 +577,11 @@ const getStatusType = (status) => {
     'pending_confirmation': 'warning',
     'completed': 'success',
     'refunded': 'info',
-    'rejected': 'danger'
+    'rejected': 'danger',
+    'cancelled': 'info',
+    'expired': 'warning'
   }
-  return typeMap[status] || ''
+  return typeMap[status] || 'info'
 }
 
 // 获取状态文本
@@ -596,6 +598,8 @@ const getStatusText = (status) => {
     'refunded': '已退款',
     'rejected': '已拒绝'
   }
+  textMap.cancelled = '已撤销'
+  textMap.expired = '已超时关闭'
   return textMap[status] || status
 }
 

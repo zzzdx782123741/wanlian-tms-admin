@@ -232,9 +232,9 @@
         >
           <template #default="{ row }">
             <span
-              v-if="row.quote?.total"
+              v-if="row.quote && row.quote.total != null"
               class="amount"
-            >¥{{ formatAmount(row.quote.actualTotal || row.quote.total) }}</span>
+            >¥{{ Number(row.quote.total).toFixed(2) }}</span>
             <span v-else>-</span>
           </template>
         </el-table-column>
@@ -273,6 +273,24 @@
               @click="handleApprove(row)"
             >
               审批
+            </el-button>
+            <el-button
+              v-if="row.status === 'awaiting_approval'"
+              type="warning"
+              size="small"
+              link
+              @click="handleQuoteApproval(row)"
+            >
+              审批报价
+            </el-button>
+            <el-button
+              v-if="canCancelOrder(row)"
+              type="danger"
+              size="small"
+              link
+              @click="handleCancel(row)"
+            >
+              撤销
             </el-button>
             <el-button
               type="info"
@@ -355,8 +373,8 @@
           <el-image
             v-for="(photo, index) in currentOrder.milestonePhotos"
             :key="index"
-            :src="photo"
-            :preview-src-list="currentOrder.milestonePhotos"
+            :src="getImageUrl(photo)"
+            :preview-src-list="getMilestonePhotoUrls(currentOrder)"
             :initial-index="index"
             fit="cover"
             style="width: 100px; height: 100px; margin-right: 8px; border-radius: 4px; cursor: pointer;"
@@ -374,8 +392,8 @@
           <el-image
             v-for="(photo, index) in currentOrder.faultImages"
             :key="index"
-            :src="photo"
-            :preview-src-list="currentOrder.faultImages"
+            :src="getImageUrl(photo)"
+            :preview-src-list="getFaultImageUrls(currentOrder)"
             :initial-index="index"
             fit="cover"
             style="width: 100px; height: 100px; margin-right: 8px; border-radius: 4px; cursor: pointer;"
@@ -419,6 +437,7 @@
               placeholder="请选择维修门店"
               style="width: 100%"
               filterable
+              @change="handleStoreChange"
             >
               <el-option
                 v-for="store in storeList"
@@ -428,6 +447,73 @@
               />
             </el-select>
           </el-form-item>
+
+          <!-- 保养订单需要选择套餐 -->
+          <template v-if="currentOrder?.type === 'maintenance'">
+            <el-form-item
+              label="套餐选择"
+              required
+            >
+              <el-select
+                v-model="approveForm.packageId"
+                placeholder="请选择套餐"
+                style="width: 100%"
+                filterable
+                @change="handlePackageChange"
+              >
+                <el-option
+                  v-for="pkg in availablePackages"
+                  :key="pkg._id"
+                  :label="`${pkg.name} - ¥${pkg.price.toFixed(2)}（原价¥${pkg.originalPrice.toFixed(2)}）`"
+                  :value="pkg._id"
+                />
+              </el-select>
+            </el-form-item>
+
+            <!-- 套餐详情 -->
+            <el-alert
+              v-if="selectedPackage"
+              title="套餐详情"
+              type="info"
+              :closable="false"
+              style="margin-bottom: 16px"
+            >
+              <div>套餐名称：{{ selectedPackage.name }}</div>
+              <div>套餐档次：{{ selectedPackage.tier }}</div>
+              <div>套餐价格：¥{{ selectedPackage.price.toFixed(2) }}</div>
+              <div>适用里程：{{ selectedPackage.mileageRange?.min }}km - {{ selectedPackage.mileageRange?.max }}km</div>
+              <div>预计工时：{{ selectedPackage.estimatedDuration || '-' }}小时</div>
+            </el-alert>
+
+            <!-- 审批金额 -->
+            <el-form-item
+              label="审批金额"
+              required
+            >
+              <el-input-number
+                v-model="approveForm.finalAmount"
+                :min="0"
+                :precision="2"
+                :step="100"
+                controls-position="right"
+                style="width: 200px"
+              />
+              <span style="margin-left: 12px; color: #909399;">元（审批通过后将从车队账户冻结此金额）</span>
+            </el-form-item>
+
+            <!-- 资金冻结提示 -->
+            <el-alert
+              v-if="approveForm.finalAmount > 0"
+              title="资金冻结说明"
+              type="warning"
+              :closable="false"
+              style="margin-bottom: 16px"
+            >
+              <div>审批通过后将从车队账户冻结 <strong>¥{{ approveForm.finalAmount.toFixed(2) }}</strong></div>
+              <div>完工结算时多退少补，剩余资金将自动解冻</div>
+            </el-alert>
+          </template>
+
           <el-form-item label="审批备注">
             <el-input
               v-model="approveForm.remark"
@@ -456,6 +542,188 @@
           @click="confirmApprove"
         >
           确认审批
+        </el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 报价审批对话框 -->
+    <el-dialog
+      v-model="quoteApproveDialogVisible"
+      title="审批报价"
+      width="800px"
+    >
+      <div v-if="currentOrder">
+        <!-- 订单基本信息 -->
+        <el-descriptions
+          :column="2"
+          border
+          style="margin-bottom: 20px"
+        >
+          <el-descriptions-item label="订单号">
+            {{ currentOrder.orderNumber }}
+          </el-descriptions-item>
+          <el-descriptions-item label="车牌号">
+            {{ currentOrder.vehicleId?.plateNumber }}
+          </el-descriptions-item>
+          <el-descriptions-item
+            label="品牌型号"
+            :span="2"
+          >
+            {{ currentOrder.vehicleId?.brand }} {{ currentOrder.vehicleId?.model }}
+          </el-descriptions-item>
+          <el-descriptions-item
+            label="故障描述"
+            :span="2"
+          >
+            {{ currentOrder.faultDescription }}
+          </el-descriptions-item>
+        </el-descriptions>
+
+        <!-- 接车检查信息 -->
+        <div
+          v-if="currentOrder.receiveCheck"
+          style="margin-bottom: 20px"
+        >
+          <div style="margin-bottom: 10px; font-weight: 600;">
+            接车检查信息：
+          </div>
+          <el-descriptions
+            :column="2"
+            border
+          >
+            <el-descriptions-item label="检查里程">
+              {{ currentOrder.receiveCheck.mileage || '-' }} 公里
+            </el-descriptions-item>
+            <el-descriptions-item label="诊断结果">
+              {{ currentOrder.receiveCheck.diagnosis || '-' }}
+            </el-descriptions-item>
+          </el-descriptions>
+          <!-- 接车照片 -->
+          <div
+            v-if="currentOrder.receiveCheck.checkinPhotos && currentOrder.receiveCheck.checkinPhotos.length > 0"
+            style="margin-top: 10px"
+          >
+            <div style="margin-bottom: 8px; font-weight: 600;">
+              接车照片：
+            </div>
+            <el-image
+              v-for="(photo, index) in currentOrder.receiveCheck.checkinPhotos"
+              :key="index"
+              :src="getImageUrl(photo)"
+              :preview-src-list="getCheckinPhotoUrls(currentOrder)"
+              :initial-index="index"
+              fit="cover"
+              style="width: 80px; height: 80px; margin-right: 8px; border-radius: 4px; cursor: pointer;"
+            />
+          </div>
+        </div>
+
+        <!-- 报价信息 -->
+        <div
+          v-if="currentOrder.quote"
+          style="margin-bottom: 20px"
+        >
+          <div style="margin-bottom: 10px; font-weight: 600;">
+            报价明细：
+          </div>
+          <el-table
+            :data="currentOrder.quote.items"
+            size="small"
+            border
+            style="margin-bottom: 10px;"
+          >
+            <el-table-column
+              prop="item"
+              label="项目名称"
+            />
+            <el-table-column
+              prop="price"
+              label="单价"
+              width="100"
+            >
+              <template #default="{ row }">
+                ¥{{ Number(row.price).toFixed(2) }}
+              </template>
+            </el-table-column>
+            <el-table-column
+              prop="quantity"
+              label="数量"
+              width="80"
+            />
+            <el-table-column
+              label="小计"
+              width="100"
+            >
+              <template #default="{ row }">
+                ¥{{ (row.price * row.quantity).toFixed(2) }}
+              </template>
+            </el-table-column>
+          </el-table>
+          <div style="text-align: right;">
+            <span style="color: #909399;">报价总额：</span>
+            <span style="color: #f56c6c; font-size: 20px; font-weight: bold; margin-left: 10px;">
+              ¥{{ Number(currentOrder.quote.total || 0).toFixed(2) }}
+            </span>
+          </div>
+          <!-- 报价说明 -->
+          <div
+            v-if="currentOrder.quote.description"
+            style="margin-top: 10px; color: #606266;"
+          >
+            <strong>报价说明：</strong>{{ currentOrder.quote.description }}
+          </div>
+          <!-- 报价图片 -->
+          <div
+            v-if="getQuoteImageUrls(currentOrder).length > 0"
+            style="margin-top: 10px"
+          >
+            <div style="margin-bottom: 8px; font-weight: 600;">
+              报价图片：
+            </div>
+            <el-image
+              v-for="(photo, index) in getQuoteImageUrls(currentOrder)"
+              :key="index"
+              :src="photo"
+              :preview-src-list="getQuoteImageUrls(currentOrder)"
+              :initial-index="index"
+              fit="cover"
+              style="width: 80px; height: 80px; margin-right: 8px; border-radius: 4px; cursor: pointer;"
+            />
+          </div>
+        </div>
+
+        <!-- 审批备注 -->
+        <el-form
+          :model="quoteApproveForm"
+          label-width="100px"
+        >
+          <el-form-item label="审批备注">
+            <el-input
+              v-model="quoteApproveForm.remark"
+              type="textarea"
+              :rows="3"
+              placeholder="请输入审批备注（可选）"
+              maxlength="200"
+              show-word-limit
+            />
+          </el-form-item>
+        </el-form>
+      </div>
+      <template #footer>
+        <el-button @click="quoteApproveDialogVisible = false">
+          取消
+        </el-button>
+        <el-button
+          type="danger"
+          @click="confirmQuoteReject"
+        >
+          拒绝报价
+        </el-button>
+        <el-button
+          type="primary"
+          @click="confirmQuoteApprove"
+        >
+          批准报价
         </el-button>
       </template>
     </el-dialog>
@@ -536,8 +804,8 @@
             <el-image
               v-for="(img, idx) in currentOrder.milestonePhotos"
               :key="idx"
-              :src="img"
-              :preview-src-list="currentOrder.milestonePhotos"
+              :src="getImageUrl(img)"
+              :preview-src-list="getMilestonePhotoUrls(currentOrder)"
               :initial-index="idx"
               style="width: 80px; height: 80px; margin-right: 8px; border-radius: 4px;"
               fit="cover"
@@ -551,8 +819,8 @@
             <el-image
               v-for="(img, idx) in currentOrder.faultImages"
               :key="idx"
-              :src="img"
-              :preview-src-list="currentOrder.faultImages"
+              :src="getImageUrl(img)"
+              :preview-src-list="getFaultImageUrls(currentOrder)"
               :initial-index="idx"
               style="width: 80px; height: 80px; margin-right: 8px; border-radius: 4px;"
               fit="cover"
@@ -571,8 +839,8 @@
             <el-image
               v-for="(img, idx) in currentOrder.receiveCheck.checkinPhotos || []"
               :key="idx"
-              :src="img"
-              :preview-src-list="currentOrder.receiveCheck.checkinPhotos || []"
+              :src="getImageUrl(img)"
+              :preview-src-list="getCheckinPhotoUrls(currentOrder)"
               :initial-index="idx"
               style="width: 80px; height: 80px; margin-right: 8px; border-radius: 4px; margin-top: 8px;"
               fit="cover"
@@ -600,7 +868,7 @@
                 width="100"
               >
                 <template #default="{ row }">
-                  ¥{{ formatAmount(row.price) }}
+                  ¥{{ Number(row.price).toFixed(2) }}
                 </template>
               </el-table-column>
               <el-table-column
@@ -613,13 +881,13 @@
                 width="100"
               >
                 <template #default="{ row }">
-                  ¥{{ formatAmount(row.price * row.quantity) }}
+                  ¥{{ (row.price * row.quantity).toFixed(2) }}
                 </template>
               </el-table-column>
             </el-table>
             <div style="margin-top: 10px;">
               <strong>报价总额：</strong>
-              <span style="color: #f56c6c; font-size: 18px; font-weight: bold;">¥{{ formatAmount(currentOrder.quote.actualTotal || currentOrder.quote.total) }}</span>
+              <span style="color: #f56c6c; font-size: 18px; font-weight: bold;">¥{{ Number(currentOrder.quote.total || 0).toFixed(2) }}</span>
             </div>
           </el-descriptions-item>
           <el-descriptions-item
@@ -649,11 +917,12 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Download } from '@element-plus/icons-vue'
 import request from '@/utils/request'
 import { getStores } from '@/api/store'
 import { getFleetConfig } from '@/api/fleet'
+import { getImageUrl, getImageUrls } from '@/utils/image'
 import dayjs from 'dayjs'
 
 const loading = ref(false)
@@ -679,11 +948,21 @@ const queryParams = ref({
 })
 
 const approveDialogVisible = ref(false)
+const quoteApproveDialogVisible = ref(false)
 const detailDialogVisible = ref(false)
 const currentOrder = ref(null)
 
 const approveForm = ref({
   storeId: null,
+  packageId: null,
+  finalAmount: 0,
+  remark: ''
+})
+
+// 套餐列表
+const availablePackages = ref([])
+
+const quoteApproveForm = ref({
   remark: ''
 })
 
@@ -697,6 +976,18 @@ const userFleetId = computed(() => {
   const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}')
   return userInfo.fleetInfo?.fleetId
 })
+
+const getCheckinPhotoUrls = (order) => getImageUrls(order?.receiveCheck?.checkinPhotos || [])
+
+const getQuoteImageUrls = (order) => getImageUrls(order?.quote?.quoteImages || order?.quote?.images || [])
+
+const getMilestonePhotoUrls = (order) => getImageUrls(order?.milestonePhotos || [])
+
+const getFaultImageUrls = (order) => getImageUrls(order?.faultImages || [])
+
+const cancelableStatuses = ['awaiting_fleet_approval', 'awaiting_time_confirmation', 'pending_assessment']
+
+const canCancelOrder = (order) => cancelableStatuses.includes(order?.status)
 
 // 是否可以审批
 const canApprove = computed(() => {
@@ -805,6 +1096,54 @@ const fetchStores = async () => {
   }
 }
 
+// 获取套餐列表
+const fetchPackages = async (storeId = null) => {
+  try {
+    const params = { auditStatus: 'approved', limit: 100 }
+    // 如果提供了门店ID，则获取该门店的套餐和平台套餐
+    if (storeId) {
+      params.storeId = storeId
+    }
+    const res = await request({
+      url: '/maintenance/fleet/store-packages',
+      method: 'get',
+      params
+    })
+    availablePackages.value = res.data.packages || []
+  } catch (error) {
+    console.error('获取套餐列表失败:', error)
+  }
+}
+
+// 选中的套餐
+const selectedPackage = computed(() => {
+  if (!approveForm.value.packageId) return null
+  return availablePackages.value.find(p => p._id === approveForm.value.packageId)
+})
+
+// 套餐变化
+const handlePackageChange = (packageId) => {
+  const pkg = availablePackages.value.find(p => p._id === packageId)
+  if (pkg) {
+    approveForm.value.finalAmount = pkg.price
+  }
+}
+
+// 门店变化：清空已选套餐并重新加载套餐列表
+const handleStoreChange = async (storeId) => {
+  // 清空已选套餐
+  approveForm.value.packageId = null
+  approveForm.value.finalAmount = 0
+
+  // 根据选择的门店重新加载套餐列表
+  if (storeId) {
+    await fetchPackages(storeId)
+  } else {
+    // 如果没有选择门店，清空套餐列表
+    availablePackages.value = []
+  }
+}
+
 // 获取统计数据
 const fetchStatistics = async () => {
   try {
@@ -828,11 +1167,11 @@ const fetchStatistics = async () => {
 
     const monthlyOrders = orders.filter(o => {
       const orderDate = new Date(o.createdAt)
-      return orderDate >= monthStart && o.status === 'completed' && (o.quote?.actualTotal || o.quote?.total)
+      return orderDate >= monthStart && o.status === 'completed' && o.quote?.total != null
     })
 
     stats.value.monthlyAmount = monthlyOrders.reduce((sum, order) => {
-      return sum + (order.quote?.actualTotal || order.quote?.total || 0)
+      return sum + (order.quote?.total || 0)
     }, 0) / 100 // 分转元
   } catch (error) {
     console.error('获取统计数据失败:', error)
@@ -868,6 +1207,8 @@ const handleApprove = async (order) => {
   currentOrder.value = order
   approveForm.value = {
     storeId: order.storeId || null,
+    packageId: null,
+    finalAmount: 0,
     remark: ''
   }
 
@@ -879,15 +1220,59 @@ const handleApprove = async (order) => {
     await fetchStores()
   }
 
+  // 确定要查询套餐的门店ID
+  let packageStoreId = null
+  if (fleetConfig.value.allowDriverSelectStore) {
+    // 司机自选门店模式：使用订单中的门店ID
+    packageStoreId = order.storeId || null
+  } else {
+    // 车队分配门店模式：使用车队选择的门店ID
+    packageStoreId = approveForm.value.storeId || null
+  }
+
+  // 如果是保养订单，加载套餐列表
+  if (order.type === 'maintenance' && packageStoreId) {
+    await fetchPackages(packageStoreId)
+  }
+
   approveDialogVisible.value = true
 }
 
 // 确认审批
 const confirmApprove = async () => {
+  // 验证门店：仅当车队分配门店时需要验证
+  if (!fleetConfig.value.allowDriverSelectStore && !approveForm.value.storeId) {
+    ElMessage.warning('请选择门店')
+    return
+  }
+
+  // 验证套餐：保养订单必须选择套餐
+  if (currentOrder.value.type === 'maintenance' && !approveForm.value.packageId) {
+    ElMessage.warning('请选择保养套餐')
+    return
+  }
+
+  // 验证金额：保养订单必须输入金额
+  if (currentOrder.value.type === 'maintenance' && (!approveForm.value.finalAmount || approveForm.value.finalAmount <= 0)) {
+    ElMessage.warning('请输入审批金额')
+    return
+  }
+
   try {
     const data = {
       storeId: approveForm.value.storeId,
       remark: approveForm.value.remark
+    }
+
+    // 如果是保养订单，添加套餐信息
+    if (currentOrder.value.type === 'maintenance') {
+      data.packageId = approveForm.value.packageId
+      // 确定门店ID
+      let storeId = approveForm.value.storeId
+      if (fleetConfig.value.allowDriverSelectStore && currentOrder.value.storeId) {
+        storeId = currentOrder.value.storeId
+      }
+      data.storeId = storeId
     }
 
     await request({
@@ -896,7 +1281,11 @@ const confirmApprove = async () => {
       data
     })
 
-    ElMessage.success('审批成功')
+    const successMessage = currentOrder.value.type === 'maintenance'
+      ? '审批成功，资金已冻结，订单已分配门店'
+      : '审批成功，订单已分配门店'
+
+    ElMessage.success(successMessage)
     approveDialogVisible.value = false
     fetchOrders()
     fetchStatistics() // 刷新统计数据
@@ -925,6 +1314,83 @@ const confirmReject = async () => {
   }
 }
 
+// 报价审批
+const handleCancel = async (order) => {
+  try {
+    const { value } = await ElMessageBox.prompt('请填写撤销原因', '撤销订单', {
+      confirmButtonText: '确认撤销',
+      cancelButtonText: '取消',
+      inputPlaceholder: '例如：门店长期未确认时间，改为重新申请',
+      inputValidator: (input) => {
+        if (!input || !input.trim()) {
+          return '请填写撤销原因'
+        }
+        return true
+      }
+    })
+
+    await request({
+      url: `/orders/${order._id}/cancel`,
+      method: 'post',
+      data: { reason: value.trim() }
+    })
+
+    ElMessage.success('订单已撤销')
+    fetchOrders()
+    fetchStatistics()
+  } catch (error) {
+    if (error === 'cancel' || error?.action === 'cancel' || error?.action === 'close') {
+      return
+    }
+    console.error('撤销订单失败:', error)
+    ElMessage.error(error.response?.data?.message || '撤销订单失败')
+  }
+}
+
+const handleQuoteApproval = (order) => {
+  currentOrder.value = order
+  quoteApproveForm.value = { remark: '' }
+  quoteApproveDialogVisible.value = true
+}
+
+// 确认批准报价
+const confirmQuoteApprove = async () => {
+  try {
+    await request({
+      url: `/orders/${currentOrder.value._id}/approve-quote`,
+      method: 'post',
+      data: { approved: true, rejectReason: quoteApproveForm.value.remark }
+    })
+
+    ElMessage.success('报价已批准，订单进入维修中')
+    quoteApproveDialogVisible.value = false
+    fetchOrders()
+    fetchStatistics()
+  } catch (error) {
+    console.error('批准报价失败:', error)
+    ElMessage.error(error.response?.data?.message || '批准报价失败')
+  }
+}
+
+// 确认拒绝报价
+const confirmQuoteReject = async () => {
+  try {
+    await request({
+      url: `/orders/${currentOrder.value._id}/approve-quote`,
+      method: 'post',
+      data: { approved: false, rejectReason: quoteApproveForm.value.remark || '车队管理员拒绝报价' }
+    })
+
+    ElMessage.success('已拒绝报价，订单退回待接车检查')
+    quoteApproveDialogVisible.value = false
+    fetchOrders()
+    fetchStatistics()
+  } catch (error) {
+    console.error('拒绝报价失败:', error)
+    ElMessage.error(error.response?.data?.message || '拒绝报价失败')
+  }
+}
+
 // 查看详情
 const handleViewDetail = (order) => {
   currentOrder.value = order
@@ -943,9 +1409,11 @@ const getStatusType = (status) => {
     'pending_confirmation': 'warning',
     'completed': 'success',
     'refunded': 'info',
-    'rejected': 'danger'
+    'rejected': 'danger',
+    'cancelled': 'info',
+    'expired': 'warning'
   }
-  return typeMap[status] || ''
+  return typeMap[status] || 'info'
 }
 
 // 获取状态文本
@@ -962,6 +1430,8 @@ const getStatusText = (status) => {
     'refunded': '已退款',
     'rejected': '已拒绝'
   }
+  textMap.cancelled = '已撤销'
+  textMap.expired = '已超时关闭'
   return textMap[status] || status
 }
 

@@ -222,7 +222,7 @@
         >
           <template #default="{ row }">
             <el-tag
-              :type="row.type === 'repair' ? '' : 'success'"
+              :type="row.type === 'repair' ? 'warning' : 'success'"
               size="small"
             >
               {{ row.type === 'repair' ? '维修' : '保养' }}
@@ -259,7 +259,7 @@
           align="right"
         >
           <template #default="{ row }">
-            <span class="amount">{{ row.quote?.total ? '¥' + formatAmount(row.quote.actualTotal || row.quote.total) : '-' }}</span>
+            <span class="amount">{{ row.quote && row.quote.total != null ? '¥' + Number(row.quote.total).toFixed(2) : '-' }}</span>
           </template>
         </el-table-column>
         <el-table-column
@@ -299,7 +299,7 @@
               详情
             </el-button>
             <el-button
-              v-if="row.status === 'awaiting_time_confirmation'"
+              v-if="isStoreManager && row.status === 'awaiting_time_confirmation'"
               link
               type="warning"
               size="small"
@@ -308,7 +308,7 @@
               确认时间
             </el-button>
             <el-button
-              v-if="row.status === 'pending_assessment'"
+              v-if="isStoreTechnician && row.status === 'pending_assessment'"
               link
               type="primary"
               size="small"
@@ -317,7 +317,7 @@
               接车
             </el-button>
             <el-button
-              v-if="row.status === 'in_repair'"
+              v-if="isStoreTechnician && row.status === 'in_repair'"
               link
               type="warning"
               size="small"
@@ -326,7 +326,7 @@
               增项
             </el-button>
             <el-button
-              v-if="row.status === 'in_repair'"
+              v-if="isStoreTechnician && row.status === 'in_repair'"
               link
               type="success"
               size="small"
@@ -365,7 +365,7 @@
           {{ currentOrder.orderNumber }}
         </el-descriptions-item>
         <el-descriptions-item label="订单类型">
-          <el-tag :type="currentOrder.type === 'repair' ? '' : 'success'">
+          <el-tag :type="currentOrder.type === 'repair' ? 'warning' : 'success'">
             {{ currentOrder.type === 'repair' ? '维修订单' : '保养订单' }}
           </el-tag>
         </el-descriptions-item>
@@ -408,7 +408,7 @@
         >
           <div>
             <strong>报价总额：</strong>
-            <span class="total-amount">¥{{ formatAmount(currentOrder.quote.actualTotal || currentOrder.quote.total) }}</span>
+            <span class="total-amount">¥{{ Number(currentOrder.quote.total || 0).toFixed(2) }}</span>
           </div>
         </el-descriptions-item>
         <el-descriptions-item label="订单状态">
@@ -651,7 +651,7 @@
                   width="100"
                 >
                   <template #default="{ row }">
-                    ¥{{ formatAmount(row.price) }}
+                    ¥{{ Number(row.price).toFixed(2) }}
                   </template>
                 </el-table-column>
                 <el-table-column
@@ -674,7 +674,7 @@
                   width="100"
                 >
                   <template #default="{ row }">
-                    ¥{{ formatAmount(row.price * row.quantity) }}
+                    ¥{{ (row.price * row.quantity).toFixed(2) }}
                   </template>
                 </el-table-column>
                 <el-table-column
@@ -1020,7 +1020,7 @@
               width="100"
             >
               <template #default="{ row }">
-                ¥{{ formatAmount(row.price) }}
+                ¥{{ Number(row.price).toFixed(2) }}
               </template>
             </el-table-column>
             <el-table-column
@@ -1042,7 +1042,7 @@
               width="120"
             >
               <template #default="{ row }">
-                ¥{{ formatAmount(row.price * row.quantity) }}
+                ¥{{ (row.price * row.quantity).toFixed(2) }}
               </template>
             </el-table-column>
             <el-table-column
@@ -1120,11 +1120,16 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ref, reactive, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
 import { Plus, Search, Download } from '@element-plus/icons-vue'
 import request from '@/utils/request'
+import { getStoreOrders } from '@/api/store'
 import dayjs from 'dayjs'
+
+const userRole = localStorage.getItem('role') || ''
+const isStoreManager = userRole === 'STORE_MANAGER'
+const isStoreTechnician = userRole === 'STORE_TECHNICIAN'
 
 const loading = ref(false)
 const exporting = ref(false)
@@ -1208,6 +1213,17 @@ const stats = reactive({
   completed: 0
 })
 
+const defaultStats = {
+  awaiting_fleet_approval: 0,
+  awaiting_time_confirmation: 0,
+  pending_assessment: 0,
+  awaiting_approval: 0,
+  in_repair: 0,
+  awaiting_addon_approval: 0,
+  pending_confirmation: 0,
+  completed: 0
+}
+
 // 确认时间对话框相关
 const confirmTimeDialogVisible = ref(false)
 const confirming = ref(false)
@@ -1248,15 +1264,12 @@ async function loadOrders() {
       params.endDate = dateRange.value[1]
     }
 
-    const res = await request({
-      url: '/store/orders',
-      method: 'get',
-      params
-    })
+    // 使用门店订单 API
+    const res = await getStoreOrders(params)
 
     orders.value = res.data.list || []
     pagination.total = res.data.total || 0
-    Object.assign(stats, res.data.stats || {})
+    Object.assign(stats, defaultStats, res.data.stats || {})
   } catch (error) {
     ElMessage.error(error.message || '加载订单列表失败')
   } finally {
@@ -1620,7 +1633,7 @@ async function handleSubmitComplete() {
   completing.value = true
   try {
     await request({
-      url: `/store/orders/${currentOrder.value._id}/complete`,
+      url: `/orders/${currentOrder.value._id}/complete`,
       method: 'POST',
       data: completeForm.value
     })
@@ -1801,7 +1814,9 @@ function getStatusText(status) {
     pending_confirmation: '待确认',
     completed: '已完成',
     refunded: '已退款',
-    rejected: '已拒绝'
+    rejected: '已拒绝',
+    cancelled: '已撤销',
+    expired: '已超时关闭'
   }
   return map[status] || '未知'
 }
@@ -1811,15 +1826,17 @@ function getStatusColor(status) {
     awaiting_fleet_approval: 'warning',
     awaiting_time_confirmation: 'info',
     pending_assessment: 'warning',
-    awaiting_approval: '',
+    awaiting_approval: 'warning',
     in_repair: 'primary',
     awaiting_addon_approval: 'warning',
     pending_confirmation: 'warning',
     completed: 'success',
     refunded: 'info',
-    rejected: 'danger'
+    rejected: 'danger',
+    cancelled: 'info',
+    expired: 'warning'
   }
-  return map[status] || ''
+  return map[status] || 'info'
 }
 
 function formatAmount(amount) {
