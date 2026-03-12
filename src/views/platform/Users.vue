@@ -477,14 +477,14 @@ const handleUpdateStatus = async (row, status) => {
 
 const getRoleType = (role) => {
   const typeMap = {
-    DRIVER: '',
+    DRIVER: 'info',
     FLEET_MANAGER: 'success',
     STORE_MANAGER: 'primary',
     STORE_TECHNICIAN: 'warning',
     PLATFORM_OPERATOR: 'danger'
   }
 
-  return typeMap[role] || ''
+  return typeMap[role] || 'info'
 }
 
 const getRoleText = (role) => {
@@ -506,7 +506,7 @@ const getStatusType = (status) => {
     suspended: 'danger'
   }
 
-  return typeMap[status] || ''
+  return typeMap[status] || 'info'
 }
 
 const getStatusText = (status) => {

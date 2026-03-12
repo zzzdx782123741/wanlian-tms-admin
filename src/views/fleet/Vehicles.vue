@@ -1061,12 +1061,6 @@ const confirmSave = async () => {
     // 这里只需要处理特殊情况
     console.error('保存失败:', error)
 
-    // 如果需要，可以显示更详细的错误信息
-    const errorMsg = error.response?.data?.message || error.message || '保存失败'
-    ElMessage.error({
-      message: errorMsg,
-      duration: 5000
-    })
   } finally {
     saving.value = false
   }
@@ -1118,7 +1112,7 @@ const getStatusType = (status) => {
     'repairing': 'warning',
     'scrapped': 'danger'
   }
-  return typeMap[status] || ''
+  return typeMap[status] || 'info'
 }
 
 // 获取状态文本

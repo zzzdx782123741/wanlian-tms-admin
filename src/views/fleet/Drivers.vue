@@ -937,7 +937,7 @@ const getStatusType = (status) => {
     'pending_audit': 'warning',
     'suspended': 'danger'
   }
-  return typeMap[status] || ''
+  return typeMap[status] || 'info'
 }
 
 // 获取状态文本
@@ -957,7 +957,7 @@ const getActivationStatusType = (status) => {
     'pending_activation': 'info',
     'suspended': 'danger'
   }
-  return typeMap[status] || ''
+  return typeMap[status] || 'info'
 }
 
 // 获取激活状态文本
@@ -977,7 +977,7 @@ const getRoleStatusType = (status) => {
     'pending_audit': 'warning',
     'suspended': 'danger'
   }
-  return typeMap[status] || ''
+  return typeMap[status] || 'info'
 }
 
 // 获取角色状态文本

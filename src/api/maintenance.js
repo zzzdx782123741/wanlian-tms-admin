@@ -86,3 +86,14 @@ export function approveMaintenanceApplication(id, data) {
     data
   })
 }
+
+/**
+ * 获取车队门店套餐列表（用于车队管理员选择门店套餐）
+ */
+export function getFleetStorePackages(params) {
+  return request({
+    url: '/maintenance/fleet/store-packages',
+    method: 'get',
+    params
+  })
+}

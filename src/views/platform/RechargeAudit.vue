@@ -48,205 +48,388 @@
       </el-col>
     </el-row>
 
-    <!-- 待审核列表 -->
+    <!-- 标签页：待审核列表 + 历史审核记录 -->
     <el-card style="margin-top: 20px">
-      <template #header>
-        <div class="card-header">
-          <span>充值审核队列</span>
-          <div class="header-actions">
-            <el-button
-              type="success"
-              size="small"
-              @click="handleExport"
-            >
-              <el-icon><Download /></el-icon>
-              导出列表
-            </el-button>
-            <el-button
-              type="primary"
-              size="small"
-              @click="fetchPendingList"
-            >
-              <el-icon><Refresh /></el-icon>
-              刷新
-            </el-button>
-          </div>
-        </div>
-      </template>
-
-      <!-- 搜索筛选 -->
-      <el-form
-        :inline="true"
-        class="search-form"
+      <el-tabs
+        v-model="activeTab"
+        @tab-change="handleTabChange"
       >
-        <el-form-item label="车队名称">
-          <el-input
-            v-model="filters.fleetName"
-            placeholder="请输入车队名称"
-            clearable
-            style="width: 200px"
-            @clear="handleSearch"
-          />
-        </el-form-item>
-        <el-form-item label="申请时间">
-          <el-date-picker
-            v-model="dateRange"
-            type="daterange"
-            range-separator="至"
-            start-placeholder="开始日期"
-            end-placeholder="结束日期"
-            value-format="YYYY-MM-DD"
-            style="width: 240px"
-          />
-        </el-form-item>
-        <el-form-item>
-          <div class="form-actions">
-            <el-button
-              type="primary"
-              @click="handleSearch"
-            >
-              <el-icon><Search /></el-icon>
-              查询
-            </el-button>
-            <el-button @click="handleReset">
-              重置
-            </el-button>
-          </div>
-        </el-form-item>
-      </el-form>
+        <!-- 待审核列表 -->
+        <el-tab-pane
+          label="待审核列表"
+          name="pending"
+        >
+          <template #header>
+            <div class="card-header">
+              <span>充值审核队列</span>
+              <div class="header-actions">
+                <el-button
+                  type="success"
+                  size="small"
+                  @click="handleExport"
+                >
+                  <el-icon><Download /></el-icon>
+                  导出列表
+                </el-button>
+                <el-button
+                  type="primary"
+                  size="small"
+                  @click="fetchPendingList"
+                >
+                  <el-icon><Refresh /></el-icon>
+                  刷新
+                </el-button>
+              </div>
+            </div>
+          </template>
 
-      <!-- 表格 -->
-      <el-table
-        v-loading="loading"
-        :data="pendingList"
-        stripe
-        style="width: 100%"
-      >
-        <el-table-column
-          type="selection"
-          width="55"
-        />
-        <el-table-column
-          prop="rechargeNo"
-          label="充值单号"
-          width="180"
-          fixed="left"
-        />
-        <el-table-column
-          prop="fleetName"
-          label="车队名称"
-          width="180"
-          show-overflow-tooltip
-        />
-        <el-table-column
-          label="充值金额"
-          width="120"
-          align="right"
-          fixed="left"
-        >
-          <template #default="{ row }">
-            <span style="color: #67c23a; font-weight: 600; font-size: 15px">
-              ¥{{ (row.amount / 100).toFixed(2) }}
-            </span>
-          </template>
-        </el-table-column>
-        <el-table-column
-          prop="remitterName"
-          label="汇款方"
-          width="200"
-          show-overflow-tooltip
-        />
-        <el-table-column
-          label="收款账户"
-          width="200"
-          show-overflow-tooltip
-        >
-          <template #default="{ row }">
-            {{ row.receiverAccountId?.bankName }}<br>
-            <span style="color: #909399; font-size: 12px">{{ row.receiverAccountId?.accountNumber }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column
-          label="凭证"
-          width="100"
-        >
-          <template #default="{ row }">
-            <el-button
-              type="primary"
-              link
-              size="small"
-              @click="viewProofImages(row)"
-            >
-              <el-icon><View /></el-icon>
-              查看({{ row.proofImages?.length || 0 }})
-            </el-button>
-          </template>
-        </el-table-column>
-        <el-table-column
-          label="打款日期"
-          width="120"
-        >
-          <template #default="{ row }">
-            {{ formatDate(row.transferDate) }}
-          </template>
-        </el-table-column>
-        <el-table-column
-          prop="appliedAt"
-          label="申请时间"
-          width="180"
-        >
-          <template #default="{ row }">
-            {{ formatDate(row.appliedAt) }}
-          </template>
-        </el-table-column>
-        <el-table-column
-          prop="appliedBy.nickname"
-          label="申请人"
-          width="120"
-        />
-        <el-table-column
-          prop="remark"
-          label="备注"
-          min-width="150"
-          show-overflow-tooltip
-        />
-        <el-table-column
-          label="操作"
-          width="200"
-          fixed="right"
-        >
-          <template #default="{ row }">
-            <el-button
-              type="success"
-              size="small"
-              @click="handleApprove(row)"
-            >
-              <el-icon><Select /></el-icon>
-              通过
-            </el-button>
-            <el-button
-              type="danger"
-              size="small"
-              @click="handleReject(row)"
-            >
-              <el-icon><Close /></el-icon>
-              驳回
-            </el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+          <!-- 搜索筛选 -->
+          <el-form
+            :inline="true"
+            class="search-form"
+          >
+            <el-form-item label="车队名称">
+              <el-input
+                v-model="filters.fleetName"
+                placeholder="请输入车队名称"
+                clearable
+                style="width: 200px"
+                @clear="handleSearch"
+              />
+            </el-form-item>
+            <el-form-item label="申请时间">
+              <el-date-picker
+                v-model="dateRange"
+                type="daterange"
+                range-separator="至"
+                start-placeholder="开始日期"
+                end-placeholder="结束日期"
+                value-format="YYYY-MM-DD"
+                style="width: 240px"
+              />
+            </el-form-item>
+            <el-form-item>
+              <div class="form-actions">
+                <el-button
+                  type="primary"
+                  @click="handleSearch"
+                >
+                  <el-icon><Search /></el-icon>
+                  查询
+                </el-button>
+                <el-button @click="handleReset">
+                  重置
+                </el-button>
+              </div>
+            </el-form-item>
+          </el-form>
 
-      <!-- 分页 -->
-      <el-pagination
-        v-model:current-page="pagination.page"
-        v-model:page-size="pagination.limit"
-        :total="pagination.total"
-        :page-sizes="[10, 20, 50, 100]"
-        layout="total, sizes, prev, pager, next, jumper"
-        style="margin-top: 20px; justify-content: flex-end"
-        @size-change="fetchPendingList"
-        @current-change="fetchPendingList"
-      />
+          <!-- 表格 -->
+          <el-table
+            v-loading="loading"
+            :data="pendingList"
+            stripe
+            style="width: 100%"
+          >
+            <el-table-column
+              type="selection"
+              width="55"
+            />
+            <el-table-column
+              prop="rechargeNo"
+              label="充值单号"
+              width="180"
+              fixed="left"
+            />
+            <el-table-column
+              prop="fleetName"
+              label="车队名称"
+              width="180"
+              show-overflow-tooltip
+            />
+            <el-table-column
+              label="充值金额"
+              width="120"
+              align="right"
+              fixed="left"
+            >
+              <template #default="{ row }">
+                <span style="color: #67c23a; font-weight: 600; font-size: 15px">
+                  ¥{{ (row.amount / 100).toFixed(2) }}
+                </span>
+              </template>
+            </el-table-column>
+            <el-table-column
+              prop="remitterName"
+              label="汇款方"
+              width="200"
+              show-overflow-tooltip
+            />
+            <el-table-column
+              label="收款账户"
+              width="200"
+              show-overflow-tooltip
+            >
+              <template #default="{ row }">
+                {{ row.receiverAccountId?.bankName }}<br>
+                <span style="color: #909399; font-size: 12px">{{ row.receiverAccountId?.accountNumber }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column
+              label="凭证"
+              width="100"
+            >
+              <template #default="{ row }">
+                <el-button
+                  type="primary"
+                  link
+                  size="small"
+                  @click="viewProofImages(row)"
+                >
+                  <el-icon><View /></el-icon>
+                  查看({{ row.proofImages?.length || 0 }})
+                </el-button>
+              </template>
+            </el-table-column>
+            <el-table-column
+              label="打款日期"
+              width="120"
+            >
+              <template #default="{ row }">
+                {{ formatDate(row.transferDate) }}
+              </template>
+            </el-table-column>
+            <el-table-column
+              prop="appliedAt"
+              label="申请时间"
+              width="180"
+            >
+              <template #default="{ row }">
+                {{ formatDate(row.appliedAt) }}
+              </template>
+            </el-table-column>
+            <el-table-column
+              prop="appliedBy.nickname"
+              label="申请人"
+              width="120"
+            />
+            <el-table-column
+              prop="remark"
+              label="备注"
+              min-width="150"
+              show-overflow-tooltip
+            />
+            <el-table-column
+              label="操作"
+              width="200"
+              fixed="right"
+            >
+              <template #default="{ row }">
+                <el-button
+                  type="success"
+                  size="small"
+                  @click="handleApprove(row)"
+                >
+                  <el-icon><Select /></el-icon>
+                  通过
+                </el-button>
+                <el-button
+                  type="danger"
+                  size="small"
+                  @click="handleReject(row)"
+                >
+                  <el-icon><Close /></el-icon>
+                  驳回
+                </el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+
+          <!-- 分页 -->
+          <el-pagination
+            v-model:current-page="pagination.page"
+            v-model:page-size="pagination.limit"
+            :total="pagination.total"
+            :page-sizes="[10, 20, 50, 100]"
+            layout="total, sizes, prev, pager, next, jumper"
+            style="margin-top: 20px; justify-content: flex-end"
+            @size-change="fetchPendingList"
+            @current-change="fetchPendingList"
+          />
+        </el-tab-pane>
+
+        <!-- 历史审核记录 -->
+        <el-tab-pane
+          label="历史审核记录"
+          name="reviewed"
+        >
+          <template #header>
+            <div class="card-header">
+              <span>历史审核记录</span>
+              <div class="header-actions">
+                <el-button
+                  type="primary"
+                  size="small"
+                  @click="fetchReviewedList"
+                >
+                  <el-icon><Refresh /></el-icon>
+                  刷新
+                </el-button>
+              </div>
+            </div>
+          </template>
+
+          <!-- 搜索筛选 -->
+          <el-form
+            :inline="true"
+            class="search-form"
+          >
+            <el-form-item label="车队名称">
+              <el-input
+                v-model="reviewedFilters.fleetName"
+                placeholder="请输入车队名称"
+                clearable
+                style="width: 200px"
+                @clear="handleReviewedSearch"
+              />
+            </el-form-item>
+            <el-form-item label="审核状态">
+              <el-select
+                v-model="reviewedFilters.status"
+                placeholder="全部状态"
+                clearable
+                style="width: 150px"
+                @clear="handleReviewedSearch"
+              >
+                <el-option
+                  label="已通过"
+                  value="approved"
+                />
+                <el-option
+                  label="已驳回"
+                  value="rejected"
+                />
+              </el-select>
+            </el-form-item>
+            <el-form-item label="审核时间">
+              <el-date-picker
+                v-model="reviewedDateRange"
+                type="daterange"
+                range-separator="至"
+                start-placeholder="开始日期"
+                end-placeholder="结束日期"
+                value-format="YYYY-MM-DD"
+                style="width: 240px"
+              />
+            </el-form-item>
+            <el-form-item>
+              <div class="form-actions">
+                <el-button
+                  type="primary"
+                  @click="handleReviewedSearch"
+                >
+                  <el-icon><Search /></el-icon>
+                  查询
+                </el-button>
+                <el-button @click="handleReviewedReset">
+                  重置
+                </el-button>
+              </div>
+            </el-form-item>
+          </el-form>
+
+          <!-- 历史记录表格 -->
+          <el-table
+            v-loading="reviewedLoading"
+            :data="reviewedList"
+            stripe
+            style="width: 100%"
+          >
+            <el-table-column
+              prop="rechargeNo"
+              label="充值单号"
+              width="180"
+            />
+            <el-table-column
+              prop="fleetName"
+              label="车队名称"
+              width="180"
+              show-overflow-tooltip
+            />
+            <el-table-column
+              label="充值金额"
+              width="120"
+              align="right"
+            >
+              <template #default="{ row }">
+                <span style="color: #409eff; font-weight: 600">
+                  ¥{{ (row.amount / 100).toFixed(2) }}
+                </span>
+              </template>
+            </el-table-column>
+            <el-table-column
+              label="审核状态"
+              width="100"
+            >
+              <template #default="{ row }">
+                <el-tag
+                  :type="row.status === 'approved' ? 'success' : 'danger'"
+                  size="small"
+                >
+                  {{ row.status === 'approved' ? '已通过' : '已驳回' }}
+                </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column
+              prop="reviewedBy.nickname"
+              label="审核人"
+              width="120"
+            />
+            <el-table-column
+              label="审核时间"
+              width="180"
+            >
+              <template #default="{ row }">
+                {{ formatDate(row.reviewedAt) }}
+              </template>
+            </el-table-column>
+            <el-table-column
+              prop="reviewRemark"
+              label="审核备注"
+              min-width="150"
+              show-overflow-tooltip
+            />
+            <el-table-column
+              label="操作"
+              width="100"
+              fixed="right"
+            >
+              <template #default="{ row }">
+                <el-button
+                  type="primary"
+                  link
+                  size="small"
+                  @click="viewReviewedDetail(row)"
+                >
+                  查看详情
+                </el-button>
+              </template>
+            </el-table-column>
+          </el-table>
+
+          <!-- 历史记录分页 -->
+          <el-pagination
+            v-model:current-page="reviewedPagination.page"
+            v-model:page-size="reviewedPagination.limit"
+            :total="reviewedPagination.total"
+            :page-sizes="[10, 20, 50, 100]"
+            layout="total, sizes, prev, pager, next, jumper"
+            style="margin-top: 20px; justify-content: flex-end"
+            @size-change="fetchReviewedList"
+            @current-change="fetchReviewedList"
+          />
+        </el-tab-pane>
+      </el-tabs>
     </el-card>
 
     <!-- 凭证预览对话框 -->
@@ -428,6 +611,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Search, View, Select, Close, Download } from '@element-plus/icons-vue'
 import {
   getPendingRecharges,
+  getReviewedRecharges,
   approveRecharge,
   rejectRecharge,
   getRechargeList,
@@ -437,7 +621,11 @@ import { exportRechargeRecords } from '@/utils/export'
 import { getImageUrl, getImageUrls } from '@/utils/image'
 import dayjs from 'dayjs'
 
+// 当前激活的标签页
+const activeTab = ref('pending')
+
 const loading = ref(false)
+const reviewedLoading = ref(false)
 const submitting = ref(false)
 
 // 统计数据
@@ -495,28 +683,39 @@ const rejectRules = {
 // 当前处理的记录
 const currentRecord = ref(null)
 
+// 历史审核记录
+const reviewedList = ref([])
+const reviewedPagination = ref({
+  page: 1,
+  limit: 20,
+  total: 0
+})
+const reviewedFilters = ref({
+  fleetName: '',
+  status: ''
+})
+const reviewedDateRange = ref([])
+
+const formatLocalDate = (date) => dayjs(date).format('YYYY-MM-DD')
+
 // 获取统计数据
 const fetchStats = async () => {
   try {
-    // 获取今日的起止时间
     const today = new Date()
-    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString().split('T')[0]
-    const todayEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1).toISOString().split('T')[0]
+    const todayStart = formatLocalDate(today)
+    const todayEnd = formatLocalDate(today)
 
-    // 获取本月的起止时间
-    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0]
-    const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 1).toISOString().split('T')[0]
+    const monthStart = formatLocalDate(new Date(today.getFullYear(), today.getMonth(), 1))
+    const monthEnd = formatLocalDate(new Date(today.getFullYear(), today.getMonth() + 1, 0))
 
-    // 并行获取待审核、今日和本月的统计数据
     const [pendingRes, todayRes, monthRes] = await Promise.all([
       getPendingRecharges({ page: 1, limit: 1 }),
       getRechargeStats({ startDate: todayStart, endDate: todayEnd }),
       getRechargeStats({ startDate: monthStart, endDate: monthEnd })
     ])
 
-    // 更新统计数据
     stats.value.pending = pendingRes.data.total || 0
-    stats.value.todayApproved = todayRes.data.approved?.count || 0
+    stats.value.todayApproved = (todayRes.data.approved?.count || 0) + (todayRes.data.rejected?.count || 0)
     stats.value.todayAmount = (todayRes.data.approved?.total || 0) / 100
     stats.value.monthlyAmount = (monthRes.data.approved?.total || 0) / 100
   } catch (error) {
@@ -646,6 +845,90 @@ const confirmReject = async () => {
 // 格式化日期
 const formatDate = (date) => {
   return dayjs(date).format('YYYY-MM-DD HH:mm:ss')
+}
+
+// 标签页切换
+const handleTabChange = (tabName) => {
+  if (tabName === 'pending') {
+    fetchPendingList()
+  } else if (tabName === 'reviewed') {
+    fetchReviewedList()
+  }
+}
+
+// 获取历史审核记录
+const fetchReviewedList = async () => {
+  reviewedLoading.value = true
+  try {
+    const params = {
+      page: reviewedPagination.value.page,
+      limit: reviewedPagination.value.limit
+    }
+
+    if (reviewedFilters.value.fleetName) {
+      params.fleetName = reviewedFilters.value.fleetName
+    }
+
+    if (reviewedFilters.value.status) {
+      params.status = reviewedFilters.value.status
+    }
+
+    if (reviewedDateRange.value && reviewedDateRange.value.length === 2) {
+      params.startDate = reviewedDateRange.value[0]
+      params.endDate = reviewedDateRange.value[1]
+    }
+
+    const res = await getReviewedRecharges(params)
+    reviewedList.value = res.data.list || []
+    reviewedPagination.value.total = res.data.total || 0
+  } catch (error) {
+    console.error('获取历史审核记录失败:', error)
+    ElMessage.error('获取历史审核记录失败')
+  } finally {
+    reviewedLoading.value = false
+  }
+}
+
+// 历史记录搜索
+const handleReviewedSearch = () => {
+  reviewedPagination.value.page = 1
+  fetchReviewedList()
+}
+
+// 历史记录重置
+const handleReviewedReset = () => {
+  reviewedFilters.value.fleetName = ''
+  reviewedFilters.value.status = ''
+  reviewedDateRange.value = []
+  reviewedPagination.value.page = 1
+  fetchReviewedList()
+}
+
+// 查看历史记录详情
+const viewReviewedDetail = (row) => {
+  const statusText = row.status === 'approved' ? '已通过' : '已驳回'
+  const actualAmount = row.actualAmount ? (row.actualAmount / 100).toFixed(2) : (row.amount / 100).toFixed(2)
+
+  ElMessageBox.alert(
+    `
+    <div style="line-height: 1.8">
+      <p><strong>充值单号：</strong>${row.rechargeNo}</p>
+      <p><strong>车队名称：</strong>${row.fleetName}</p>
+      <p><strong>申请金额：</strong>¥${(row.amount / 100).toFixed(2)}</p>
+      <p><strong>实际到账：</strong>¥${actualAmount}</p>
+      <p><strong>审核状态：</strong>${statusText}</p>
+      <p><strong>审核人：</strong>${row.reviewedBy?.nickname || '-'}</p>
+      <p><strong>审核时间：</strong>${formatDate(row.reviewedAt)}</p>
+      ${row.reviewRemark ? `<p><strong>审核备注：</strong>${row.reviewRemark}</p>` : ''}
+      ${row.rejectReason ? `<p><strong>驳回原因：</strong>${row.rejectReason}</p>` : ''}
+    </div>
+    `,
+    '审核记录详情',
+    {
+      dangerouslyUseHTMLString: true,
+      confirmButtonText: '关闭'
+    }
+  )
 }
 
 // 导出待审核列表

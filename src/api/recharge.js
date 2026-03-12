@@ -25,10 +25,11 @@ export function getMyRechargeRecords(params) {
 /**
  * 车队端 - 获取充值统计
  */
-export function getRechargeStats() {
+export function getRechargeStats(params) {
   return request({
     url: '/recharge/stats',
-    method: 'get'
+    method: 'get',
+    params
   })
 }
 
@@ -94,6 +95,17 @@ export function rejectRecharge(id, data) {
     url: `/recharge/${id}/reject`,
     method: 'post',
     data
+  })
+}
+
+/**
+ * 财务审核 - 获取历史审核记录
+ */
+export function getReviewedRecharges(params) {
+  return request({
+    url: '/recharge/reviewed',
+    method: 'get',
+    params
   })
 }
 

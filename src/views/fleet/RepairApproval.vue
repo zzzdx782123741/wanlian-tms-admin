@@ -613,16 +613,10 @@ const fetchOrders = async () => {
     orders.value = res.data.orders || []
     total.value = res.data.total || 0
 
-    // 更新统计
-    stats.value.pending = orders.value.filter(o => o.status === 'awaiting_fleet_approval').length
-    stats.value.approvedToday = orders.value.filter(o => {
-      const date = new Date(o.fleetApproval?.approvedAt)
-      return date && dayjs(date).isSame(dayjs(), 'day') && o.status === 'awaiting_time_confirmation'
-    }).length
-    stats.value.rejectedToday = orders.value.filter(o => {
-      const date = new Date(o.fleetApproval?.rejectedAt)
-      return date && dayjs(date).isSame(dayjs(), 'day') && o.status === 'rejected'
-    }).length
+    stats.value = {
+      ...stats.value,
+      ...(res.data.stats || {})
+    }
   } catch (error) {
     console.error('获取订单列表失败:', error)
     ElMessage.error('获取订单列表失败')
@@ -749,7 +743,7 @@ const getStatusType = (status) => {
     'completed': 'success',
     'rejected': 'danger'
   }
-  return typeMap[status] || ''
+  return typeMap[status] || 'info'
 }
 
 // 获取状态文本

@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
+import { localizeErrorMessage } from './errorMessage'
 
 const service = axios.create({
   baseURL: '/api',
@@ -28,6 +29,7 @@ service.interceptors.response.use(
 
     // 检查业务逻辑是否成功
     if (res.success === false) {
+      res.message = localizeErrorMessage(res.message, '请求失败')
       const errorMsg = res.message || '请求失败'
       console.error('业务错误:', errorMsg, res)
       ElMessage.error(errorMsg)
@@ -55,6 +57,11 @@ service.interceptors.response.use(
       errorMessage = error.response.data.message
     } else if (error.message) {
       errorMessage = error.message
+    }
+    errorMessage = localizeErrorMessage(errorMessage, '网络错误')
+    error.message = errorMessage
+    if (error.response?.data) {
+      error.response.data.message = errorMessage
     }
 
     if (status === 401 && !isAuthLoginRequest) {

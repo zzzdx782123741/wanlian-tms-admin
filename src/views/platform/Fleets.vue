@@ -634,7 +634,7 @@ const getStatusType = (status) => {
     'normal': 'success',
     'suspended': 'danger'
   }
-  return typeMap[status] || ''
+  return typeMap[status] || 'info'
 }
 
 // 获取状态文本
@@ -654,7 +654,7 @@ const getVehicleStatusType = (status) => {
     'repairing': 'warning',
     'scrapped': 'danger'
   }
-  return typeMap[status] || ''
+  return typeMap[status] || 'info'
 }
 
 // 获取车辆状态文本

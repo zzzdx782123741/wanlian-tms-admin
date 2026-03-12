@@ -522,7 +522,7 @@ const getSettlementStatusType = (status) => {
     'completed': 'success',
     'failed': 'danger'
   }
-  return typeMap[status] || ''
+  return typeMap[status] || 'info'
 }
 
 // 获取结算状态文本

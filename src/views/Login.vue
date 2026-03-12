@@ -85,34 +85,34 @@
             size="small"
             type="info"
           >
-            密码统一为: Test123456
+            密码统一为: 123456
           </el-text>
         </div>
         <div class="account-buttons">
           <el-button
             size="small"
             type="danger"
-            @click="fillAccount('admin', 'Test123456')"
+            @click="handleQuickTestLogin('admin', '123456')"
           >
             平台运营
           </el-button>
           <el-button
             size="small"
             type="warning"
-            @click="fillAccount('fleet001', 'Test123456')"
+            @click="handleQuickTestLogin('fleet001', '123456')"
           >
             车队管理员
           </el-button>
           <el-button
             size="small"
             type="success"
-            @click="fillAccount('store001', 'Test123456')"
+            @click="handleQuickTestLogin('store001', '123456')"
           >
             门店管理员
           </el-button>
           <el-button
             size="small"
-            @click="fillAccount('tech001', 'Test123456')"
+            @click="handleQuickTestLogin('tech001', '123456')"
           >
             门店技师
           </el-button>
@@ -162,65 +162,48 @@ const loginRules = {
 }
 
 // 填充测试账号
-const fillAccount = (username, password) => {
-  loginForm.value.username = username
-  loginForm.value.password = password
-  ElMessage.success(`已填充测试账号：${username}`)
+const persistLoginState = (response) => {
+  const { token, user } = response.data
+
+  localStorage.removeItem('token')
+  localStorage.removeItem('userInfo')
+  localStorage.removeItem('role')
+  localStorage.removeItem('forceChangePassword')
+
+  localStorage.setItem('token', token)
+  localStorage.setItem('userInfo', JSON.stringify(user))
+  localStorage.setItem('role', user.role?.type)
+
+  console.log('登录成功，用户信息:', {
+    username: user.username,
+    nickname: user.nickname,
+    role: user.role?.type,
+    fleetName: user.fleetInfo?.fleetName,
+    storeName: user.storeInfo?.storeName
+  })
 }
 
-// 登录
-const handleLogin = async () => {
-  const valid = await loginFormRef.value.validate().catch(() => false)
-  if (!valid) return
+const navigateToDashboard = () => {
+  setTimeout(async () => {
+    try {
+      window.location.replace('/dashboard')
+    } catch (navError) {
+      console.error('路由跳转失败，尝试强制刷新:', navError)
+      window.location.assign('/dashboard')
+    }
+  }, 500)
+}
 
+const submitLogin = async (loginApi, payload) => {
   loading.value = true
 
   try {
-    // 开发环境使用测试登录，生产环境使用正式登录
-    const loginApi = isDev.value ? testLogin : login
-
-    const response = await loginApi({
-      username: loginForm.value.username,
-      password: loginForm.value.password
-    })
+    const response = await loginApi(payload)
 
     if (response.success) {
-      const { token, user, requirePasswordChange } = response.data
-
-      // 清理旧的登录信息，避免角色混乱
-      localStorage.removeItem('token')
-      localStorage.removeItem('userInfo')
-      localStorage.removeItem('role')
-
-      // 保存新的登录信息
-      localStorage.setItem('token', token)
-      localStorage.setItem('userInfo', JSON.stringify(user))
-      localStorage.setItem('role', user.role?.type)
-      if (requirePasswordChange) {
-        localStorage.setItem('forceChangePassword', 'true')
-      } else {
-        localStorage.removeItem('forceChangePassword')
-      }
-
-      console.log('登录成功，用户信息:', {
-        username: user.username,
-        nickname: user.nickname,
-        role: user.role?.type,
-        fleetName: user.fleetInfo?.fleetName,
-        storeName: user.storeInfo?.storeName
-      })
-
+      persistLoginState(response)
       ElMessage.success('登录成功！')
-
-      // 跳转到首页
-      setTimeout(async () => {
-        try {
-          window.location.replace('/dashboard')
-        } catch (navError) {
-          console.error('路由跳转失败，尝试强制刷新:', navError)
-          window.location.assign('/dashboard')
-        }
-      }, 500)
+      navigateToDashboard()
     } else {
       ElMessage.error(response.message || '登录失败，请检查用户名和密码')
     }
@@ -230,6 +213,23 @@ const handleLogin = async () => {
   } finally {
     loading.value = false
   }
+}
+
+const handleQuickTestLogin = async (username, password) => {
+  loginForm.value.username = username
+  loginForm.value.password = password
+  await submitLogin(testLogin, { username, password })
+}
+
+// 登录
+const handleLogin = async () => {
+  const valid = await loginFormRef.value.validate().catch(() => false)
+  if (!valid) return
+
+  await submitLogin(login, {
+    username: loginForm.value.username,
+    password: loginForm.value.password
+  })
 }
 </script>
 

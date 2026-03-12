@@ -95,17 +95,7 @@
       v-model="passwordDialogVisible"
       title="修改密码"
       width="500px"
-      :close-on-click-modal="!forcePasswordChange"
-      :close-on-press-escape="!forcePasswordChange"
-      :show-close="!forcePasswordChange"
     >
-      <el-alert
-        v-if="forcePasswordChange"
-        title="当前账号仍在使用初始密码，请先完成修改后再继续使用后台。"
-        type="warning"
-        :closable="false"
-        style="margin-bottom: 16px"
-      />
       <el-form
         ref="passwordFormRef"
         :model="passwordForm"
@@ -147,10 +137,7 @@
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button
-          v-if="!forcePasswordChange"
-          @click="passwordDialogVisible = false"
-        >
+        <el-button @click="passwordDialogVisible = false">
           取消
         </el-button>
         <el-button
@@ -166,7 +153,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessageBox, ElMessage } from 'element-plus'
 import request from '@/utils/request'
@@ -180,7 +167,6 @@ const userRole = ref(localStorage.getItem('role') || '')
 
 // 修改密码相关
 const passwordDialogVisible = ref(false)
-const forcePasswordChange = ref(false)
 const passwordSubmitting = ref(false)
 const passwordFormRef = ref(null)
 const passwordForm = ref({
@@ -210,16 +196,6 @@ const passwordRules = {
   ]
 }
 
-// 修改密码
-const syncPasswordChangeState = () => {
-  const needsPasswordChange = localStorage.getItem('forceChangePassword') === 'true' ||
-    userInfo.value?.passwordChanged === false
-  forcePasswordChange.value = needsPasswordChange
-  if (needsPasswordChange) {
-    passwordDialogVisible.value = true
-  }
-}
-
 const openPasswordDialog = () => {
   passwordDialogVisible.value = true
 }
@@ -240,8 +216,6 @@ const handleChangePassword = async () => {
     })
 
     if (res.success) {
-      localStorage.removeItem('forceChangePassword')
-      forcePasswordChange.value = false
       ElMessage.success('密码修改成功，请重新登录')
       passwordDialogVisible.value = false
 
@@ -272,11 +246,6 @@ const handleChangePassword = async () => {
   }
 }
 
-// 根据角色过滤菜单
-onMounted(() => {
-  syncPasswordChangeState()
-})
-
 const menuRoutes = computed(() => {
   const routes = router.options.routes.find(r => r.path === '/')?.children || []
   return routes.filter(r => {
@@ -303,13 +272,13 @@ const getRoleText = (role) => {
 // 获取角色标签类型
 const getRoleTagType = (role) => {
   const typeMap = {
-    'DRIVER': '',
+    'DRIVER': 'info',
     'FLEET_MANAGER': 'success',
     'STORE_MANAGER': 'success',
     'STORE_TECHNICIAN': 'warning',
     'PLATFORM_OPERATOR': 'danger'
   }
-  return typeMap[role] || ''
+  return typeMap[role] || 'info'
 }
 
 // 退出登录

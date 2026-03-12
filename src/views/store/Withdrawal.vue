@@ -506,7 +506,7 @@ const getStatusType = status => {
     completed: 'success',
     rejected: 'danger'
   }
-  return statusMap[status] || ''
+  return statusMap[status] || 'info'
 }
 
 const getStatusText = status => {

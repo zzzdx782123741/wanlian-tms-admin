@@ -957,14 +957,14 @@ function getPaymentMethodText(method) {
 
 function getPaymentMethodColor(method) {
   const map = {
-    bank: '',
+    bank: 'info',
     alipay: 'success',
     wechat: 'success',
     aggregation: 'warning',
     yopay: 'primary',
     jsbank_wallet: 'info'
   }
-  return map[method] || ''
+  return map[method] || 'info'
 }
 
 function getAccountDisplayName(account) {
@@ -1020,7 +1020,7 @@ function getStatusType(status) {
     frozen: 'warning',
     closed: 'danger'
   }
-  return map[status] || ''
+  return map[status] || 'info'
 }
 
 function getStatusText(status) {

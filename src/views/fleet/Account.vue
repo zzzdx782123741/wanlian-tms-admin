@@ -307,9 +307,12 @@ const pagination = ref({
   total: 0
 })
 
-// 格式化金额（分转元）
+// 格式化金额（后端已返回元，直接使用）
 const formatMoney = (amount) => {
-  return (amount / 100).toFixed(2)
+  // 如果是字符串，直接返回；如果是数字，保留两位小数
+  if (typeof amount === 'string') return amount
+  if (typeof amount === 'number') return amount.toFixed(2)
+  return '0.00'
 }
 
 // 获取交易类型标签
@@ -370,7 +373,7 @@ const getTransactionTypeTag = (type) => {
     'freeze': 'info',
     'unfreeze': 'info'
   }
-  return map[type] || ''
+  return map[type] || 'info'
 }
 
 // 获取交易类型文本

@@ -126,13 +126,13 @@
                 size="small"
                 type="info"
               >
-                {{ row.standardId.vehicleGroup }}
+                {{ row.vehicleGroup || '-' }}
               </el-tag>
               <el-tag
                 size="small"
                 style="margin-left: 4px;"
               >
-                {{ row.standardId.tier }}
+                {{ row.tier || '-' }}
               </el-tag>
               <div style="font-size: 12px; color: #909399; margin-top: 4px;">
                 {{ row.standardId.name }}
@@ -293,30 +293,72 @@
             filterable
             @change="handleStandardChange"
           >
-            <el-option-group
-              v-for="group in groupedStandards"
-              :key="group.vehicleGroup"
-              :label="group.vehicleGroup"
-            >
-              <el-option
-                v-for="standard in group.standards"
-                :key="standard._id"
-                :label="`${standard.name}（${standard.tier}）`"
-                :value="standard._id"
-              >
-                <span>{{ standard.name }}</span>
-                <el-tag
-                  size="small"
-                  style="margin-left: 8px;"
-                >
-                  {{ standard.tier }}
-                </el-tag>
-              </el-option>
-            </el-option-group>
+            <el-option
+              v-for="standard in availableStandards"
+              :key="standard._id"
+              :label="standard.name"
+              :value="standard._id"
+            />
           </el-select>
           <div class="form-item-tip">
-            请从平台运营创建的套餐类型中选择
+            请选择平台运营维护的保养类型，车型和档位由门店单独配置
           </div>
+        </el-form-item>
+
+        <el-form-item
+          label="车型分组"
+          prop="vehicleGroup"
+        >
+          <el-select
+            v-model="form.vehicleGroup"
+            placeholder="请选择车型分组"
+            style="width: 100%"
+          >
+            <el-option
+              label="牵引车"
+              value="牵引车"
+            />
+            <el-option
+              label="载货车"
+              value="载货车"
+            />
+            <el-option
+              label="轻卡"
+              value="轻卡"
+            />
+            <el-option
+              label="自卸"
+              value="自卸"
+            />
+          </el-select>
+        </el-form-item>
+
+        <el-form-item
+          label="套餐档位"
+          prop="tier"
+        >
+          <el-select
+            v-model="form.tier"
+            placeholder="请选择套餐档位"
+            style="width: 100%"
+          >
+            <el-option
+              label="实惠"
+              value="实惠"
+            />
+            <el-option
+              label="标准"
+              value="标准"
+            />
+            <el-option
+              label="优质"
+              value="优质"
+            />
+            <el-option
+              label="尊享"
+              value="尊享"
+            />
+          </el-select>
         </el-form-item>
 
         <el-form-item
@@ -672,7 +714,7 @@
           </el-descriptions-item>
           <el-descriptions-item label="套餐类型">
             <div v-if="currentPackage.standardId">
-              {{ currentPackage.standardId.vehicleGroup }} - {{ currentPackage.standardId.tier }}
+              {{ currentPackage.vehicleGroup || '-' }} - {{ currentPackage.tier || '-' }}
               <div style="font-size: 12px; color: #909399;">
                 {{ currentPackage.standardId.name }}
               </div>
@@ -963,6 +1005,8 @@ const form = reactive({
 
 const formRules = {
   standardId: [{ required: true, message: '请选择套餐类型', trigger: 'change' }],
+  vehicleGroup: [{ required: true, message: '请选择车型分组', trigger: 'change' }],
+  tier: [{ required: true, message: '请选择套餐档位', trigger: 'change' }],
   name: [{ required: true, message: '请输入套餐名称', trigger: 'blur' }]
   // price 改为可选，默认等于原价
 }
@@ -979,24 +1023,6 @@ const importResult = ref({
   successCount: 0,
   failedCount: 0,
   errors: []
-})
-
-// 套餐类型列表（用于单个新建套餐时的选择）
-const groupedStandards = computed(() => {
-  const groups = {}
-  availableStandards.value.forEach(standard => {
-    if (!groups[standard.vehicleGroup]) {
-      groups[standard.vehicleGroup] = []
-    }
-    groups[standard.vehicleGroup].push(standard)
-  })
-  return Object.keys(groups).map(key => ({
-    vehicleGroup: key,
-    standards: groups[key].sort((a, b) => {
-      const tierOrder = { '实惠': 1, '标准': 2, '优质': 3, '尊享': 4 }
-      return tierOrder[a.tier] - tierOrder[b.tier]
-    })
-  }))
 })
 
 // 计算属性：原价（商品总价）
@@ -1092,9 +1118,7 @@ const handleStandardChange = (standardId) => {
   const standard = availableStandards.value.find(s => String(s._id) === String(standardId))
   console.log('找到的套餐类型:', standard)
   if (standard) {
-    form.vehicleGroup = standard.vehicleGroup
-    form.tier = standard.tier
-    console.log('设置 form.vehicleGroup:', form.vehicleGroup, 'form.tier:', form.tier)
+    console.log('当前套餐类型仅用于选择平台保养类型，车型和档位由门店自行配置')
   } else {
     console.error('未找到匹配的套餐类型，standardId:', standardId)
   }

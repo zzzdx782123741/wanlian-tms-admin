@@ -704,7 +704,7 @@ async function loadTechnicians() {
     })
     technicians.value = res.data.list || []
     pagination.total = res.data.total || 0
-    Object.assign(stats, res.data.stats || {})
+    Object.assign(stats.value, res.data.stats || {})
   } catch (error) {
     ElMessage.error(error.message || '获取技师列表失败')
   } finally {
@@ -898,7 +898,7 @@ function getStatusType(status) {
     'pending_audit': 'warning',
     'suspended': 'danger'
   }
-  return typeMap[status] || ''
+  return typeMap[status] || 'info'
 }
 
 // 获取状态文本

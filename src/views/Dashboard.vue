@@ -156,14 +156,14 @@ const getRoleText = (role) => {
 
 const getRoleTagType = (role) => {
   const typeMap = {
-    DRIVER: '',
+    DRIVER: 'info',
     FLEET_MANAGER: 'success',
     STORE_TECHNICIAN: 'warning',
     STORE_MANAGER: 'warning',
     PLATFORM_OPERATOR: 'danger'
   }
 
-  return typeMap[normalizeRole(role)] || ''
+  return typeMap[normalizeRole(role)] || 'info'
 }
 
 const updateTime = () => {
@@ -184,7 +184,8 @@ const fetchBalance = async () => {
 
   try {
     const res = await getBalance()
-    accountBalance.value = Number(((res.data?.balance || 0) / 100).toFixed(2))
+    // 后端已返回元，直接使用
+    accountBalance.value = Number(res.data?.balance || 0)
   } catch (error) {
     console.error('获取余额失败:', error)
   }

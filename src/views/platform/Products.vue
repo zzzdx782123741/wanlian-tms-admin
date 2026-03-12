@@ -1242,7 +1242,7 @@ function getStatusType(status) {
     rejected: 'danger',
     offline: 'info'
   }
-  return map[status] || ''
+  return map[status] || 'info'
 }
 
 function formatDate(dateStr) {

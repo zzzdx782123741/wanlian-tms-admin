@@ -534,13 +534,13 @@ const handleViewDetail = async (pkg) => {
 // 获取车型分组类型
 const getVehicleGroupType = (type) => {
   const typeMap = {
-    '牵引车': '',
+    '牵引车': 'primary',
     '载货车': 'success',
     '轻卡': 'warning',
     '自卸': 'info',
-    'ALL': ''
+    'ALL': 'info'
   }
-  return typeMap[type] || ''
+  return typeMap[type] || 'info'
 }
 
 // 获取车型分组标签
@@ -563,7 +563,7 @@ const getTierType = (tier) => {
     '高级': 'success',
     '尊享': 'warning'
   }
-  return typeMap[tier] || ''
+  return typeMap[tier] || 'info'
 }
 
 onMounted(() => {

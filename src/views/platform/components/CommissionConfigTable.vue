@@ -176,7 +176,7 @@ const getServiceTypeTag = (type) => {
     'maintenance': 'warning',
     'addon': 'success'
   }
-  return map[type] || ''
+  return map[type] || 'info'
 }
 
 const formatDateTime = (date) => {

@@ -592,7 +592,7 @@ const getStatusType = (status) => {
     'normal': 'success',
     'suspended': 'danger'
   }
-  return typeMap[status] || ''
+  return typeMap[status] || 'info'
 }
 
 // 获取状态文本

@@ -600,7 +600,7 @@ const getStatusType = (status) => {
     'approved': 'success',
     'rejected': 'danger'
   }
-  return map[status] || ''
+  return map[status] || 'info'
 }
 
 // 获取状态文本

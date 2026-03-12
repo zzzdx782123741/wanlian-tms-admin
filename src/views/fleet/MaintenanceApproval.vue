@@ -468,7 +468,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh, Search } from '@element-plus/icons-vue'
-import { getMaintenanceApplications, approveMaintenanceApplication, getPackages } from '@/api/maintenance'
+import { getMaintenanceApplications, approveMaintenanceApplication, getFleetStorePackages } from '@/api/maintenance'
 import { getStores } from '@/api/store'
 import { getFleetConfig } from '@/api/fleet'
 import dayjs from 'dayjs'
@@ -550,16 +550,10 @@ const fetchApplications = async () => {
     applications.value = res.data.applications || []
     total.value = res.data.total || 0
 
-    // 更新统计
-    stats.value.pending = applications.value.filter(a => a.fleetApproval?.status === 'pending').length
-    stats.value.approvedToday = applications.value.filter(a => {
-      const date = new Date(a.fleetApproval?.approvedAt)
-      return date && dayjs(date).isSame(dayjs(), 'day') && a.fleetApproval?.status === 'approved'
-    }).length
-    stats.value.rejectedToday = applications.value.filter(a => {
-      const date = new Date(a.fleetApproval?.approvedAt)
-      return date && dayjs(date).isSame(dayjs(), 'day') && a.fleetApproval?.status === 'rejected'
-    }).length
+    stats.value = {
+      ...stats.value,
+      ...(res.data.stats || {})
+    }
   } catch (error) {
     console.error('获取申请列表失败:', error)
   } finally {
@@ -570,12 +564,12 @@ const fetchApplications = async () => {
 // 获取套餐列表
 const fetchPackages = async (storeId = null) => {
   try {
-    const params = { enabled: true, limit: 100 }
+    const params = { auditStatus: 'approved', limit: 100 }
     // 如果提供了门店ID，则获取该门店的套餐和平台套餐
     if (storeId) {
       params.storeId = storeId
     }
-    const res = await getPackages(params)
+    const res = await getFleetStorePackages(params)
     availablePackages.value = res.data.packages || []
   } catch (error) {
     console.error('获取套餐列表失败:', error)
@@ -691,7 +685,7 @@ const confirmApprove = async () => {
       approved: true,
       storeId: storeId,
       packageId: approveForm.value.packageId,
-      finalAmount: Math.round(approveForm.value.finalAmount * 100), // 转换为分
+      finalAmount: approveForm.value.finalAmount,
       remark: approveForm.value.remark
     })
 
