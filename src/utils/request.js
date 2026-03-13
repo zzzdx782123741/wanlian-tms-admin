@@ -1,9 +1,10 @@
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
 import { localizeErrorMessage } from './errorMessage'
+import { clearAuthState } from './authStorage'
 
 const service = axios.create({
-  baseURL: '/api',
+  baseURL: import.meta.env.VITE_API_URL || '/api',
   timeout: 30000
 })
 
@@ -66,9 +67,7 @@ service.interceptors.response.use(
 
     if (status === 401 && !isAuthLoginRequest) {
       ElMessage.error('登录已过期，请重新登录')
-      localStorage.removeItem('token')
-      localStorage.removeItem('userInfo')
-      localStorage.removeItem('role')
+      clearAuthState()
       window.location.href = '/login'
     } else {
       ElMessage.error(errorMessage)

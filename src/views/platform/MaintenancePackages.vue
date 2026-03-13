@@ -52,16 +52,16 @@
             @change="fetchPackages"
           >
             <el-option
-              label="基础"
-              value="基础"
+              label="实惠"
+              value="实惠"
             />
             <el-option
               label="标准"
               value="标准"
             />
             <el-option
-              label="高级"
-              value="高级"
+              label="优质"
+              value="优质"
             />
             <el-option
               label="尊享"
@@ -327,16 +327,16 @@
             style="width: 100%"
           >
             <el-option
-              label="基础"
-              value="基础"
+              label="实惠"
+              value="实惠"
             />
             <el-option
               label="标准"
               value="标准"
             />
             <el-option
-              label="高级"
-              value="高级"
+              label="优质"
+              value="优质"
             />
             <el-option
               label="尊享"
@@ -981,9 +981,9 @@ const getVehicleGroupLabel = (type) => {
 // 获取档位类型
 const getTierType = (tier) => {
   const typeMap = {
-    '基础': 'info',
+    '实惠': 'info',
     '标准': 'primary',
-    '高级': 'success',
+    '优质': 'success',
     '尊享': 'warning'
   }
   return typeMap[tier] || 'info'

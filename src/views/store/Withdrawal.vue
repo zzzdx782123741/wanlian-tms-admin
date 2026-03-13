@@ -9,22 +9,18 @@
       <el-col :span="8">
         <el-card class="balance-card">
           <el-statistic
-            title="待结算余额"
-            :value="displayBalance.pendingBalance"
+            title="可提现余额"
+            :value="displayBalance.withdrawableBalance"
             :precision="2"
             prefix="¥"
-          >
-            <template #suffix>
-              <span class="stat-suffix">可提现</span>
-            </template>
-          </el-statistic>
+          />
         </el-card>
       </el-col>
       <el-col :span="8">
         <el-card class="balance-card balance-card-success">
           <el-statistic
-            title="已结算余额"
-            :value="displayBalance.settledBalance"
+            title="已结算收入"
+            :value="displayBalance.settledIncome"
             :precision="2"
             prefix="¥"
           />
@@ -33,8 +29,8 @@
       <el-col :span="8">
         <el-card class="balance-card balance-card-info">
           <el-statistic
-            title="累计收入"
-            :value="displayBalance.totalEarned"
+            title="待结算金额(D+1)"
+            :value="displayBalance.pendingSettlement"
             :precision="2"
             prefix="¥"
           />
@@ -69,7 +65,7 @@
           />
           <span style="margin-left: 10px; color: #909399">元</span>
           <div class="amount-tip">
-            可提现金额：¥{{ displayBalance.pendingBalance.toFixed(2) }}
+            可提现金额：¥{{ displayBalance.withdrawableBalance.toFixed(2) }}
           </div>
         </el-form-item>
 
@@ -124,6 +120,9 @@
               </el-radio-button>
               <el-radio-button label="rejected">
                 已驳回
+              </el-radio-button>
+              <el-radio-button label="cancelled">
+                已取消
               </el-radio-button>
             </el-radio-group>
           </div>
@@ -212,10 +211,19 @@
         </el-table-column>
         <el-table-column
           label="操作"
-          width="100"
+          width="180"
           fixed="right"
         >
           <template #default="{ row }">
+            <el-button
+              v-if="row.status === 'pending' && row.applyType === 'store'"
+              type="danger"
+              link
+              size="small"
+              @click="handleCancel(row)"
+            >
+              撤回
+            </el-button>
             <el-button
               size="small"
               @click="viewDetail(row)"
@@ -304,9 +312,9 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { Download } from '@element-plus/icons-vue'
-import { getStoreAccountBalance, createWithdrawal, getWithdrawalList } from '@/api/withdrawal'
+import { getStoreAccountBalance, createWithdrawal, cancelWithdrawal, getWithdrawalList } from '@/api/withdrawal'
 import dayjs from 'dayjs'
 
 const withdrawalFormRef = ref()
@@ -314,24 +322,26 @@ const loading = ref(false)
 const submitting = ref(false)
 
 const balanceData = ref({
-  pendingBalance: 0,
-  settledBalance: 0,
+  withdrawableBalance: 0,
+  settledIncome: 0,
+  pendingSettlement: 0,
   totalEarned: 0
 })
 
 const displayBalance = computed(() => ({
-  pendingBalance: (balanceData.value.pendingBalance || 0) / 100,
-  settledBalance: (balanceData.value.settledBalance || 0) / 100,
+  withdrawableBalance: (balanceData.value.withdrawableBalance || 0) / 100,
+  settledIncome: (balanceData.value.settledIncome || 0) / 100,
+  pendingSettlement: (balanceData.value.pendingSettlement || 0) / 100,
   totalEarned: (balanceData.value.totalEarned || 0) / 100
 }))
 
 const maxWithdrawalAmount = computed(() => {
-  const amount = Number(displayBalance.value.pendingBalance || 0)
+  const amount = Number(displayBalance.value.withdrawableBalance || 0)
   if (amount <= 0) return 0.01
   return Number(amount.toFixed(2))
 })
 
-const canWithdraw = computed(() => Number(displayBalance.value.pendingBalance || 0) > 0)
+const canWithdraw = computed(() => Number(displayBalance.value.withdrawableBalance || 0) > 0)
 
 const withdrawalForm = ref({
   withdrawalAmount: null
@@ -349,7 +359,7 @@ const validateWithdrawalAmount = (_, value, callback) => {
     return
   }
 
-  const max = Number(displayBalance.value.pendingBalance || 0)
+  const max = Number(displayBalance.value.withdrawableBalance || 0)
   if (max > 0 && amount > max) {
     callback(new Error(`提现金额不能超过可提现金额 ¥${max.toFixed(2)}`))
     return
@@ -378,8 +388,9 @@ const fetchBalance = async () => {
     const res = await getStoreAccountBalance()
     if (res?.data) {
       balanceData.value = {
-        pendingBalance: res.data.pendingBalance || 0,
-        settledBalance: res.data.settledBalance || 0,
+        withdrawableBalance: res.data.withdrawableBalance ?? res.data.pendingBalance ?? 0,
+        settledIncome: res.data.settledIncome ?? res.data.settledBalance ?? 0,
+        pendingSettlement: res.data.pendingSettlement ?? 0,
         totalEarned: res.data.totalEarned || 0
       }
     }
@@ -403,7 +414,7 @@ const handleSubmit = async () => {
     return
   }
 
-  if (amount > displayBalance.value.pendingBalance) {
+  if (amount > displayBalance.value.withdrawableBalance) {
     ElMessage.warning('提现金额不能超过可提现余额')
     return
   }
@@ -431,7 +442,7 @@ const handleReset = () => {
 }
 
 watch(
-  () => displayBalance.value.pendingBalance,
+  () => displayBalance.value.withdrawableBalance,
   (latestBalance) => {
     const max = Number(latestBalance || 0)
     if (max <= 0) {
@@ -489,6 +500,25 @@ const handleExport = () => {
   ElMessage.info('导出功能开发中')
 }
 
+const handleCancel = async row => {
+  try {
+    await ElMessageBox.confirm('撤回后会释放本次提现锁定金额，确定继续吗？', '撤回提现', {
+      type: 'warning',
+      confirmButtonText: '确认撤回',
+      cancelButtonText: '再想想'
+    })
+
+    await cancelWithdrawal(row._id)
+    ElMessage.success('提现申请已撤回')
+    await fetchBalance()
+    await fetchWithdrawals()
+  } catch (error) {
+    if (error === 'cancel' || error === 'close') return
+    console.error('撤回提现失败:', error)
+    ElMessage.error(error.response?.data?.message || error.message || '撤回失败')
+  }
+}
+
 const displayAmount = amount => {
   if (amount === null || amount === undefined) return '0.00'
   return (Number(amount) / 100).toFixed(2)
@@ -504,7 +534,8 @@ const getStatusType = status => {
     pending: 'warning',
     processing: 'info',
     completed: 'success',
-    rejected: 'danger'
+    rejected: 'danger',
+    cancelled: 'info'
   }
   return statusMap[status] || 'info'
 }
@@ -514,7 +545,8 @@ const getStatusText = status => {
     pending: '待打款',
     processing: '处理中',
     completed: '已完成',
-    rejected: '已驳回'
+    rejected: '已驳回',
+    cancelled: '已取消'
   }
   return statusMap[status] || status || '-'
 }

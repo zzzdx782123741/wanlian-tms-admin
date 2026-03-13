@@ -1,6 +1,5 @@
 <template>
-  <div class="store-package-audit">
-    <!-- 操作栏 -->
+  <div class="published-store-packages">
     <el-card style="margin-bottom: 20px">
       <el-row :gutter="20">
         <el-col :span="18">
@@ -12,23 +11,6 @@
             <el-icon><Refresh /></el-icon>
             刷新
           </el-button>
-          <el-button @click="router.push('/published-store-packages')">
-            查看已上线套餐
-          </el-button>
-          <el-button
-            v-if="selectedPackages.length > 0"
-            type="success"
-            @click="handleBatchApprove"
-          >
-            批量通过 ({{ selectedPackages.length }})
-          </el-button>
-          <el-button
-            v-if="selectedPackages.length > 0"
-            type="danger"
-            @click="handleBatchReject"
-          >
-            批量拒绝
-          </el-button>
         </el-col>
         <el-col
           :span="6"
@@ -39,7 +21,7 @@
             placeholder="车型分组"
             clearable
             style="width: 140px"
-            @change="fetchPackages"
+            @change="handleFilterChange"
           >
             <el-option
               label="牵引车"
@@ -63,7 +45,7 @@
             placeholder="套餐档位"
             clearable
             style="width: 140px"
-            @change="fetchPackages"
+            @change="handleFilterChange"
           >
             <el-option
               label="实惠"
@@ -86,54 +68,54 @@
       </el-row>
     </el-card>
 
-    <!-- 待审核套餐列表 -->
     <el-card>
+      <el-alert
+        title="这里展示平台运营端已审核通过并已上线的门店套餐。"
+        type="success"
+        :closable="false"
+        style="margin-bottom: 16px"
+      />
+
       <el-table
         v-loading="loading"
         :data="packages"
         stripe
         style="width: 100%"
-        @selection-change="handleSelectionChange"
       >
-        <el-table-column
-          type="selection"
-          width="55"
-        />
-
         <el-table-column
           prop="name"
           label="套餐名称"
-          width="180"
+          min-width="180"
         />
 
         <el-table-column
           label="所属门店"
-          width="180"
+          min-width="180"
         >
           <template #default="{ row }">
             {{ row.storeId?.name || '-' }}
-            <div style="font-size: 12px; color: #909399;">
-              {{ row.storeProvince }} {{ row.storeCity }}
+            <div class="sub-text">
+              {{ formatStoreRegion(row) }}
             </div>
           </template>
         </el-table-column>
 
         <el-table-column
           label="车型/档位"
-          width="120"
+          width="150"
         >
           <template #default="{ row }">
             <el-tag
               size="small"
               type="info"
             >
-              {{ row.vehicleGroup }}
+              {{ row.vehicleGroup || '-' }}
             </el-tag>
             <el-tag
               size="small"
-              style="margin-left: 4px;"
+              style="margin-left: 4px"
             >
-              {{ row.tier }}
+              {{ row.tier || '-' }}
             </el-tag>
           </template>
         </el-table-column>
@@ -143,7 +125,7 @@
           width="140"
         >
           <template #default="{ row }">
-            <span style="color: #f56c6c; font-weight: bold;">¥{{ row.price }}</span>
+            <span class="price-text">¥{{ formatAmount(row.price) }}</span>
           </template>
         </el-table-column>
 
@@ -153,19 +135,19 @@
         >
           <template #default="{ row }">
             <div v-if="row.priceRangeRef">
-              <span style="color: #67c23a;">¥{{ row.priceRangeRef.minPrice }}</span>
+              <span class="range-text">¥{{ formatAmount(row.priceRangeRef.minPrice) }}</span>
               <span> - </span>
-              <span style="color: #67c23a;">¥{{ row.priceRangeRef.maxPrice }}</span>
+              <span class="range-text">¥{{ formatAmount(row.priceRangeRef.maxPrice) }}</span>
             </div>
             <span
               v-else
-              style="color: #909399;"
-            >无规范</span>
+              class="sub-text"
+            >暂无规范</span>
           </template>
         </el-table-column>
 
         <el-table-column
-          label="价格状态"
+          label="价格位置"
           width="100"
         >
           <template #default="{ row }">
@@ -179,88 +161,35 @@
         </el-table-column>
 
         <el-table-column
-          label="审核通道"
-          width="100"
+          label="状态"
+          width="90"
           align="center"
         >
           <template #default="{ row }">
             <el-tag
-              v-if="row.fastTrack === true"
-              type="success"
+              :type="row.enabled ? 'success' : 'info'"
               size="small"
             >
-              ⚡ 快速
+              {{ row.enabled ? '已上线' : '已停用' }}
             </el-tag>
-            <el-tag
-              v-else-if="row.fastTrack === false"
-              type="warning"
-              size="small"
-            >
-              人工审核
-            </el-tag>
-            <span v-else>-</span>
           </template>
         </el-table-column>
 
         <el-table-column
-          label="服务项目"
-          width="200"
+          label="上线时间"
+          width="170"
         >
           <template #default="{ row }">
-            <div v-if="row.serviceItems && row.serviceItems.length > 0">
-              <el-tag
-                v-for="(item, index) in row.serviceItems.slice(0, 2)"
-                :key="index"
-                size="small"
-                style="margin-right: 4px; margin-bottom: 4px;"
-              >
-                {{ item.icon }} {{ item.name }}
-              </el-tag>
-              <span
-                v-if="row.serviceItems.length > 2"
-                style="font-size: 12px; color: #909399;"
-              >
-                +{{ row.serviceItems.length - 2 }}
-              </span>
-            </div>
-            <span
-              v-else
-              style="color: #909399;"
-            >无服务项目</span>
-          </template>
-        </el-table-column>
-
-        <el-table-column
-          label="提交时间"
-          width="160"
-        >
-          <template #default="{ row }">
-            {{ formatDate(row.submittedAt) }}
+            {{ formatDate(row.auditInfo?.auditedAt || row.updatedAt) }}
           </template>
         </el-table-column>
 
         <el-table-column
           label="操作"
-          width="180"
+          width="100"
           fixed="right"
         >
           <template #default="{ row }">
-            <el-button
-              type="success"
-              size="small"
-              link
-              @click="handleApprove(row)"
-            >
-              通过
-            </el-button>
-            <el-button
-              type="danger"
-              size="small"
-              link
-              @click="handleReject(row)"
-            >
-              拒绝
-            </el-button>
             <el-button
               type="primary"
               size="small"
@@ -273,7 +202,6 @@
         </el-table-column>
       </el-table>
 
-      <!-- 分页 -->
       <el-pagination
         v-model:current-page="pagination.page"
         v-model:page-size="pagination.limit"
@@ -286,11 +214,10 @@
       />
     </el-card>
 
-    <!-- 详情对话框 -->
     <el-dialog
       v-model="detailVisible"
       title="套餐详情"
-      width="700px"
+      width="720px"
     >
       <div
         v-if="currentPackage"
@@ -304,41 +231,41 @@
             {{ currentPackage.name }}
           </el-descriptions-item>
           <el-descriptions-item label="套餐编码">
-            {{ currentPackage.code }}
+            {{ currentPackage.code || '-' }}
           </el-descriptions-item>
           <el-descriptions-item label="所属门店">
-            {{ currentPackage.storeId?.name }}
+            {{ currentPackage.storeId?.name || '-' }}
           </el-descriptions-item>
-          <el-descriptions-item label="门店地址">
-            {{ currentPackage.storeProvince }} {{ currentPackage.storeCity }}
+          <el-descriptions-item label="门店地区">
+            {{ formatStoreRegion(currentPackage) }}
           </el-descriptions-item>
           <el-descriptions-item label="车型分组">
-            {{ currentPackage.vehicleGroup }}
+            {{ currentPackage.vehicleGroup || '-' }}
           </el-descriptions-item>
           <el-descriptions-item label="套餐档位">
-            {{ currentPackage.tier }}
+            {{ currentPackage.tier || '-' }}
           </el-descriptions-item>
           <el-descriptions-item label="套餐价格">
-            <span style="color: #f56c6c; font-weight: bold;">¥{{ currentPackage.price }}</span>
+            <span class="price-text">¥{{ formatAmount(currentPackage.price) }}</span>
           </el-descriptions-item>
           <el-descriptions-item label="原价">
-            <span
-              v-if="currentPackage.originalPrice"
-              style="color: #909399;"
-            >
-              ¥{{ currentPackage.originalPrice.toFixed(2) }}
-            </span>
-            <span v-else>-</span>
+            {{ currentPackage.originalPrice ? `¥${formatAmount(currentPackage.originalPrice)}` : '-' }}
           </el-descriptions-item>
-          <el-descriptions-item label="预估时长">
-            {{ currentPackage.estimatedDuration }} 小时
+          <el-descriptions-item label="预计时长">
+            {{ currentPackage.estimatedDuration || '-' }} 小时
+          </el-descriptions-item>
+          <el-descriptions-item label="上线时间">
+            {{ formatDate(currentPackage.auditInfo?.auditedAt || currentPackage.updatedAt) }}
+          </el-descriptions-item>
+          <el-descriptions-item label="审核备注">
+            {{ currentPackage.auditInfo?.auditNote || '-' }}
           </el-descriptions-item>
           <el-descriptions-item label="提交时间">
-            {{ formatDate(currentPackage.submittedAt) }}
+            {{ formatDate(currentPackage.submittedAt || currentPackage.createdAt) }}
           </el-descriptions-item>
         </el-descriptions>
 
-        <div style="margin-top: 20px;">
+        <div style="margin-top: 20px">
           <h4>价格对比</h4>
           <div
             v-if="currentPackage.priceRangeRef"
@@ -346,11 +273,11 @@
           >
             <div class="price-item">
               <span class="label">规范最低价：</span>
-              <span class="value low">¥{{ currentPackage.priceRangeRef.minPrice }}</span>
+              <span class="value low">¥{{ formatAmount(currentPackage.priceRangeRef.minPrice) }}</span>
             </div>
             <div class="price-item">
               <span class="label">规范最高价：</span>
-              <span class="value high">¥{{ currentPackage.priceRangeRef.maxPrice }}</span>
+              <span class="value high">¥{{ formatAmount(currentPackage.priceRangeRef.maxPrice) }}</span>
             </div>
             <div class="price-item">
               <span class="label">门店定价：</span>
@@ -358,22 +285,22 @@
                 class="value"
                 :class="getPriceClass(currentPackage)"
               >
-                ¥{{ currentPackage.price }}
+                ¥{{ formatAmount(currentPackage.price) }}
               </span>
             </div>
           </div>
           <div
             v-else
-            style="color: #909399;"
+            class="sub-text"
           >
-            该区域暂无价格规范
+            该区域暂无价格规范。
           </div>
         </div>
 
-        <div style="margin-top: 20px;">
+        <div style="margin-top: 20px">
           <h4>服务项目</h4>
           <div
-            v-if="currentPackage.serviceItems && currentPackage.serviceItems.length > 0"
+            v-if="currentPackage.serviceItems.length > 0"
             class="service-items"
           >
             <div
@@ -391,16 +318,16 @@
           </div>
           <div
             v-else
-            style="color: #909399;"
+            class="sub-text"
           >
-            无服务项目
+            暂无服务项目
           </div>
         </div>
 
-        <div style="margin-top: 20px;">
+        <div style="margin-top: 20px">
           <h4>包含商品</h4>
           <div
-            v-if="currentPackage.products && currentPackage.products.length > 0"
+            v-if="currentPackage.products.length > 0"
             class="products"
           >
             <div
@@ -418,9 +345,9 @@
           </div>
           <div
             v-else
-            style="color: #909399;"
+            class="sub-text"
           >
-            无商品
+            暂无商品
           </div>
         </div>
       </div>
@@ -429,73 +356,22 @@
         <el-button @click="detailVisible = false">
           关闭
         </el-button>
-        <el-button
-          type="success"
-          @click="handleApprove(currentPackage)"
-        >
-          通过
-        </el-button>
-        <el-button
-          type="danger"
-          @click="handleReject(currentPackage)"
-        >
-          拒绝
-        </el-button>
-      </template>
-    </el-dialog>
-
-    <!-- 审核备注对话框 -->
-    <el-dialog
-      v-model="auditNoteVisible"
-      :title="auditType === 'approve' ? '审核通过' : '审核拒绝'"
-      width="500px"
-    >
-      <el-form
-        :model="auditForm"
-        label-width="80px"
-      >
-        <el-form-item :label="auditType === 'approve' ? '审核备注' : '拒绝原因'">
-          <el-input
-            v-model="auditForm.note"
-            type="textarea"
-            :rows="4"
-            :placeholder="auditType === 'approve' ? '选填，审核通过的原因或备注' : '必填，请说明拒绝原因'"
-          />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="auditNoteVisible = false">
-          取消
-        </el-button>
-        <el-button
-          :type="auditType === 'approve' ? 'success' : 'danger'"
-          @click="confirmAudit"
-        >
-          确定
-        </el-button>
       </template>
     </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { onMounted, reactive, ref } from 'vue'
+import { ElMessage } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
-import {
-  getPendingStorePackages,
-  auditStorePackage,
-  batchAuditPackages
-} from '@/api/packageStandard'
-
-// 数据
-const router = useRouter()
+import { getStorePackages } from '@/api/packageStandard'
 
 const loading = ref(false)
 const packages = ref([])
-const selectedPackages = ref([])
 const total = ref(0)
+const detailVisible = ref(false)
+const currentPackage = ref(null)
 
 const filters = reactive({
   vehicleGroup: '',
@@ -505,17 +381,6 @@ const filters = reactive({
 const pagination = reactive({
   page: 1,
   limit: 20
-})
-
-// 对话框
-const detailVisible = ref(false)
-const auditNoteVisible = ref(false)
-const currentPackage = ref(null)
-const auditType = ref('approve') // 'approve' or 'reject'
-const auditPackageIds = ref([])
-
-const auditForm = reactive({
-  note: ''
 })
 
 const PRICE_LEVEL_LABELS = {
@@ -532,13 +397,47 @@ const PRICE_LEVEL_TAG_TYPES = {
   unknown: 'info'
 }
 
-const normalizePackage = (pkg = {}) => ({
-  ...pkg,
-  priceLevel: ['low', 'medium', 'high'].includes(pkg.priceLevel) ? pkg.priceLevel : 'unknown',
-  priceRangeRef: pkg.priceRangeRef || null,
-  serviceItems: Array.isArray(pkg.serviceItems) ? pkg.serviceItems : [],
-  products: Array.isArray(pkg.products) ? pkg.products : []
-})
+const getStandardPriceRange = (standard, province, city) => {
+  if (!standard?.enabled || !Array.isArray(standard.priceRanges) || standard.priceRanges.length === 0) {
+    return null
+  }
+
+  const exactMatch = standard.priceRanges.find(item => item?.province === province && item?.city === city)
+  if (exactMatch) return exactMatch
+
+  return standard.priceRanges.find(item => item?.province === province && item?.city === '全省') || null
+}
+
+const getPriceLevel = (price, priceRange) => {
+  if (!priceRange || typeof price !== 'number') return 'unknown'
+  if (price < priceRange.minPrice) return 'low'
+  if (price > priceRange.maxPrice) return 'high'
+
+  const range = priceRange.maxPrice - priceRange.minPrice
+  if (range <= 0) return 'medium'
+
+  const position = (price - priceRange.minPrice) / range
+  if (position < 0.33) return 'low'
+  if (position >= 0.67) return 'high'
+  return 'medium'
+}
+
+const normalizePackage = (pkg = {}) => {
+  const priceRange = getStandardPriceRange(pkg.standardId, pkg.storeProvince, pkg.storeCity)
+
+  return {
+    ...pkg,
+    priceRangeRef: priceRange
+      ? {
+          minPrice: priceRange.minPrice,
+          maxPrice: priceRange.maxPrice
+        }
+      : null,
+    priceLevel: getPriceLevel(pkg.price, priceRange),
+    serviceItems: Array.isArray(pkg.serviceItems) ? pkg.serviceItems : [],
+    products: Array.isArray(pkg.products) ? pkg.products : []
+  }
+}
 
 const getPackagePayload = (response) => {
   const payload = response?.data || {}
@@ -547,88 +446,30 @@ const getPackagePayload = (response) => {
     : payload
 }
 
-// 方法
 const fetchPackages = async () => {
   loading.value = true
   try {
-    const response = await getPendingStorePackages({
+    const response = await getStorePackages({
       page: pagination.page,
       limit: pagination.limit,
+      auditStatus: 'approved',
       ...filters
     })
+
     const payload = getPackagePayload(response)
     packages.value = (payload.packages || []).map(normalizePackage)
     total.value = Number(payload.total || 0)
   } catch (error) {
-    console.error('获取待审核套餐列表失败:', error)
-    ElMessage.error('获取待审核套餐列表失败')
+    console.error('获取已上线套餐列表失败:', error)
+    ElMessage.error('获取已上线套餐列表失败')
   } finally {
     loading.value = false
   }
 }
 
-const handleSelectionChange = (selection) => {
-  selectedPackages.value = selection
-}
-
-const handleApprove = (pkg) => {
-  auditType.value = 'approve'
-  auditPackageIds.value = [pkg._id]
-  auditForm.note = ''
-  auditNoteVisible.value = true
-}
-
-const handleReject = (pkg) => {
-  auditType.value = 'reject'
-  auditPackageIds.value = [pkg._id]
-  auditForm.note = ''
-  auditNoteVisible.value = true
-}
-
-const handleBatchApprove = () => {
-  if (selectedPackages.value.length === 0) return
-  auditType.value = 'approve'
-  auditPackageIds.value = selectedPackages.value.map(p => p._id)
-  auditForm.note = ''
-  auditNoteVisible.value = true
-}
-
-const handleBatchReject = () => {
-  if (selectedPackages.value.length === 0) return
-  auditType.value = 'reject'
-  auditPackageIds.value = selectedPackages.value.map(p => p._id)
-  auditForm.note = ''
-  auditNoteVisible.value = true
-}
-
-const confirmAudit = async () => {
-  if (auditType.value === 'reject' && !auditForm.note.trim()) {
-    ElMessage.warning('请填写拒绝原因')
-    return
-  }
-
-  try {
-    if (auditPackageIds.value.length === 1) {
-      await auditStorePackage(auditPackageIds.value[0], {
-        approved: auditType.value === 'approve',
-        auditNote: auditType.value === 'approve' ? auditForm.note : undefined,
-        rejectReason: auditType.value === 'reject' ? auditForm.note : undefined
-      })
-    } else {
-      await batchAuditPackages({
-        packageIds: auditPackageIds.value,
-        approved: auditType.value === 'approve',
-        auditNote: auditType.value === 'approve' ? auditForm.note : undefined,
-        rejectReason: auditType.value === 'reject' ? auditForm.note : undefined
-      })
-    }
-    ElMessage.success(auditType.value === 'approve' ? '审核通过' : '已拒绝')
-    auditNoteVisible.value = false
-    detailVisible.value = false
-    fetchPackages()
-  } catch (error) {
-    ElMessage.error(error.response?.data?.message || '操作失败')
-  }
+const handleFilterChange = () => {
+  pagination.page = 1
+  fetchPackages()
 }
 
 const handleViewDetail = (pkg) => {
@@ -636,17 +477,12 @@ const handleViewDetail = (pkg) => {
   detailVisible.value = true
 }
 
-const getPriceLevelTagType = (level) => {
-  return PRICE_LEVEL_TAG_TYPES[level] || 'info'
-}
+const getPriceLevelTagType = (level) => PRICE_LEVEL_TAG_TYPES[level] || 'info'
 
-const getPriceLevelText = (level) => {
-  return PRICE_LEVEL_LABELS[level] || PRICE_LEVEL_LABELS.unknown
-}
+const getPriceLevelText = (level) => PRICE_LEVEL_LABELS[level] || PRICE_LEVEL_LABELS.unknown
 
 const getPriceClass = (pkg) => {
   if (!pkg.priceRangeRef) return ''
-  // 套餐价格和规范价格区间单位都是元，直接比较
   const { minPrice, maxPrice } = pkg.priceRangeRef
   if (pkg.price < minPrice) return 'low'
   if (pkg.price > maxPrice) return 'high'
@@ -658,14 +494,38 @@ const formatDate = (date) => {
   return new Date(date).toLocaleString('zh-CN')
 }
 
+const formatStoreRegion = (pkg = {}) => {
+  const values = [pkg.storeProvince, pkg.storeCity].filter(Boolean)
+  return values.length > 0 ? values.join(' ') : '-'
+}
+
+const formatAmount = (value) => {
+  const amount = Number(value)
+  return Number.isFinite(amount) ? amount.toFixed(2) : '0.00'
+}
+
 onMounted(() => {
   fetchPackages()
 })
 </script>
 
 <style scoped>
-.store-package-audit {
+.published-store-packages {
   padding: 20px;
+}
+
+.sub-text {
+  color: #909399;
+  font-size: 12px;
+}
+
+.price-text {
+  color: #f56c6c;
+  font-weight: bold;
+}
+
+.range-text {
+  color: #67c23a;
 }
 
 .package-detail h4 {
@@ -701,21 +561,19 @@ onMounted(() => {
   color: #f56c6c;
 }
 
-.price-item .value.suggested {
-  color: #409eff;
-}
-
 .price-item .value.medium {
   color: #e6a23c;
 }
 
-.service-items {
+.service-items,
+.products {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.service-item {
+.service-item,
+.product-item {
   display: flex;
   align-items: center;
   padding: 8px 12px;
@@ -733,23 +591,10 @@ onMounted(() => {
   margin-right: 8px;
 }
 
-.service-item .description {
+.service-item .description,
+.product-item .unit {
   color: #909399;
   font-size: 14px;
-}
-
-.products {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.product-item {
-  display: flex;
-  align-items: center;
-  padding: 8px 12px;
-  background: #f5f7fa;
-  border-radius: 4px;
 }
 
 .product-item .name {
@@ -759,10 +604,5 @@ onMounted(() => {
 .product-item .quantity {
   color: #409eff;
   margin-right: 8px;
-}
-
-.product-item .unit {
-  color: #909399;
-  font-size: 14px;
 }
 </style>

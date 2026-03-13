@@ -5,8 +5,8 @@
       <el-col :span="6">
         <el-card class="stat-card">
           <el-statistic
-            title="账户余额"
-            :value="account.balance"
+            title="可提现余额"
+            :value="account.withdrawableBalance"
             :precision="2"
             prefix="¥"
           />
@@ -15,8 +15,8 @@
       <el-col :span="6">
         <el-card class="stat-card stat-card-success">
           <el-statistic
-            title="本月收入"
-            :value="stats.monthlyIncome"
+            title="已结算收入"
+            :value="account.settledIncome"
             :precision="2"
             prefix="¥"
           />
@@ -25,8 +25,8 @@
       <el-col :span="6">
         <el-card class="stat-card stat-card-warning">
           <el-statistic
-            title="待结算金额"
-            :value="stats.pendingSettlement"
+            title="待结算金额(D+1)"
+            :value="account.pendingSettlement"
             :precision="2"
             prefix="¥"
           />
@@ -35,8 +35,10 @@
       <el-col :span="6">
         <el-card class="stat-card stat-card-info">
           <el-statistic
-            title="本月订单数"
-            :value="stats.monthlyOrders"
+            title="本月已结算收入"
+            :value="stats.monthlyIncome"
+            :precision="2"
+            prefix="¥"
           />
         </el-card>
       </el-col>
@@ -356,7 +358,9 @@ const settlementPagination = ref({
 })
 
 const account = ref({
-  balance: 0
+  withdrawableBalance: 0,
+  settledIncome: 0,
+  pendingSettlement: 0
 })
 
 const stats = ref({

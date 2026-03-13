@@ -46,14 +46,6 @@ export function fleetRejectOrder(id, data) {
   })
 }
 
-export function cancelOrder(id, data) {
-  return request({
-    url: `/orders/${id}/cancel`,
-    method: 'post',
-    data
-  })
-}
-
 export function resubmitOrder(id) {
   return request({
     url: `/orders/${id}/resubmit`,

@@ -214,6 +214,15 @@
               width="120"
             />
             <el-table-column
+              label="操作人"
+              width="140"
+              show-overflow-tooltip
+            >
+              <template #default="{ row }">
+                {{ getOperatorName(row) || '-' }}
+              </template>
+            </el-table-column>
+            <el-table-column
               prop="remark"
               label="备注"
               min-width="150"
@@ -378,6 +387,15 @@
                 >
                   {{ row.status === 'approved' ? '已通过' : '已驳回' }}
                 </el-tag>
+              </template>
+            </el-table-column>
+            <el-table-column
+              label="操作人"
+              width="140"
+              show-overflow-tooltip
+            >
+              <template #default="{ row }">
+                {{ getOperatorName(row) || '-' }}
               </template>
             </el-table-column>
             <el-table-column
@@ -697,6 +715,7 @@ const reviewedFilters = ref({
 const reviewedDateRange = ref([])
 
 const formatLocalDate = (date) => dayjs(date).format('YYYY-MM-DD')
+const getOperatorName = (record) => record?.operatorName || record?.appliedBy?.name || record?.appliedBy?.nickname || record?.appliedBy?.username || ''
 
 // 获取统计数据
 const fetchStats = async () => {

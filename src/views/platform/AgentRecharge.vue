@@ -131,6 +131,7 @@
             :action="uploadUrl"
             :headers="uploadHeaders"
             :on-success="handleUploadSuccess"
+            :on-error="handleUploadError"
             :on-remove="handleRemove"
             :before-upload="beforeUpload"
             :limit="5"
@@ -223,6 +224,15 @@
           </template>
         </el-table-column>
         <el-table-column
+          label="操作人"
+          width="140"
+          show-overflow-tooltip
+        >
+          <template #default="{ row }">
+            {{ getOperatorName(row) || '-' }}
+          </template>
+        </el-table-column>
+        <el-table-column
           prop="remitterName"
           label="汇款方"
           width="180"
@@ -300,6 +310,9 @@
         </el-descriptions-item>
         <el-descriptions-item label="车队名称">
           {{ currentRecord.fleetName }}
+        </el-descriptions-item>
+        <el-descriptions-item label="操作人">
+          {{ getOperatorName(currentRecord) || '-' }}
         </el-descriptions-item>
         <el-descriptions-item label="充值金额">
           <span style="color: #67c23a; font-weight: 600">
@@ -398,6 +411,7 @@ const submitting = ref(false)
 
 const rechargeForm = ref({
   fleetId: '',
+  fleetName: '',
   amount: 1000,
   remitterName: '',
   receiverAccountId: '',
@@ -436,10 +450,7 @@ const selectedFleet = ref(null)
 const platformAccounts = ref([])
 
 // 上传配置
-const uploadUrl = computed(() => {
-  const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
-  return `${baseURL}/api/upload`
-})
+const uploadUrl = '/api/upload'
 
 const uploadHeaders = computed(() => {
   const token = localStorage.getItem('token')
@@ -449,6 +460,9 @@ const uploadHeaders = computed(() => {
 })
 
 const fileList = ref([])
+
+const getAccountStatus = (account) => account?.status?.type || account?.status || ''
+const getOperatorName = (record) => record?.operatorName || record?.appliedBy?.name || record?.appliedBy?.nickname || record?.appliedBy?.username || ''
 
 // 最近充值记录
 const recentRecords = ref([])
@@ -472,7 +486,8 @@ const fetchFleets = async () => {
 const fetchPlatformAccounts = async () => {
   try {
     const res = await getPlatformBankAccounts()
-    platformAccounts.value = res.data.filter(acc => acc.status?.type === 'active')
+    const accounts = Array.isArray(res.data) ? res.data : []
+    platformAccounts.value = accounts.filter(acc => getAccountStatus(acc) === 'active')
   } catch (error) {
     console.error('获取平台收款账户失败:', error)
   }
@@ -481,6 +496,7 @@ const fetchPlatformAccounts = async () => {
 // 车队选择变化
 const handleFleetChange = (fleetId) => {
   selectedFleet.value = fleetList.value.find(f => f._id === fleetId)
+  rechargeForm.value.fleetName = selectedFleet.value?.name || ''
 }
 
 // 上传前校验
@@ -501,8 +517,12 @@ const beforeUpload = (file) => {
 
 // 上传成功
 const handleUploadSuccess = (response, file) => {
-  if (response.success) {
-    rechargeForm.value.proofImages.push(response.data.url)
+  const uploadedUrl = response?.data?.url
+  if (response?.success && uploadedUrl) {
+    if (!rechargeForm.value.proofImages.includes(uploadedUrl)) {
+      rechargeForm.value.proofImages.push(uploadedUrl)
+    }
+    rechargeFormRef.value?.clearValidate?.('proofImages')
   } else {
     ElMessage.error(response.message || '上传失败')
     const index = fileList.value.indexOf(file)
@@ -514,19 +534,31 @@ const handleUploadSuccess = (response, file) => {
 
 // 移除文件
 const handleRemove = (file) => {
-  const index = fileList.value.indexOf(file)
+  const uploadedUrl = file?.response?.data?.url || file?.url
+  const index = uploadedUrl
+    ? rechargeForm.value.proofImages.indexOf(uploadedUrl)
+    : fileList.value.indexOf(file)
   if (index > -1) {
     rechargeForm.value.proofImages.splice(index, 1)
+  }
+
+  if (rechargeForm.value.proofImages.length > 0) {
+    rechargeFormRef.value?.clearValidate?.('proofImages')
   }
 }
 
 // 提交代客充值
 const handleSubmit = async () => {
-  const valid = await rechargeFormRef.value.validate().catch(() => false)
+  const valid = await rechargeFormRef.value?.validate().catch(() => false)
   if (!valid) return
 
   if (rechargeForm.value.proofImages.length === 0) {
     ElMessage.warning('请上传转账凭证')
+    return
+  }
+
+  if (!platformAccounts.value.length) {
+    ElMessage.warning('暂无可用的收款账户，请先在平台收款账户中启用账号')
     return
   }
 
@@ -535,6 +567,7 @@ const handleSubmit = async () => {
     // 将元转换为分（后端存储的是分）
     const submitData = {
       ...rechargeForm.value,
+      fleetName: selectedFleet.value?.name || rechargeForm.value.fleetName || '',
       amount: Math.round(rechargeForm.value.amount * 100)
     }
     await createAgentRecharge(submitData)
@@ -554,6 +587,7 @@ const handleReset = () => {
   rechargeFormRef.value.resetFields()
   rechargeForm.value = {
     fleetId: '',
+    fleetName: '',
     amount: 1000,
     remitterName: '',
     receiverAccountId: '',
@@ -616,6 +650,11 @@ const getStatusText = (status) => {
 // 格式化日期
 const formatDate = (date) => {
   return dayjs(date).format('YYYY-MM-DD HH:mm:ss')
+}
+
+const handleUploadError = (error) => {
+  console.error('上传凭证失败:', error)
+  ElMessage.error(error?.message || error?.response?.data?.message || '上传失败，请重试')
 }
 
 onMounted(() => {

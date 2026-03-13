@@ -354,6 +354,25 @@ const fetchTransactions = async () => {
 }
 
 // 充值功能已移除，使用充值页面
+const getOrderId = (order) => {
+  if (!order) return ''
+  if (typeof order === 'string') return order
+  return order._id || order.id || ''
+}
+
+const viewOrder = (order) => {
+  const orderId = getOrderId(order)
+  if (!orderId) {
+    ElMessage.warning('未找到关联订单')
+    return
+  }
+
+  router.push({
+    path: '/fleet-orders',
+    query: { orderId }
+  })
+}
+
 const handleRecharge = () => {
   router.push('/fleet-recharge')
 }

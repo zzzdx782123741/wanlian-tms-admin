@@ -137,6 +137,23 @@ import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { User, Lock, Van } from '@element-plus/icons-vue'
 import { login, testLogin } from '@/api/auth'
+import { persistAuthState } from '@/utils/authStorage'
+
+const normalizeRole = (role) => String(role || '').trim().toUpperCase()
+
+const getRoleHomePath = (role) => {
+  switch (normalizeRole(role)) {
+    case 'FLEET_MANAGER':
+      return '/fleet-vehicles'
+    case 'STORE_MANAGER':
+    case 'STORE_TECHNICIAN':
+      return '/store-orders'
+    case 'PLATFORM_OPERATOR':
+      return '/dashboard'
+    default:
+      return '/dashboard'
+  }
+}
 
 const loginFormRef = ref()
 const loading = ref(false)
@@ -164,32 +181,34 @@ const loginRules = {
 // 填充测试账号
 const persistLoginState = (response) => {
   const { token, user } = response.data
+  const normalizedRole = normalizeRole(user.role?.type)
 
-  localStorage.removeItem('token')
-  localStorage.removeItem('userInfo')
-  localStorage.removeItem('role')
-  localStorage.removeItem('forceChangePassword')
-
-  localStorage.setItem('token', token)
-  localStorage.setItem('userInfo', JSON.stringify(user))
-  localStorage.setItem('role', user.role?.type)
+  persistAuthState({
+    token,
+    user,
+    role: normalizedRole
+  })
 
   console.log('登录成功，用户信息:', {
     username: user.username,
     nickname: user.nickname,
-    role: user.role?.type,
+    role: normalizedRole,
     fleetName: user.fleetInfo?.fleetName,
     storeName: user.storeInfo?.storeName
   })
+
+  return normalizedRole
 }
 
-const navigateToDashboard = () => {
+const navigateToDashboard = (role) => {
+  const homePath = getRoleHomePath(role)
+
   setTimeout(async () => {
     try {
-      window.location.replace('/dashboard')
+      window.location.replace(homePath)
     } catch (navError) {
       console.error('路由跳转失败，尝试强制刷新:', navError)
-      window.location.assign('/dashboard')
+      window.location.assign(homePath)
     }
   }, 500)
 }
@@ -201,9 +220,9 @@ const submitLogin = async (loginApi, payload) => {
     const response = await loginApi(payload)
 
     if (response.success) {
-      persistLoginState(response)
+      const userRole = persistLoginState(response)
       ElMessage.success('登录成功！')
-      navigateToDashboard()
+      navigateToDashboard(userRole)
     } else {
       ElMessage.error(response.message || '登录失败，请检查用户名和密码')
     }

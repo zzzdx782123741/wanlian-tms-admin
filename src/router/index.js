@@ -1,6 +1,22 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import LayoutIndex from '@/layout/Index.vue'
 
+const normalizeRole = (role) => String(role || '').trim().toUpperCase()
+
+const getRoleHomePath = (role) => {
+  switch (normalizeRole(role)) {
+    case 'FLEET_MANAGER':
+      return '/fleet-vehicles'
+    case 'STORE_MANAGER':
+    case 'STORE_TECHNICIAN':
+      return '/store-orders'
+    case 'PLATFORM_OPERATOR':
+      return '/dashboard'
+    default:
+      return '/dashboard'
+  }
+}
+
 const routes = [
   {
     path: '/login',
@@ -11,7 +27,7 @@ const routes = [
   {
     path: '/',
     component: LayoutIndex,
-    redirect: '/dashboard',
+    redirect: () => getRoleHomePath(localStorage.getItem('role')),
     children: [
       {
         path: 'dashboard',
@@ -203,6 +219,12 @@ const routes = [
         meta: { title: '门店套餐审核', icon: 'Select', roles: ['PLATFORM_OPERATOR'] }
       },
       {
+        path: 'published-store-packages',
+        name: 'PublishedStorePackages',
+        component: () => import('@/views/platform/PublishedStorePackages.vue'),
+        meta: { title: '已上线套餐', icon: 'Box', roles: ['PLATFORM_OPERATOR'] }
+      },
+      {
         path: 'fleet-orders',
         name: 'FleetOrders',
         component: () => import('@/views/fleet/Orders.vue'),
@@ -239,11 +261,13 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('token')
   const userRole = localStorage.getItem('role')
+  const normalizedRole = normalizeRole(userRole)
+  const roleHomePath = getRoleHomePath(normalizedRole)
 
   // 打印调试信息
   console.log('路由守卫:', {
     to: to.path,
-    userRole,
+    userRole: normalizedRole,
     requiredRoles: to.meta?.roles,
     hasToken: !!token
   })
@@ -262,10 +286,11 @@ router.beforeEach((to, from, next) => {
         return
       }
 
-      if (!to.meta.roles.includes(userRole)) {
-        console.warn('角色权限不匹配:', { userRole, required: to.meta.roles })
-        // 重定向到首页而不是next('/')，避免循环
-        next('/dashboard')
+      const requiredRoles = to.meta.roles.map(normalizeRole)
+
+      if (!requiredRoles.includes(normalizedRole)) {
+        console.warn('角色权限不匹配:', { userRole: normalizedRole, required: requiredRoles })
+        next(roleHomePath)
         return
       }
     }

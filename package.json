@@ -6,11 +6,13 @@
   "scripts": {
     "dev": "vite",
     "dev:lan": "vite --host 0.0.0.0",
+    "prebuild": "npm run check:text",
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint . --fix",
     "lint:check": "eslint .",
-    "check:encoding": "powershell -ExecutionPolicy Bypass -File ../scripts/quick-encoding-check.ps1 -Path ."
+    "check:encoding": "powershell -ExecutionPolicy Bypass -File ../scripts/quick-encoding-check.ps1 -Path .",
+    "check:text": "node scripts/check-text-integrity.cjs src package.json vite.config.js .gitattributes .gitignore index.html"
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.0",

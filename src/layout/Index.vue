@@ -157,6 +157,7 @@ import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessageBox, ElMessage } from 'element-plus'
 import request from '@/utils/request'
+import { clearAuthState } from '@/utils/authStorage'
 
 const router = useRouter()
 const route = useRoute()
@@ -228,9 +229,7 @@ const handleChangePassword = async () => {
 
       // 延迟1秒后退出登录
       setTimeout(() => {
-        localStorage.removeItem('token')
-        localStorage.removeItem('userInfo')
-        localStorage.removeItem('role')
+        clearAuthState()
         window.location.replace('/login')
       }, 1000)
     } else {
@@ -288,9 +287,7 @@ const handleLogout = () => {
     cancelButtonText: '取消',
     type: 'warning'
   }).then(() => {
-    localStorage.removeItem('token')
-    localStorage.removeItem('userInfo')
-    localStorage.removeItem('role')
+    clearAuthState()
     window.location.replace('/login')
   })
 }

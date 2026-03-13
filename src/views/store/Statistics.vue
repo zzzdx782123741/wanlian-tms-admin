@@ -266,8 +266,8 @@ const statistics = reactive({
 const orderTypeData = ref([])
 const technicianWorkData = ref([])
 
-function fenToYuan(amount) {
-  return Number(amount || 0) / 100
+function normalizeAmount(amount) {
+  return Number(amount || 0)
 }
 
 onMounted(async () => {
@@ -301,15 +301,15 @@ async function loadStatistics() {
 
     Object.assign(statistics, {
       ...res.data.summary,
-      totalRevenue: fenToYuan(res.data.summary?.totalRevenue)
+      totalRevenue: normalizeAmount(res.data.summary?.totalRevenue)
     })
     orderTypeData.value = (res.data.orderTypes || []).map(item => ({
       ...item,
-      amount: fenToYuan(item.amount)
+      amount: normalizeAmount(item.amount)
     }))
     technicianWorkData.value = (res.data.technicianWork || []).map(item => ({
       ...item,
-      revenue: fenToYuan(item.revenue)
+      revenue: normalizeAmount(item.revenue)
     }))
 
     // 渲染图表
@@ -317,7 +317,7 @@ async function loadStatistics() {
     renderOrderTrend(res.data.orderTrend || [])
     renderRevenueTrend((res.data.revenueTrend || []).map(item => ({
       ...item,
-      amount: fenToYuan(item.amount)
+      amount: normalizeAmount(item.amount)
     })))
 
   } catch (error) {

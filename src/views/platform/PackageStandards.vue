@@ -59,16 +59,16 @@
             @change="fetchStandards"
           >
             <el-option
-              label="基础"
-              value="基础"
+              label="实惠"
+              value="实惠"
             />
             <el-option
               label="标准"
               value="标准"
             />
             <el-option
-              label="高级"
-              value="高级"
+              label="优质"
+              value="优质"
             />
             <el-option
               label="尊享"
@@ -262,16 +262,16 @@
             style="width: 100%"
           >
             <el-option
-              label="基础"
-              value="基础"
+              label="实惠"
+              value="实惠"
             />
             <el-option
               label="标准"
               value="标准"
             />
             <el-option
-              label="高级"
-              value="高级"
+              label="优质"
+              value="优质"
             />
             <el-option
               label="尊享"
@@ -461,9 +461,9 @@
 
           <el-form-item label="选择套餐档位">
             <el-checkbox-group v-model="batchForm.tiers">
-              <el-checkbox label="基础" />
+              <el-checkbox label="实惠" />
               <el-checkbox label="标准" />
-              <el-checkbox label="高级" />
+              <el-checkbox label="优质" />
               <el-checkbox label="尊享" />
             </el-checkbox-group>
           </el-form-item>
@@ -997,9 +997,9 @@ const getVehicleGroupType = (group) => {
 
 const getTierType = (tier) => {
   const map = {
-    '基础': 'info',
+    '实惠': 'info',
     '标准': 'success',
-    '高级': 'warning',
+    '优质': 'warning',
     '尊享': 'danger'
   }
   return map[tier] || ''

@@ -64,6 +64,16 @@ export function getFleetStats() {
 }
 
 /**
+ * 获取当前登录车队统计
+ */
+export function getCurrentFleetStats() {
+  return request({
+    url: '/fleets/current/stats',
+    method: 'get'
+  })
+}
+
+/**
  * 更新车队门店选择配置
  */
 export function updateFleetStoreConfig(id, data) {

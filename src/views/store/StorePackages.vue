@@ -935,7 +935,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, nextTick, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Search, InfoFilled, Upload, Download, UploadFilled, Refresh } from '@element-plus/icons-vue'
 import request from '@/utils/request'
@@ -1058,6 +1058,7 @@ const fetchPackages = async () => {
     packages.value = response.data?.packages || []
     total.value = response.data?.total || 0
   } catch (error) {
+    error.message = getRequestErrorMessage(error)
     ElMessage.error('获取套餐列表失败')
   } finally {
     loading.value = false
@@ -1124,6 +1125,39 @@ const handleStandardChange = (standardId) => {
   }
 }
 
+const getRequestErrorMessage = (error, fallback = '操作失败') => {
+  return error?.response?.data?.message || error?.message || fallback
+}
+
+const validatePackageBeforeSubmit = () => {
+  if (Number(form.mileageRangeMin) > Number(form.mileageRangeMax)) {
+    ElMessage.warning('里程范围起始值不能大于结束值')
+    return false
+  }
+
+  if (!form.products.length) {
+    ElMessage.warning('请至少添加一个商品')
+    return false
+  }
+
+  if (form.products.some(item => !item.productId)) {
+    ElMessage.warning('请选择完整的套餐商品')
+    return false
+  }
+
+  if (form.products.some(item => Number(item.quantity) < 1)) {
+    ElMessage.warning('套餐商品数量必须大于等于1')
+    return false
+  }
+
+  if (form.serviceItems.some(item => item && !String(item.name || '').trim())) {
+    ElMessage.warning('服务项目名称不能为空')
+    return false
+  }
+
+  return true
+}
+
 const handleCreate = () => {
   isEdit.value = false
   Object.assign(form, {
@@ -1143,6 +1177,9 @@ const handleCreate = () => {
   tagsInput.value = ''
   currentPriceRange.value = null
   dialogVisible.value = true
+  nextTick(() => {
+    formRef.value?.clearValidate()
+  })
 }
 
 const handleEdit = (row) => {
@@ -1170,6 +1207,9 @@ const handleEdit = (row) => {
   })
   tagsInput.value = row.tags ? row.tags.join(', ') : ''
   dialogVisible.value = true
+  nextTick(() => {
+    formRef.value?.clearValidate()
+  })
 }
 
 const handleSubmitForm = async () => {
@@ -1177,7 +1217,10 @@ const handleSubmitForm = async () => {
   formRef.value.clearValidate('price')
 
   // 验证表单
-  await formRef.value.validate()
+  const valid = await formRef.value?.validate().catch(() => false)
+  if (!valid || !validatePackageBeforeSubmit()) {
+    return
+  }
 
   submitting.value = true
   try {

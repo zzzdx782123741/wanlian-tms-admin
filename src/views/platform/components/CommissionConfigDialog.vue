@@ -1,9 +1,9 @@
 <template>
   <el-dialog
     :model-value="modelValue"
-    :title="isEdit ? '编辑配置' : '新增配置'"
-    width="600px"
-    @update:model-value="$emit('update:modelValue', $event)"
+    :title="dialogTitle"
+    width="640px"
+    @update:model-value="handleVisibleChange"
   >
     <el-form
       ref="formRef"
@@ -11,143 +11,33 @@
       :rules="formRules"
       label-width="120px"
     >
-      <!-- 全局配置 -->
-      <template v-if="configType === 'global'">
-        <el-form-item
-          label="配置名称"
-          prop="name"
-        >
-          <el-input
-            v-model="form.name"
-            placeholder="如：全局默认佣金配置"
-            maxlength="50"
-            show-word-limit
-          />
-        </el-form-item>
+      <el-form-item label="配置名称" prop="name">
+        <el-input
+          v-model="form.name"
+          :placeholder="namePlaceholder"
+          maxlength="50"
+          show-word-limit
+        />
+      </el-form-item>
 
-        <el-form-item
-          label="佣金比例"
-          prop="commissionRate"
-        >
-          <el-input-number
-            v-model="form.percentageValue"
-            :min="3"
-            :max="10"
-            :precision="1"
-            :step="0.1"
-            controls-position="right"
-            style="width: 200px"
-          />
-          <span style="margin-left: 10px; color: #909399">
-            %（范围：3.0% - 10.0%）
-          </span>
-        </el-form-item>
-
-        <el-form-item label="说明">
-          <el-input
-            v-model="form.description"
-            type="textarea"
-            :rows="3"
-            placeholder="请输入配置说明"
-            maxlength="200"
-            show-word-limit
-          />
-        </el-form-item>
-
-        <el-alert
-          title="全局默认配置说明"
-          type="info"
-          :closable="false"
-          style="margin-top: 10px"
-        >
-          全局默认配置将作为兜底配置，当订单没有匹配到服务类型或区域配置时使用此比例。
-        </el-alert>
-      </template>
-
-      <!-- 服务类型配置 -->
-      <template v-else-if="configType === 'service_type'">
-        <el-form-item
-          label="配置名称"
-          prop="name"
-        >
-          <el-input
-            v-model="form.name"
-            placeholder="如：维修订单佣金配置"
-            maxlength="50"
-            show-word-limit
-          />
-        </el-form-item>
-
-        <el-form-item
-          label="服务类型"
-          prop="serviceTypes"
-        >
+      <template v-if="configType === 'service_type'">
+        <el-form-item label="服务类型" prop="serviceTypes">
           <el-checkbox-group v-model="form.serviceTypes">
-            <el-checkbox label="repair">
-              维修订单
-            </el-checkbox>
-            <el-checkbox label="maintenance">
-              保养订单
-            </el-checkbox>
-            <el-checkbox label="addon">
-              增项服务
-            </el-checkbox>
+            <el-checkbox label="repair">维修订单</el-checkbox>
+            <el-checkbox label="maintenance">保养订单</el-checkbox>
+            <el-checkbox label="addon">增项服务</el-checkbox>
           </el-checkbox-group>
         </el-form-item>
-
-        <el-form-item
-          label="佣金比例"
-          prop="commissionRate"
-        >
-          <el-input-number
-            v-model="form.percentageValue"
-            :min="3"
-            :max="10"
-            :precision="1"
-            :step="0.1"
-            controls-position="right"
-            style="width: 200px"
-          />
-          <span style="margin-left: 10px; color: #909399">
-            %（范围：3.0% - 10.0%）
-          </span>
-        </el-form-item>
-
-        <el-form-item label="说明">
-          <el-input
-            v-model="form.description"
-            type="textarea"
-            :rows="3"
-            placeholder="请输入配置说明"
-            maxlength="200"
-            show-word-limit
-          />
-        </el-form-item>
       </template>
 
-      <!-- 区域配置 -->
       <template v-else-if="configType === 'region'">
-        <el-form-item
-          label="配置名称"
-          prop="name"
-        >
-          <el-input
-            v-model="form.name"
-            placeholder="如：北京市佣金配置"
-            maxlength="50"
-            show-word-limit
-          />
-        </el-form-item>
-
-        <el-form-item
-          label="省份"
-          prop="province"
-        >
+        <el-form-item label="省份" prop="province">
           <el-select
             v-model="form.province"
             placeholder="请选择省份"
             filterable
             style="width: 100%"
+            @change="handleProvinceChange"
           >
             <el-option
               v-for="province in provinces"
@@ -161,16 +51,12 @@
         <el-form-item label="城市">
           <el-select
             v-model="form.city"
-            placeholder="全省适用（可不选）"
-            filterable
+            placeholder="可不选，不选表示全省适用"
             clearable
+            filterable
             style="width: 100%"
             :disabled="!form.province"
           >
-            <el-option
-              label="全省适用"
-              value=""
-            />
             <el-option
               v-for="city in getCityOptions(form.province)"
               :key="city"
@@ -178,60 +64,69 @@
               :value="city"
             />
           </el-select>
-          <div style="margin-top: 5px; color: #909399; font-size: 12px">
-            不选择城市表示该配置适用于全省所有城市
-          </div>
+          <div class="form-tip">不选择城市时，该配置适用于所选省份下全部门店。</div>
         </el-form-item>
-
-        <el-form-item
-          label="佣金比例"
-          prop="commissionRate"
-        >
-          <el-input-number
-            v-model="form.percentageValue"
-            :min="3"
-            :max="10"
-            :precision="1"
-            :step="0.1"
-            controls-position="right"
-            style="width: 200px"
-          />
-          <span style="margin-left: 10px; color: #909399">
-            %（范围：3.0% - 10.0%）
-          </span>
-        </el-form-item>
-
-        <el-form-item label="说明">
-          <el-input
-            v-model="form.description"
-            type="textarea"
-            :rows="3"
-            placeholder="请输入配置说明"
-            maxlength="200"
-            show-word-limit
-          />
-        </el-form-item>
-
-        <el-alert
-          title="区域配置优先级说明"
-          type="info"
-          :closable="false"
-          style="margin-top: 10px"
-        >
-          区域配置优先级高于服务类型配置。如果同时设置了"北京市+维修订单"和"北京市"，将优先使用"北京市+维修订单"的配置。
-        </el-alert>
       </template>
+
+      <template v-else-if="configType === 'store'">
+        <el-form-item label="适用门店" prop="storeId">
+          <el-select
+            v-model="form.storeId"
+            placeholder="请选择门店"
+            filterable
+            clearable
+            style="width: 100%"
+            :loading="storeLoading"
+          >
+            <el-option
+              v-for="store in storeOptions"
+              :key="store._id"
+              :label="getStoreOptionLabel(store)"
+              :value="store._id"
+            />
+          </el-select>
+          <div class="form-tip">门店级配置优先级最高，命中后将直接按该门店佣金比例结算。</div>
+        </el-form-item>
+      </template>
+
+      <el-form-item label="佣金比例" prop="percentageValue">
+        <el-input-number
+          v-model="form.percentageValue"
+          :min="3"
+          :max="10"
+          :precision="1"
+          :step="0.1"
+          controls-position="right"
+          style="width: 200px"
+        />
+        <span class="rate-tip">%（范围：3.0% - 10.0%）</span>
+      </el-form-item>
+
+      <el-form-item label="说明">
+        <el-input
+          v-model="form.description"
+          type="textarea"
+          :rows="3"
+          placeholder="请输入配置说明"
+          maxlength="200"
+          show-word-limit
+        />
+      </el-form-item>
+
+      <el-alert
+        v-if="tipContent"
+        :title="tipTitle"
+        type="info"
+        :closable="false"
+        style="margin-top: 8px"
+      >
+        {{ tipContent }}
+      </el-alert>
     </el-form>
 
     <template #footer>
-      <el-button @click="handleCancel">
-        取消
-      </el-button>
-      <el-button
-        type="primary"
-        :loading="submitting"
-        @click="handleConfirm"
-      >
+      <el-button @click="closeDialog">取消</el-button>
+      <el-button type="primary" :loading="submitting" @click="handleConfirm">
         确定
       </el-button>
     </template>
@@ -239,9 +134,10 @@
 </template>
 
 <script setup>
-import { ref, reactive, watch, computed } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { createCommissionConfig, updateCommissionConfig } from '@/api/commission'
+import { getStores } from '@/api/store'
 
 const props = defineProps({
   modelValue: {
@@ -262,68 +158,190 @@ const emit = defineEmits(['update:modelValue', 'success'])
 
 const formRef = ref()
 const submitting = ref(false)
+const storeLoading = ref(false)
+const storeOptions = ref([])
 
-const isEdit = computed(() => !!props.config)
+const isEdit = computed(() => Boolean(props.config?._id))
+const dialogTitle = computed(() => (isEdit.value ? '编辑佣金配置' : '新增佣金配置'))
 
-// 表单数据
 const form = reactive({
   name: '',
   commissionRate: 0.08,
-  percentageValue: 8.0,
+  percentageValue: 8,
   serviceTypes: [],
   province: '',
   city: '',
+  storeId: '',
   description: ''
 })
 
-// 表单验证规则
-const formRules = {
-  name: [
-    { required: true, message: '请输入配置名称', trigger: 'blur' }
-  ],
-  commissionRate: [
-    { required: true, message: '请输入佣金比例', trigger: 'blur' }
-  ],
-  serviceTypes: [
-    { required: true, message: '请选择服务类型', trigger: 'change' }
-  ],
-  province: [
-    { required: true, message: '请选择省份', trigger: 'change' }
-  ]
+const namePlaceholderMap = {
+  global: '例如：全局默认佣金配置',
+  service_type: '例如：维修订单佣金配置',
+  region: '例如：北京市佣金配置',
+  store: '例如：友道门店佣金配置'
 }
 
-// 监听百分比变化，同步到commissionRate
-watch(() => form.percentageValue, (newVal) => {
-  form.commissionRate = newVal / 100
-})
+const tipTitleMap = {
+  global: '全局配置说明',
+  service_type: '服务类型配置说明',
+  region: '区域配置说明',
+  store: '门店配置说明'
+}
 
-// 监听config变化，初始化表单
-watch(() => props.config, (config) => {
-  if (config) {
-    Object.assign(form, {
-      name: config.name,
-      commissionRate: config.commissionRate,
-      percentageValue: (config.commissionRate * 100).toFixed(1),
-      serviceTypes: config.serviceTypes || [],
-      province: config.province || '',
-      city: config.city || '',
-      description: config.description || ''
-    })
-  } else {
-    // 重置表单
-    Object.assign(form, {
-      name: '',
-      commissionRate: 0.08,
-      percentageValue: 8.0,
-      serviceTypes: [],
-      province: '',
-      city: '',
-      description: ''
-    })
+const tipContentMap = {
+  global: '全局配置会作为兜底配置，在没有匹配到其他佣金规则时生效。',
+  service_type: '服务类型配置会覆盖全局配置，但低于门店级和区域级配置。',
+  region: '区域配置会覆盖服务类型和全局配置；如果未来扩展区域+服务类型组合，将优先命中更细粒度规则。',
+  store: '门店配置适用于指定门店，优先级最高，可用于单独管理重点门店或合作门店的佣金比例。'
+}
+
+const namePlaceholder = computed(() => namePlaceholderMap[props.configType] || '请输入配置名称')
+const tipTitle = computed(() => tipTitleMap[props.configType] || '配置说明')
+const tipContent = computed(() => tipContentMap[props.configType] || '')
+
+const formRules = {
+  name: [{ required: true, message: '请输入配置名称', trigger: 'blur' }],
+  percentageValue: [{ required: true, message: '请输入佣金比例', trigger: 'change' }],
+  serviceTypes: [{ required: true, message: '请选择服务类型', trigger: 'change' }],
+  province: [{ required: true, message: '请选择省份', trigger: 'change' }],
+  storeId: [{ required: true, message: '请选择门店', trigger: 'change' }]
+}
+
+watch(
+  () => form.percentageValue,
+  (value) => {
+    form.commissionRate = Number(value || 0) / 100
   }
-}, { immediate: true })
+)
 
-// 省市数据
+watch(
+  () => props.modelValue,
+  async (visible) => {
+    if (!visible) {
+      return
+    }
+
+    resetForm()
+    fillForm(props.config)
+
+    if (props.configType === 'store') {
+      await fetchStores()
+    }
+  },
+  { immediate: true }
+)
+
+watch(
+  () => props.config,
+  (config) => {
+    if (props.modelValue) {
+      resetForm()
+      fillForm(config)
+    }
+  }
+)
+
+const resetForm = () => {
+  Object.assign(form, {
+    name: '',
+    commissionRate: 0.08,
+    percentageValue: 8,
+    serviceTypes: [],
+    province: '',
+    city: '',
+    storeId: '',
+    description: ''
+  })
+
+  formRef.value?.clearValidate()
+}
+
+const fillForm = (config) => {
+  if (!config) {
+    return
+  }
+
+  Object.assign(form, {
+    name: config.name || '',
+    commissionRate: Number(config.commissionRate || 0.08),
+    percentageValue: Number((Number(config.commissionRate || 0.08) * 100).toFixed(1)),
+    serviceTypes: Array.isArray(config.serviceTypes) ? [...config.serviceTypes] : [],
+    province: config.province || '',
+    city: config.city || '',
+    storeId: config.storeId?._id || config.storeId || '',
+    description: config.description || ''
+  })
+}
+
+const fetchStores = async () => {
+  storeLoading.value = true
+  try {
+    const res = await getStores({ page: 1, limit: 1000 })
+    storeOptions.value = res.data?.stores || res.data?.list || []
+  } catch (error) {
+    console.error('获取门店列表失败:', error)
+    ElMessage.error(error.message || '获取门店列表失败')
+  } finally {
+    storeLoading.value = false
+  }
+}
+
+const handleProvinceChange = () => {
+  form.city = ''
+}
+
+const getStoreOptionLabel = (store) => {
+  const province = store.address?.province || ''
+  const city = store.address?.city || ''
+  const region = [province, city].filter(Boolean).join(' / ')
+  return region ? `${store.name}（${region}）` : store.name
+}
+
+const closeDialog = () => {
+  emit('update:modelValue', false)
+}
+
+const handleVisibleChange = (visible) => {
+  emit('update:modelValue', visible)
+}
+
+const handleConfirm = async () => {
+  try {
+    await formRef.value.validate()
+    submitting.value = true
+
+    const payload = {
+      name: form.name.trim(),
+      configType: props.configType,
+      commissionRate: Number(form.commissionRate),
+      description: form.description.trim(),
+      serviceTypes: props.configType === 'service_type' ? [...form.serviceTypes] : [],
+      province: props.configType === 'region' ? form.province : '',
+      city: props.configType === 'region' ? form.city : '',
+      storeId: props.configType === 'store' ? form.storeId : ''
+    }
+
+    if (isEdit.value) {
+      await updateCommissionConfig(props.config._id, payload)
+      ElMessage.success('更新成功')
+    } else {
+      await createCommissionConfig(payload)
+      ElMessage.success('创建成功')
+    }
+
+    emit('update:modelValue', false)
+    emit('success')
+  } catch (error) {
+    if (error !== false) {
+      console.error('保存佣金配置失败:', error)
+      ElMessage.error(error.message || '保存失败')
+    }
+  } finally {
+    submitting.value = false
+  }
+}
+
 const provinces = [
   '北京市', '天津市', '上海市', '重庆市',
   '河北省', '山西省', '辽宁省', '吉林省', '黑龙江省',
@@ -335,55 +353,16 @@ const provinces = [
 ]
 
 const cityMap = {
-  '北京市': ['东城区', '西城区', '朝阳区', '丰台区', '石景山区', '海淀区', '门头沟区', '房山区', '通州区', '顺义区', '昌平区', '大兴区', '怀柔区', '平谷区', '密云区', '延庆区'],
-  '上海市': ['黄浦区', '徐汇区', '长宁区', '静安区', '普陀区', '虹口区', '杨浦区', '闵行区', '宝山区', '嘉定区', '浦东新区', '金山区', '松江区', '青浦区', '奉贤区', '崇明区'],
-  '广东省': ['广州市', '深圳市', '珠海市', '汕头市', '佛山市', '韶关市', '湛江市', '肇庆市', '江门市', '茂名市', '惠州市', '梅州市', '汕尾市', '河源市', '阳江市', '清远市', '东莞市', '中山市', '潮州市', '揭阳市', '云浮市'],
-  '浙江省': ['杭州市', '宁波市', '温州市', '嘉兴市', '湖州市', '绍兴市', '金华市', '衢州市', '舟山市', '台州市', '丽水市'],
-  '江苏省': ['南京市', '无锡市', '徐州市', '常州市', '苏州市', '南通市', '连云港市', '淮安市', '盐城市', '扬州市', '镇江市', '泰州市', '宿迁市'],
-  '山东省': ['济南市', '青岛市', '淄博市', '枣庄市', '东营市', '烟台市', '潍坊市', '济宁市', '泰安市', '威海市', '日照市', '临沂市', '德州市', '聊城市', '滨州市', '菏泽市'],
-  '四川省': ['成都市', '自贡市', '攀枝花市', '泸州市', '德阳市', '绵阳市', '广元市', '遂宁市', '内江市', '乐山市', '南充市', '眉山市', '宜宾市', '广安市', '达州市', '雅安市', '巴中市', '资阳市']
+  北京市: ['东城区', '西城区', '朝阳区', '海淀区', '通州区', '昌平区', '大兴区'],
+  上海市: ['黄浦区', '徐汇区', '长宁区', '静安区', '浦东新区', '闵行区', '宝山区'],
+  广东省: ['广州市', '深圳市', '珠海市', '佛山市', '东莞市', '中山市', '惠州市'],
+  浙江省: ['杭州市', '宁波市', '温州市', '嘉兴市', '湖州市', '绍兴市', '台州市'],
+  江苏省: ['南京市', '无锡市', '徐州市', '常州市', '苏州市', '南通市', '扬州市'],
+  山东省: ['济南市', '青岛市', '淄博市', '烟台市', '潍坊市', '济宁市', '临沂市'],
+  四川省: ['成都市', '绵阳市', '德阳市', '宜宾市', '南充市', '乐山市', '达州市']
 }
 
-const getCityOptions = (province) => {
-  return cityMap[province] || []
-}
-
-// 取消
-const handleCancel = () => {
-  emit('update:modelValue', false)
-}
-
-// 确认
-const handleConfirm = async () => {
-  try {
-    await formRef.value.validate()
-
-    submitting.value = true
-
-    const data = {
-      ...form,
-      configType: props.configType
-    }
-
-    if (isEdit.value) {
-      await updateCommissionConfig(props.config._id, data)
-      ElMessage.success('更新成功')
-    } else {
-      await createCommissionConfig(data)
-      ElMessage.success('创建成功')
-    }
-
-    emit('update:modelValue', false)
-    emit('success')
-  } catch (error) {
-    if (error !== false) { // 表单验证失败时error为false
-      console.error('保存配置失败:', error)
-      ElMessage.error(error.message || '保存失败')
-    }
-  } finally {
-    submitting.value = false
-  }
-}
+const getCityOptions = (province) => cityMap[province] || []
 </script>
 
 <style scoped lang="scss">
@@ -391,5 +370,17 @@ const handleConfirm = async () => {
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+.rate-tip {
+  margin-left: 10px;
+  color: #909399;
+}
+
+.form-tip {
+  margin-top: 6px;
+  color: #909399;
+  font-size: 12px;
+  line-height: 1.4;
 }
 </style>

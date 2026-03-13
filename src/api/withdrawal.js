@@ -21,6 +21,14 @@ export function createWithdrawal(data) {
   })
 }
 
+export function cancelWithdrawal(id, data) {
+  return request({
+    url: `/withdrawal/${id}/cancel`,
+    method: 'post',
+    data
+  })
+}
+
 /**
  * 获取提现记录列表
  */

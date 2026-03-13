@@ -456,7 +456,7 @@
       >
         <el-form-item
           label="打款回单"
-          prop="paymentProof"
+          prop="paymentProofs"
         >
           <el-upload
             v-model:file-list="confirmFileList"
@@ -713,10 +713,7 @@ const confirmRules = {
 const confirmFileList = ref([])
 
 // 上传配置
-const uploadUrl = computed(() => {
-  const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
-  return `${baseURL}/api/upload`
-})
+const uploadUrl = '/api/upload'
 
 const uploadHeaders = computed(() => {
   const token = localStorage.getItem('token')
@@ -870,10 +867,8 @@ const handleRemove = (file) => {
 
 // 确认打款
 const confirmPayment = async () => {
-  if (confirmForm.value.paymentProofs.length === 0) {
-    ElMessage.warning('请上传打款回单')
-    return
-  }
+  const valid = await confirmFormRef.value?.validate().catch(() => false)
+  if (!valid) return
 
   submitting.value = true
   try {
@@ -947,7 +942,8 @@ const getStatusType = (status) => {
     'pending': 'warning',
     'processing': 'info',
     'completed': 'success',
-    'rejected': 'danger'
+    'rejected': 'danger',
+    'cancelled': 'info'
   }
   return map[status] || 'info'
 }
@@ -958,7 +954,8 @@ const getStatusText = (status) => {
     'pending': '待打款',
     'processing': '处理中',
     'completed': '已完成',
-    'rejected': '已驳回'
+    'rejected': '已驳回',
+    'cancelled': '已取消'
   }
   return map[status] || status
 }

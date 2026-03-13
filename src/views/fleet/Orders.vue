@@ -995,8 +995,11 @@ import request from '@/utils/request'
 import { getStores } from '@/api/store'
 import { getFleetConfig } from '@/api/fleet'
 import { getImageUrl, getImageUrls } from '@/utils/image'
+import { useRoute, useRouter } from 'vue-router'
 import dayjs from 'dayjs'
 
+const route = useRoute()
+const router = useRouter()
 const loading = ref(false)
 const exporting = ref(false)
 const orderList = ref([])
@@ -1048,6 +1051,33 @@ const userFleetId = computed(() => {
   const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}')
   return userInfo.fleetInfo?.fleetId
 })
+
+const getOrderActualAmount = (order) => {
+  const amountCandidates = [
+    order?.quote?.actualTotal,
+    order?.quote?.total,
+    order?.maintenanceOrder?.finalAmount
+  ]
+
+  const matchedAmount = amountCandidates.find(amount => {
+    const normalizedAmount = Number(amount)
+    return Number.isFinite(normalizedAmount) && normalizedAmount > 0
+  })
+
+  return Number(matchedAmount || 0)
+}
+
+const getOrderCompletedAt = (order) => {
+  const completedAt =
+    order?.completion?.confirmedAt ||
+    order?.completion?.completedAt ||
+    order?.completion?.submittedAt ||
+    order?.updatedAt ||
+    order?.createdAt
+
+  const parsedDate = completedAt ? new Date(completedAt) : null
+  return parsedDate && !Number.isNaN(parsedDate.getTime()) ? parsedDate : null
+}
 
 const getCheckinPhotoUrls = (order) => getImageUrls(order?.receiveCheck?.checkinPhotos || [])
 
@@ -1233,20 +1263,55 @@ const fetchStatistics = async () => {
     stats.value.inRepair = orders.filter(o => o.status === 'in_repair' || o.status === 'awaiting_addon_approval').length
     stats.value.pendingConfirmation = orders.filter(o => o.status === 'pending_confirmation').length
 
-    // 计算本月费用（已完成订单的总报价）
+    // 计算本月费用：按本月完成订单的实际消费金额汇总
     const now = new Date()
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
 
-    const monthlyOrders = orders.filter(o => {
-      const orderDate = new Date(o.createdAt)
-      return orderDate >= monthStart && o.status === 'completed' && o.quote?.total != null
+    const monthlyOrders = orders.filter(order => {
+      const completedAt = getOrderCompletedAt(order)
+      return order.status === 'completed' && completedAt && completedAt >= monthStart && getOrderActualAmount(order) > 0
     })
 
     stats.value.monthlyAmount = monthlyOrders.reduce((sum, order) => {
-      return sum + (order.quote?.total || 0)
-    }, 0) / 100 // 分转元
+      return sum + getOrderActualAmount(order)
+    }, 0)
   } catch (error) {
     console.error('获取统计数据失败:', error)
+  }
+}
+
+const getRouteOrderId = () => {
+  const orderId = route.query.orderId
+  return typeof orderId === 'string' ? orderId : ''
+}
+
+const clearRouteOrderId = async () => {
+  if (!route.query.orderId) return
+
+  const nextQuery = { ...route.query }
+  delete nextQuery.orderId
+  await router.replace({
+    path: route.path,
+    query: nextQuery
+  })
+}
+
+const openOrderDetailById = async (orderId) => {
+  if (!orderId) return
+
+  try {
+    const res = await request({
+      url: `/orders/${orderId}`,
+      method: 'get'
+    })
+
+    currentOrder.value = res.data
+    detailDialogVisible.value = true
+  } catch (error) {
+    console.error('获取订单详情失败:', error)
+    ElMessage.error(error.response?.data?.message || '获取订单详情失败')
+  } finally {
+    await clearRouteOrderId()
   }
 }
 
@@ -1625,11 +1690,16 @@ const exportExcel = async () => {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   fetchStores()
   fetchStatistics()
   fetchOrders()
   fetchFleetConfig()
+
+  const orderId = getRouteOrderId()
+  if (orderId) {
+    await openOrderDetailById(orderId)
+  }
 })
 </script>
 

@@ -1,50 +1,78 @@
 /**
- * 图片URL处理工具
+ * 图片 URL 处理工具。
  *
- * 说明：
- * - 后端上传接口现在返回完整的URL（如 http://localhost:3000/uploads/xxx.jpg）
- * - 但数据库中可能存在旧数据，仍然是相对路径（如 /uploads/xxx.jpg）
- * - 此工具函数兼容处理新旧两种格式，确保图片能正确显示
+ * 兼容三种场景：
+ * 1. OSS / CDN 返回的完整公网 URL
+ * 2. 旧数据中的相对路径，如 /uploads/xxx.jpg
+ * 3. 开发环境历史遗留的 http://localhost:3000/uploads/xxx.jpg
  */
 
-/**
- * 获取完整的图片URL
- * @param {string} url - 相对或绝对路径的图片URL
- * @returns {string} 完整的图片URL
- */
-export function getImageUrl(url) {
+const LOCAL_BACKEND_URL_RE = /^https?:\/\/(?:localhost|127\.0\.0\.1):3000(?=\/)/i
+
+function toDevUploadProxyUrl(pathname) {
+  const cleanPath = pathname.replace(/^\/+/, '').replace(/^uploads\/+/, '')
+  return `/api/uploads/${cleanPath}`
+}
+
+function normalizeDevImageUrl(url) {
   if (!url) return ''
 
-  // 如果已经是完整URL，直接返回
-  if (url.startsWith('http://') || url.startsWith('https://')) {
-    return url
-  }
-
-  // 处理相对路径（兼容旧数据）
-  if (url.startsWith('/uploads/') || url.startsWith('/static/')) {
-    // 开发环境：使用后端服务器地址
-    if (import.meta.env.DEV) {
-      return `http://localhost:3000${url}`
+  if (LOCAL_BACKEND_URL_RE.test(url)) {
+    try {
+      const parsed = new URL(url)
+      if (parsed.pathname.startsWith('/uploads/')) {
+        return `${toDevUploadProxyUrl(parsed.pathname)}${parsed.search}${parsed.hash}`
+      }
+      return `${parsed.pathname}${parsed.search}${parsed.hash}`
+    } catch {
+      return url
     }
-    // 生产环境：使用相对路径（通过nginx代理）
-    return url
   }
 
-  // 其他情况：如果是相对路径，拼接服务器地址
-  if (import.meta.env.DEV) {
-    return `http://localhost:3000${url.startsWith('/') ? url : '/' + url}`
+  if (url.startsWith('/uploads/')) {
+    return toDevUploadProxyUrl(url)
   }
 
   return url
 }
 
 /**
- * 获取多个图片的完整URL数组
- * @param {string[]} urls - 图片URL数组
- * @returns {string[]} 完整的图片URL数组
+ * 获取完整的图片 URL。
+ * @param {string} url 图片地址
+ * @returns {string}
+ */
+export function getImageUrl(url) {
+  if (!url) return ''
+
+  if (import.meta.env.DEV) {
+    const devUrl = normalizeDevImageUrl(url)
+    if (devUrl !== url) {
+      return devUrl
+    }
+  }
+
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url
+  }
+
+  if (url.startsWith('/uploads/') || url.startsWith('/static/')) {
+    return url
+  }
+
+  if (import.meta.env.DEV) {
+    const baseURL = import.meta.env.VITE_API_URL || '/api'
+    return `${baseURL}${url.startsWith('/') ? '' : '/'}${url}`
+  }
+
+  return url
+}
+
+/**
+ * 获取多个图片的完整 URL 数组。
+ * @param {string[]} urls 图片地址数组
+ * @returns {string[]}
  */
 export function getImageUrls(urls) {
   if (!Array.isArray(urls)) return []
   return urls.map(url => getImageUrl(url))
 }
-

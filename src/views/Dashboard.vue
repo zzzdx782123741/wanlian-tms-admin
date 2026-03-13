@@ -116,7 +116,7 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { getBalance } from '@/api/account'
-import { getFleetStats } from '@/api/fleet'
+import { getCurrentFleetStats, getFleetStats } from '@/api/fleet'
 import { getOverview } from '@/api/stats'
 import { getStoreOrders, getStoreStatistics, getStoreStats } from '@/api/store'
 
@@ -217,6 +217,24 @@ const fetchPlatformStats = async () => {
   }
 }
 
+const fetchFleetManagerStats = async () => {
+  if (!isFleetManager.value) {
+    return
+  }
+
+  try {
+    const res = await getCurrentFleetStats()
+    const fleetStats = res.data || {}
+
+    stats.value.totalOrders = Number(fleetStats.totalOrders ?? 0)
+    stats.value.completedOrders = Number(fleetStats.completedOrders ?? 0)
+    stats.value.pendingOrders = Number(fleetStats.inTransitOrders ?? 0)
+    stats.value.repairingOrders = Number(fleetStats.pendingOrders ?? 0)
+  } catch (error) {
+    console.error('获取车队管理员首页统计失败:', error)
+  }
+}
+
 const fetchStoreManagerStats = async () => {
   if (normalizeRole(userRole.value) !== 'STORE_MANAGER') {
     return
@@ -230,12 +248,12 @@ const fetchStoreManagerStats = async () => {
 
     const totalOrders = Number(ordersRes.data?.total ?? 0)
     const completedOrders = Number(statisticsRes.data?.summary?.completedOrders ?? 0)
-    const totalRevenueInFen = Number(statisticsRes.data?.summary?.totalRevenue ?? 0)
+    const totalRevenue = Number(statisticsRes.data?.summary?.totalRevenue ?? 0)
 
     stats.value.totalOrders = totalOrders
     stats.value.completedOrders = completedOrders
     stats.value.pendingOrders = Math.max(totalOrders - completedOrders, 0)
-    stats.value.totalAmount = Number((totalRevenueInFen / 100).toFixed(2))
+    stats.value.totalAmount = Number(totalRevenue.toFixed(2))
   } catch (error) {
     console.error('获取门店管理员首页统计失败:', error)
   }
@@ -246,6 +264,7 @@ onMounted(() => {
   clockTimer = setInterval(updateTime, 1000)
 
   fetchBalance()
+  fetchFleetManagerStats()
   fetchPlatformStats()
   fetchStoreManagerStats()
 

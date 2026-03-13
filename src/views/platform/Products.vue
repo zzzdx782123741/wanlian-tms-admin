@@ -277,6 +277,22 @@
             >
               编辑
             </el-button>
+            <el-tooltip
+              v-else-if="getEditBlockedReason(row)"
+              :content="getEditBlockedReason(row)"
+              placement="top"
+            >
+              <span>
+                <el-button
+                  link
+                  type="info"
+                  size="small"
+                  disabled
+                >
+                  编辑
+                </el-button>
+              </span>
+            </el-tooltip>
             <el-button
               v-if="canAudit(row)"
               link
@@ -797,7 +813,34 @@ import { batchImportProducts } from '@/api/batch'
 const userRole = localStorage.getItem('role') || ''
 const isPlatformOperator = userRole === 'PLATFORM_OPERATOR'
 const isStoreProductRole = ['STORE_MANAGER', 'STORE_TECHNICIAN'].includes(userRole)
-const userStoreId = localStorage.getItem('storeId') || ''
+
+function resolveUserStoreId() {
+  const directStoreId = localStorage.getItem('storeId')
+  if (directStoreId) {
+    return directStoreId
+  }
+
+  try {
+    const rawUserInfo = localStorage.getItem('userInfo')
+    if (!rawUserInfo) {
+      return ''
+    }
+
+    const userInfo = JSON.parse(rawUserInfo)
+    const storeId = userInfo?.storeInfo?.storeId
+
+    if (!storeId) {
+      return ''
+    }
+
+    return typeof storeId === 'object' ? (storeId._id || storeId.id || '') : storeId
+  } catch (error) {
+    console.warn('解析用户门店信息失败:', error)
+    return ''
+  }
+}
+
+const userStoreId = resolveUserStoreId()
 
 // 计算属性：是否显示所属门店筛选
 // 当选择"门店录入"或"全部来源"时显示，选择"平台录入"时隐藏
@@ -1048,6 +1091,18 @@ function canEdit(row) {
     return row?.source === 'platform' && row?.status !== 'approved'
   }
   return isOwnStoreProduct(row) && ['pending', 'rejected', 'offline'].includes(row?.status)
+}
+
+function getEditBlockedReason(row) {
+  if (!isStoreProductRole || !isOwnStoreProduct(row)) {
+    return ''
+  }
+
+  if (row?.status === 'approved') {
+    return '已上架商品需先下架，再修改商品信息'
+  }
+
+  return ''
 }
 
 function canDelete(row) {
