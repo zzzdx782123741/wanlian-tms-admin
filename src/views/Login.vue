@@ -74,7 +74,7 @@
 
       <!-- 测试账号快捷选择（测试环境显示，生产环境隐藏） -->
       <div
-        v-if="isDev"
+        v-if="isTestLoginEnabled"
         class="test-accounts"
       >
         <el-divider content-position="center">
@@ -158,9 +158,8 @@ const getRoleHomePath = (role) => {
 const loginFormRef = ref()
 const loading = ref(false)
 
-// 判断是否为开发环境
-const isDev = computed(() => {
-  return import.meta.env.DEV || window.location.hostname === 'localhost'
+const isTestLoginEnabled = computed(() => {
+  return import.meta.env.VITE_ENABLE_TEST_LOGIN === 'true'
 })
 
 const loginForm = ref({
@@ -235,6 +234,7 @@ const submitLogin = async (loginApi, payload) => {
 }
 
 const handleQuickTestLogin = async (username, password) => {
+  if (!isTestLoginEnabled.value) return
   loginForm.value.username = username
   loginForm.value.password = password
   await submitLogin(testLogin, { username, password })
