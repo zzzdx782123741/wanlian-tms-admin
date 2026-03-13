@@ -1011,7 +1011,8 @@ const getImageUrl = (url) => {
   // 开发环境：如果是 localhost:3000 的完整URL，转换为通过代理访问的路径
   // 这样可以避免跨域问题，并且通过统一的代理端口访问
   const isDev = import.meta.env.DEV
-  if (isDev && url.includes('://localhost:3000/uploads/')) {
+  const devBackendOrigin = (import.meta.env.VITE_API_PROXY_TARGET || `${import.meta.env.VITE_API_PROTOCOL || 'http'}://${import.meta.env.VITE_API_HOST || 'localhost'}:${import.meta.env.VITE_API_PORT || '3000'}`).replace(/\/+$/, '')
+  if (isDev && url.startsWith(`${devBackendOrigin}/uploads/`)) {
     // 提取 /uploads/ 之后的部分，通过 /api/uploads 访问
     const pathMatch = url.match(/\/uploads\/(.+)$/)
     if (pathMatch) {

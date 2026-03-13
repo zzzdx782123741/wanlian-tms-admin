@@ -2,9 +2,21 @@ import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import path from 'path'
 
+function resolveApiProxyTarget(env) {
+  if (env.VITE_API_PROXY_TARGET) {
+    return env.VITE_API_PROXY_TARGET
+  }
+
+  const protocol = env.VITE_API_PROTOCOL || 'http'
+  const host = env.VITE_API_HOST || 'localhost'
+  const port = env.VITE_API_PORT || '3000'
+
+  return `${protocol}://${host}:${port}`
+}
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
-  const apiProxyTarget = env.VITE_API_PROXY_TARGET || 'http://localhost:3000'
+  const apiProxyTarget = resolveApiProxyTarget(env)
 
   return {
     plugins: [vue()],
@@ -14,19 +26,17 @@ export default defineConfig(({ mode }) => {
       }
     },
     server: {
-      host: '0.0.0.0', // 监听所有网络接口，允许局域网访问
+      host: '0.0.0.0',
       port: 5173,
       proxy: {
         '/api': {
           target: apiProxyTarget,
           changeOrigin: true
         },
-        // 代理上传的静态文件（通过 /api/uploads 访问，避免跨域问题）
         '/api/uploads': {
           target: apiProxyTarget,
           changeOrigin: true,
-          // 重写路径：/api/uploads/xxx -> /uploads/xxx
-          rewrite: (path) => path.replace(/^\/api\/uploads/, '/uploads')
+          rewrite: (requestPath) => requestPath.replace(/^\/api\/uploads/, '/uploads')
         }
       }
     }

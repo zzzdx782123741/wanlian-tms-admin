@@ -3,11 +3,35 @@
  *
  * 兼容三种场景：
  * 1. OSS / CDN 返回的完整公网 URL
- * 2. 旧数据中的相对路径，如 /uploads/xxx.jpg
- * 3. 开发环境历史遗留的 http://localhost:3000/uploads/xxx.jpg
+ * 2. 旧数据中的相对路径，例如 /uploads/xxx.jpg
+ * 3. 开发环境历史遗留的后端绝对地址，例如 http://localhost:3000/uploads/xxx.jpg
  */
 
-const LOCAL_BACKEND_URL_RE = /^https?:\/\/(?:localhost|127\.0\.0\.1):3000(?=\/)/i
+const DEV_API_PROTOCOL = import.meta.env.VITE_API_PROTOCOL || 'http'
+const DEV_API_HOST = import.meta.env.VITE_API_HOST || 'localhost'
+const DEV_API_PORT = import.meta.env.VITE_API_PORT || '3000'
+const DEV_API_PROXY_TARGET = import.meta.env.VITE_API_PROXY_TARGET ||
+  `${DEV_API_PROTOCOL}://${DEV_API_HOST}:${DEV_API_PORT}`
+
+function buildDevApiOrigins() {
+  const origins = new Set()
+
+  try {
+    origins.add(new URL(DEV_API_PROXY_TARGET).origin.toLowerCase())
+  } catch {
+    // Ignore invalid values and keep relative-path fallback working.
+  }
+
+  if (DEV_API_HOST === 'localhost') {
+    origins.add(`${DEV_API_PROTOCOL}://127.0.0.1:${DEV_API_PORT}`.toLowerCase())
+  } else if (DEV_API_HOST === '127.0.0.1') {
+    origins.add(`${DEV_API_PROTOCOL}://localhost:${DEV_API_PORT}`.toLowerCase())
+  }
+
+  return origins
+}
+
+const DEV_API_ORIGINS = buildDevApiOrigins()
 
 function toDevUploadProxyUrl(pathname) {
   const cleanPath = pathname.replace(/^\/+/, '').replace(/^uploads\/+/, '')
@@ -17,13 +41,16 @@ function toDevUploadProxyUrl(pathname) {
 function normalizeDevImageUrl(url) {
   if (!url) return ''
 
-  if (LOCAL_BACKEND_URL_RE.test(url)) {
+  if (/^https?:\/\//i.test(url)) {
     try {
       const parsed = new URL(url)
-      if (parsed.pathname.startsWith('/uploads/')) {
-        return `${toDevUploadProxyUrl(parsed.pathname)}${parsed.search}${parsed.hash}`
+      if (DEV_API_ORIGINS.has(parsed.origin.toLowerCase())) {
+        if (parsed.pathname.startsWith('/uploads/')) {
+          return `${toDevUploadProxyUrl(parsed.pathname)}${parsed.search}${parsed.hash}`
+        }
+
+        return `${parsed.pathname}${parsed.search}${parsed.hash}`
       }
-      return `${parsed.pathname}${parsed.search}${parsed.hash}`
     } catch {
       return url
     }
