@@ -1,184 +1,83 @@
 <template>
   <div class="store-register-page">
-    <el-page-header
-      title="返回"
-      @back="$router.back()"
-    >
+    <el-page-header title="门店入驻" @back="$router.back()">
       <template #content>
         <div class="page-header-content">
-          <el-icon
-            :size="20"
-            style="margin-right: 8px"
-          >
+          <el-icon :size="20" style="margin-right: 8px">
             <Shop />
           </el-icon>
-          <span class="text-large font-600">门店注册</span>
+          <span class="text-large font-600">平台运营代门店注册</span>
         </div>
       </template>
     </el-page-header>
 
-    <el-card style="margin-top: 20px">
+    <el-card class="page-card">
       <el-alert
-        title="提示"
+        title="请按步骤完成门店基础资料录入"
         type="info"
         :closable="false"
-        style="margin-bottom: 20px"
+        class="page-alert"
       >
-        门店注册采用简化流程，仅需填写必要信息即可完成注册。其他详细信息（如服务能力、定价等）可由门店管理员在后台自行补充。
+        当前页面已补齐手机号、营业执照号、银行账号等核心字段校验。
+        如勾选“直接审核通过”，还会同时校验门店管理员姓名和手机号。
       </el-alert>
 
-      <!-- 步骤条 -->
-      <el-steps
-        :active="currentStep"
-        finish-status="success"
-        align-center
-        style="margin-bottom: 30px"
-      >
+      <el-steps :active="currentStep" finish-status="success" align-center class="steps">
         <el-step title="基本信息" />
-        <el-step title="资质信息" />
+        <el-step title="证照信息" />
         <el-step title="结算信息" />
-        <el-step title="管理员账号" />
+        <el-step title="账号开通" />
       </el-steps>
 
-      <!-- 步骤1：基本信息 -->
-      <div
-        v-show="currentStep === 0"
-        class="step-content"
-      >
-        <el-form
-          ref="basicFormRef"
-          :model="formData"
-          :rules="basicRules"
-          label-width="140px"
-          size="large"
-        >
-          <el-form-item
-            label="门店名称"
-            prop="name"
-          >
-            <el-input
-              v-model="formData.name"
-              placeholder="请输入门店名称"
-              clearable
-            />
+      <div v-show="currentStep === 0" class="step-content">
+        <el-form ref="basicFormRef" :model="formData" :rules="basicRules" label-width="120px" size="large">
+          <el-form-item label="门店名称" prop="name">
+            <el-input v-model="formData.name" placeholder="请输入门店名称" clearable />
           </el-form-item>
 
-          <el-form-item
-            label="门店类型"
-            prop="storeType"
-          >
-            <el-select
-              v-model="formData.storeType"
-              placeholder="请选择门店类型"
-              style="width: 100%"
-            >
-              <el-option
-                label="综合维修厂"
-                value="comprehensive"
-              />
-              <el-option
-                label="专修店"
-                value="specialized"
-              />
-              <el-option
-                label="4S店授权店"
-                value="authorized_4s"
-              />
-              <el-option
-                label="快修店"
-                value="quick_service"
-              />
-              <el-option
-                label="连锁门店"
-                value="chain"
-              />
+          <el-form-item label="门店类型" prop="storeType">
+            <el-select v-model="formData.storeType" placeholder="请选择门店类型" style="width: 100%">
+              <el-option label="综合维修厂" value="comprehensive" />
+              <el-option label="专项维修厂" value="specialized" />
+              <el-option label="4S 店授权维修" value="authorized_4s" />
+              <el-option label="快修快保" value="quick_service" />
+              <el-option label="连锁门店" value="chain" />
             </el-select>
           </el-form-item>
 
-          <el-form-item
-            label="联系人姓名"
-            prop="contact.name"
-          >
-            <el-input
-              v-model="formData.contact.name"
-              placeholder="请输入联系人姓名"
-              clearable
-            />
+          <el-form-item label="联系人" prop="contact.name">
+            <el-input v-model="formData.contact.name" placeholder="请输入联系人姓名" clearable />
           </el-form-item>
 
-          <el-form-item
-            label="联系电话"
-            prop="contact.phone"
-          >
-            <el-input
-              v-model="formData.contact.phone"
-              placeholder="请输入联系电话"
-              clearable
-            />
+          <el-form-item label="联系电话" prop="contact.phone">
+            <el-input v-model="formData.contact.phone" placeholder="请输入联系电话" clearable />
           </el-form-item>
 
-          <el-form-item label="备用联系电话">
-            <el-input
-              v-model="formData.contact.backupPhone"
-              placeholder="选填，请输入备用联系电话"
-              clearable
-            />
+          <el-form-item label="备用电话" prop="contact.backupPhone">
+            <el-input v-model="formData.contact.backupPhone" placeholder="选填，填写时需符合手机号格式" clearable />
           </el-form-item>
 
-          <el-form-item
-            label="详细地址"
-            prop="address.detail"
-          >
-            <el-input
-              v-model="formData.address.detail"
-              type="textarea"
-              :rows="2"
-              placeholder="请输入详细地址"
-            />
+          <el-form-item label="详细地址" prop="address.detail">
+            <el-input v-model="formData.address.detail" type="textarea" :rows="2" placeholder="请输入详细地址" />
           </el-form-item>
 
-          <el-form-item
-            label="营业时间"
-            prop="businessHours"
-          >
-            <el-input
-              v-model="formData.businessHours"
-              placeholder="如：8:00-18:00"
-              clearable
-            />
+          <el-form-item label="营业时间" prop="businessHours">
+            <el-input v-model="formData.businessHours" placeholder="例如：08:00-18:00" clearable />
           </el-form-item>
         </el-form>
       </div>
 
-      <!-- 步骤2：资质信息 -->
-      <div
-        v-show="currentStep === 1"
-        class="step-content"
-      >
-        <el-form
-          ref="certFormRef"
-          :model="formData"
-          :rules="certRules"
-          label-width="140px"
-          size="large"
-        >
-          <el-form-item
-            label="营业执照号码"
-            prop="businessLicense.number"
-            required
-          >
+      <div v-show="currentStep === 1" class="step-content">
+        <el-form ref="certFormRef" :model="formData" :rules="certRules" label-width="120px" size="large">
+          <el-form-item label="营业执照号" prop="businessLicense.number">
             <el-input
               v-model="formData.businessLicense.number"
-              placeholder="请输入统一社会信用代码/营业执照号码"
+              placeholder="请输入 15 位或 18 位营业执照号"
               clearable
             />
           </el-form-item>
 
-          <el-form-item
-            label="营业执照照片"
-            prop="businessLicense.url"
-            required
-          >
+          <el-form-item label="营业执照" prop="businessLicense.url">
             <el-upload
               :http-request="(options) => customUpload(options, 'businessLicense.url')"
               :before-upload="beforeUpload"
@@ -186,223 +85,137 @@
               accept="image/*"
               name="file"
             >
-              <el-button
-                type="primary"
-                :loading="uploading"
-              >
+              <el-button type="primary" :loading="uploading">
                 <el-icon style="margin-right: 4px">
                   <Upload />
                 </el-icon>
-                {{ uploading ? '上传中...' : '点击上传' }}
+                {{ uploading ? '上传中...' : '上传营业执照' }}
               </el-button>
               <template #tip>
-                <div class="el-upload__tip">
-                  支持jpg/png格式，大小不超过5MB
-                </div>
+                <div class="el-upload__tip">仅支持图片格式，大小不超过 5MB</div>
               </template>
             </el-upload>
-            <div
-              v-if="formData.businessLicense.url"
-              class="uploaded-preview"
-            >
+
+            <div v-if="formData.businessLicense.url" class="uploaded-preview">
               <el-image
-                :src="formData.businessLicense.url"
+                :src="getImageUrl(formData.businessLicense.url)"
                 fit="cover"
                 style="width: 120px; height: 120px; margin-top: 10px; border-radius: 4px"
-                :preview-src-list="[formData.businessLicense.url]"
+                :preview-src-list="[getImageUrl(formData.businessLicense.url)]"
               />
-              <el-button
-                type="danger"
-                size="small"
-                link
-                style="margin-left: 10px; vertical-align: top"
-                @click="formData.businessLicense.url = ''"
-              >
-                删除
+              <el-button type="danger" link style="margin-left: 10px; vertical-align: top" @click="clearFile('businessLicense')">
+                删除图片
               </el-button>
             </div>
           </el-form-item>
         </el-form>
       </div>
 
-      <!-- 步骤3：结算信息 -->
-      <div
-        v-show="currentStep === 2"
-        class="step-content"
-      >
-        <el-form
-          ref="settlementFormRef"
-          :model="formData"
-          :rules="settlementRules"
-          label-width="140px"
-          size="large"
-        >
-          <el-form-item
-            label="开户银行"
-            prop="bankAccount.bankName"
-          >
-            <el-input
-              v-model="formData.bankAccount.bankName"
-              placeholder="请输入开户银行"
-              clearable
-            />
+      <div v-show="currentStep === 2" class="step-content">
+        <el-form ref="settlementFormRef" :model="formData" :rules="settlementRules" label-width="120px" size="large">
+          <el-form-item label="开户银行" prop="bankAccount.bankName">
+            <el-input v-model="formData.bankAccount.bankName" placeholder="请输入开户银行" clearable />
           </el-form-item>
 
-          <el-form-item
-            label="银行账号"
-            prop="bankAccount.accountNumber"
-          >
-            <el-input
-              v-model="formData.bankAccount.accountNumber"
-              placeholder="请输入银行账号"
-              clearable
-            />
+          <el-form-item label="银行账号" prop="bankAccount.accountNumber">
+            <el-input v-model="formData.bankAccount.accountNumber" placeholder="请输入银行账号" clearable />
           </el-form-item>
 
-          <el-form-item
-            label="开户名称"
-            prop="bankAccount.accountName"
-          >
-            <el-input
-              v-model="formData.bankAccount.accountName"
-              placeholder="请输入开户名称"
-              clearable
-            />
+          <el-form-item label="账户名称" prop="bankAccount.accountName">
+            <el-input v-model="formData.bankAccount.accountName" placeholder="请输入账户名称" clearable />
           </el-form-item>
 
           <el-form-item label="结算周期">
             <el-radio-group v-model="formData.bankAccount.settlementCycle">
-              <el-radio value="monthly">
-                月结
-              </el-radio>
-              <el-radio value="quarterly">
-                季结
-              </el-radio>
-              <el-radio value="per_order">
-                单笔结算
-              </el-radio>
+              <el-radio label="monthly">月结</el-radio>
+              <el-radio label="quarterly">季结</el-radio>
+              <el-radio label="per_order">单结</el-radio>
             </el-radio-group>
           </el-form-item>
         </el-form>
       </div>
 
-      <!-- 步骤4：管理员账号 -->
-      <div
-        v-show="currentStep === 3"
-        class="step-content"
-      >
-        <el-form
-          ref="accountFormRef"
-          :model="formData"
-          :rules="accountRules"
-          label-width="140px"
-          size="large"
-        >
+      <div v-show="currentStep === 3" class="step-content">
+        <el-form ref="accountFormRef" :model="formData" :rules="accountRules" label-width="120px" size="large">
           <el-alert
-            title="管理员账号信息"
+            title="是否直接审核通过"
             type="info"
             :closable="false"
-            style="margin-bottom: 20px"
+            class="form-section-alert"
           >
-            请填写门店管理员账号信息，注册成功后将自动创建登录账号。
+            勾选后会自动为门店创建管理员账号，登录账号默认使用管理员手机号。
           </el-alert>
 
-          <el-form-item
-            label="登录账号"
-            prop="createdBy.username"
-          >
-            <el-input
-              v-model="formData.createdBy.username"
-              placeholder="请输入登录账号（手机号）"
-              clearable
-            />
-          </el-form-item>
-
-          <el-form-item
-            label="管理员姓名"
-            prop="createdBy.name"
-          >
-            <el-input
-              v-model="formData.createdBy.name"
-              placeholder="请输入管理员姓名"
-              clearable
-            />
-          </el-form-item>
-
-          <el-form-item
-            label="手机号码"
-            prop="createdBy.phone"
-          >
-            <el-input
-              v-model="formData.createdBy.phone"
-              placeholder="请输入手机号码"
-              clearable
-            />
-          </el-form-item>
-
-          <el-form-item label="直接审核通过">
+          <el-form-item label="直接审核">
             <el-switch v-model="formData.directApprove" />
-            <div class="form-tip">
-              开启后门店将直接进入正常运营状态，无需等待审核
-            </div>
           </el-form-item>
+
+          <template v-if="formData.directApprove">
+            <el-form-item label="登录账号" prop="createdBy.username">
+              <el-input v-model="formData.createdBy.username" placeholder="根据管理员手机号自动生成" disabled />
+            </el-form-item>
+
+            <el-form-item label="管理员姓名" prop="createdBy.name">
+              <el-input v-model="formData.createdBy.name" placeholder="请输入管理员姓名" clearable />
+            </el-form-item>
+
+            <el-form-item label="管理员手机" prop="createdBy.phone">
+              <el-input v-model="formData.createdBy.phone" placeholder="请输入管理员手机号" clearable />
+            </el-form-item>
+          </template>
+
+          <el-alert
+            v-else
+            title="未勾选直接审核"
+            type="warning"
+            :closable="false"
+          >
+            当前将以“待审核”状态提交，门店管理员账号不会自动创建。
+          </el-alert>
         </el-form>
       </div>
 
-      <!-- 操作按钮 -->
       <div class="form-actions">
-        <el-button
-          v-if="currentStep > 0"
-          @click="prevStep"
-        >
-          上一步
-        </el-button>
-        <el-button
-          v-else
-          @click="$router.back()"
-        >
-          取消
-        </el-button>
-        <el-button
-          v-if="currentStep < 3"
-          type="primary"
-          @click="nextStep"
-        >
-          下一步
-        </el-button>
-        <el-button
-          v-else
-          type="primary"
-          :loading="submitting"
-          @click="handleSubmit"
-        >
-          提交注册
-        </el-button>
+        <el-button v-if="currentStep > 0" @click="prevStep">上一步</el-button>
+        <el-button v-else @click="$router.back()">返回</el-button>
+
+        <el-button v-if="currentStep < LAST_STEP" type="primary" @click="nextStep">下一步</el-button>
+        <el-button v-else type="primary" :loading="submitting" @click="handleSubmit">提交注册</el-button>
       </div>
     </el-card>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, watch } from 'vue'
+import { reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useRouter } from 'vue-router'
 import { Shop, Upload } from '@element-plus/icons-vue'
-import request from '@/utils/request'
 import axios from 'axios'
+import request from '@/utils/request'
+import {
+  buildBankAccountNumberRules,
+  buildBusinessLicenseNumberRules,
+  buildPhoneRules,
+  isValidPhone,
+  normalizeBankAccountNumber,
+  normalizeBusinessLicenseNumber,
+  normalizePhone,
+  trimValue
+} from '@/utils/formValidators'
 
 const router = useRouter()
+const LAST_STEP = 3
+
 const currentStep = ref(0)
 const submitting = ref(false)
 const uploading = ref(false)
 
-// 表单引用
 const basicFormRef = ref(null)
 const certFormRef = ref(null)
 const settlementFormRef = ref(null)
 const accountFormRef = ref(null)
 
-// 表单数据（简化版）
 const formData = reactive({
   name: '',
   storeType: 'comprehensive',
@@ -414,16 +227,24 @@ const formData = reactive({
   address: {
     detail: ''
   },
-  businessHours: '8:00-18:00',
+  businessHours: '08:00-18:00',
   serviceRange: 50,
   businessLicense: {
     number: '',
     url: ''
   },
-  // 保留这些字段以兼容后端，但前端不再展示
-  organizationCode: { number: '', url: '' },
-  transportLicense: { number: '', url: '' },
-  repairLicense: { number: '', url: '' },
+  organizationCode: {
+    number: '',
+    url: ''
+  },
+  transportLicense: {
+    number: '',
+    url: ''
+  },
+  repairLicense: {
+    number: '',
+    url: ''
+  },
   serviceCapabilities: {
     serviceTypes: [],
     brandSpecialties: [],
@@ -462,67 +283,157 @@ const formData = reactive({
   directApprove: false
 })
 
-// 验证规则
+function validateRequiredText(message, condition) {
+  return (_rule, value, callback) => {
+    if (!condition()) {
+      callback()
+      return
+    }
+
+    if (!trimValue(value)) {
+      callback(new Error(message))
+      return
+    }
+
+    callback()
+  }
+}
+
+function validateConditionalPhone(requiredMessage, invalidMessage, condition) {
+  return (_rule, value, callback) => {
+    if (!condition()) {
+      callback()
+      return
+    }
+
+    const normalizedValue = normalizePhone(value)
+    if (!normalizedValue) {
+      callback(new Error(requiredMessage))
+      return
+    }
+
+    if (!isValidPhone(normalizedValue)) {
+      callback(new Error(invalidMessage))
+      return
+    }
+
+    callback()
+  }
+}
+
 const basicRules = {
   name: [{ required: true, message: '请输入门店名称', trigger: 'blur' }],
   storeType: [{ required: true, message: '请选择门店类型', trigger: 'change' }],
   'contact.name': [{ required: true, message: '请输入联系人姓名', trigger: 'blur' }],
-  'contact.phone': [
-    { required: true, message: '请输入联系电话', trigger: 'blur' },
-    { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号', trigger: 'blur' }
-  ],
+  'contact.phone': buildPhoneRules({
+    requiredMessage: '请输入联系电话',
+    invalidMessage: '请输入正确的联系电话'
+  }),
+  'contact.backupPhone': buildPhoneRules({
+    required: false,
+    invalidMessage: '请输入正确的备用电话'
+  }),
   'address.detail': [{ required: true, message: '请输入详细地址', trigger: 'blur' }],
   businessHours: [{ required: true, message: '请输入营业时间', trigger: 'blur' }]
 }
 
 const certRules = {
-  'businessLicense.number': [{ required: true, message: '请输入营业执照号码', trigger: 'blur' }],
-  'businessLicense.url': [{ required: true, message: '请上传营业执照照片', trigger: 'change' }]
+  'businessLicense.number': buildBusinessLicenseNumberRules({
+    requiredMessage: '请输入营业执照号',
+    invalidMessage: '请输入正确的营业执照号'
+  }),
+  'businessLicense.url': [{ required: true, message: '请上传营业执照', trigger: 'change' }]
 }
 
 const settlementRules = {
   'bankAccount.bankName': [{ required: true, message: '请输入开户银行', trigger: 'blur' }],
-  'bankAccount.accountNumber': [{ required: true, message: '请输入银行账号', trigger: 'blur' }],
-  'bankAccount.accountName': [{ required: true, message: '请输入开户名称', trigger: 'blur' }]
+  'bankAccount.accountNumber': buildBankAccountNumberRules({
+    requiredMessage: '请输入银行账号',
+    invalidMessage: '请输入正确的银行账号'
+  }),
+  'bankAccount.accountName': [{ required: true, message: '请输入账户名称', trigger: 'blur' }]
 }
 
 const accountRules = {
-  'createdBy.username': [
-    { required: true, message: '请输入登录账号', trigger: 'blur' },
-    { pattern: /^1[3-9]\d{9}$/, message: '登录账号必须是手机号', trigger: 'blur' }
-  ],
-  'createdBy.name': [{ required: true, message: '请输入管理员姓名', trigger: 'blur' }],
-  'createdBy.phone': [
-    { required: true, message: '请输入手机号码', trigger: 'blur' },
-    { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号', trigger: 'blur' }
-  ]
+  'createdBy.username': [{
+    validator: validateConditionalPhone(
+      '请先填写管理员手机号',
+      '登录账号需为手机号',
+      () => formData.directApprove
+    ),
+    trigger: 'blur'
+  }],
+  'createdBy.name': [{
+    validator: validateRequiredText('请输入管理员姓名', () => formData.directApprove),
+    trigger: 'blur'
+  }],
+  'createdBy.phone': [{
+    validator: validateConditionalPhone(
+      '请输入管理员手机号',
+      '请输入正确的管理员手机号',
+      () => formData.directApprove
+    ),
+    trigger: 'blur'
+  }]
 }
 
 watch(
   () => formData.createdBy.phone,
   (phone) => {
-    formData.createdBy.username = phone ? phone.trim() : ''
+    formData.createdBy.phone = normalizePhone(phone)
+    formData.createdBy.username = normalizePhone(phone)
   }
 )
 
-// 上传前验证
-const beforeUpload = (file) => {
+function getImageUrl(url) {
+  if (!url) {
+    return ''
+  }
+
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url
+  }
+
+  if (url.startsWith('/uploads') || url.startsWith('/public')) {
+    return `/api${url}`
+  }
+
+  return url
+}
+
+function setNestedValue(path, value) {
+  const keys = path.split('.')
+  if (keys.length !== 2) {
+    return
+  }
+
+  formData[keys[0]][keys[1]] = value
+}
+
+function clearFile(type) {
+  if (type === 'businessLicense') {
+    formData.businessLicense.url = ''
+  }
+}
+
+function beforeUpload(file) {
   const isImage = file.type.startsWith('image/')
   const isLt5M = file.size / 1024 / 1024 < 5
 
   if (!isImage) {
-    ElMessage.error('只能上传图片文件!')
+    ElMessage.error('只允许上传图片文件')
     return false
   }
+
   if (!isLt5M) {
-    ElMessage.error('图片大小不能超过5MB!')
+    ElMessage.error('上传文件大小不能超过 5MB')
     return false
   }
+
   return true
 }
 
-// 自定义上传方法
-const customUpload = async (options, field) => {
+async function customUpload(options, field) {
   const { file, onSuccess, onError } = options
 
   try {
@@ -531,105 +442,89 @@ const customUpload = async (options, field) => {
     const uploadFormData = new FormData()
     uploadFormData.append('file', file)
 
-    const axiosResponse = await axios.post('/api/upload', uploadFormData, {
+    const response = await axios.post('/api/upload', uploadFormData, {
       headers: {
-        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
         'Content-Type': 'multipart/form-data'
       }
     })
 
-    uploading.value = false
-
-    const response = axiosResponse.data
-
-    if (response && response.success) {
-      const keys = field.split('.')
-      if (keys.length === 2) {
-        formData[keys[0]][keys[1]] = response.data.url
-      }
-      ElMessage.success('上传成功')
-      onSuccess(response, file)
-    } else {
-      onError(new Error(response?.message || '上传失败'))
+    const result = response.data
+    if (!result?.success || !result?.data?.url) {
+      throw new Error(result?.message || '上传失败')
     }
+
+    setNestedValue(field, result.data.url)
+    ElMessage.success('上传成功')
+    onSuccess?.(result, file)
   } catch (error) {
-    console.error('上传错误:', error)
+    ElMessage.error(error.response?.data?.message || error.message || '上传失败')
+    onError?.(error)
+  } finally {
     uploading.value = false
-    ElMessage.error(error.response?.data?.message || '上传失败，请重试')
-    onError(error)
   }
 }
 
-// 下一步
-const nextStep = async () => {
-  const formRefs = [basicFormRef, certFormRef, settlementFormRef]
-  const currentRef = formRefs[currentStep.value]
+function normalizePayload() {
+  formData.contact.phone = normalizePhone(formData.contact.phone)
+  formData.contact.backupPhone = normalizePhone(formData.contact.backupPhone)
+  formData.businessLicense.number = normalizeBusinessLicenseNumber(formData.businessLicense.number)
+  formData.bankAccount.accountNumber = normalizeBankAccountNumber(formData.bankAccount.accountNumber)
+  formData.createdBy.phone = normalizePhone(formData.createdBy.phone)
+  formData.createdBy.username = normalizePhone(formData.createdBy.phone)
+}
 
-  if (currentRef.value) {
-    try {
-      await currentRef.value.validate()
-      currentStep.value++
-    } catch (validationError) {
-      const firstError = Object.values(validationError)[0]?.[0]?.message || '请检查填写内容'
-      ElMessage.error({
-        message: firstError,
-        duration: 3000,
-        showClose: true
-      })
-    }
+async function nextStep() {
+  const formRefs = [basicFormRef, certFormRef, settlementFormRef, accountFormRef]
+  const currentFormRef = formRefs[currentStep.value]?.value
+
+  if (!currentFormRef) {
+    currentStep.value += 1
+    return
+  }
+
+  normalizePayload()
+
+  try {
+    await currentFormRef.validate()
+    currentStep.value += 1
+  } catch {
+    ElMessage.error('请先修正当前步骤中的表单校验错误')
   }
 }
 
-// 上一步
-const prevStep = () => {
+function prevStep() {
   if (currentStep.value > 0) {
-    currentStep.value--
+    currentStep.value -= 1
   }
 }
 
-// 提交注册
-const handleSubmit = async () => {
+async function handleSubmit() {
   try {
     submitting.value = true
-    formData.createdBy.username = formData.createdBy.phone.trim()
+    normalizePayload()
 
-    // 验证最后一步
-    if (accountFormRef.value) {
-      try {
-        await accountFormRef.value.validate()
-      } catch (validationError) {
-        const firstError = Object.values(validationError)[0]?.[0]?.message || '请检查填写内容'
-        ElMessage.error({
-          message: firstError,
-          duration: 3000,
-          showClose: true
-        })
-        return
-      }
-    }
+    await basicFormRef.value?.validate()
+    await certFormRef.value?.validate()
+    await settlementFormRef.value?.validate()
+    await accountFormRef.value?.validate()
 
-    // 所有验证通过，提交表单
-    const res = await request({
+    const response = await request({
       url: '/stores/register',
       method: 'post',
       data: formData
     })
 
-    if (res.success) {
-      ElMessage.success(res.message || '门店注册成功')
-      setTimeout(() => {
-        router.push('/stores')
-      }, 1500)
-    } else {
-      ElMessage.error(res.message || '门店注册失败')
+    if (!response?.success) {
+      throw new Error(response?.message || '门店注册失败')
     }
+
+    ElMessage.success(response.message || '门店注册成功')
+    setTimeout(() => {
+      router.push('/stores')
+    }, 1200)
   } catch (error) {
-    console.error('门店注册失败:', error)
-    ElMessage.error({
-      message: error.response?.data?.message || error.message || '门店注册失败，请稍后重试',
-      duration: 3000,
-      showClose: true
-    })
+    ElMessage.error(error.response?.data?.message || error.message || '门店注册失败')
   } finally {
     submitting.value = false
   }
@@ -641,13 +536,26 @@ const handleSubmit = async () => {
   padding: 20px;
 }
 
+.page-card {
+  margin-top: 20px;
+}
+
 .page-header-content {
   display: flex;
   align-items: center;
 }
 
+.page-alert,
+.form-section-alert {
+  margin-bottom: 20px;
+}
+
+.steps {
+  margin-bottom: 30px;
+}
+
 .step-content {
-  min-height: 300px;
+  min-height: 320px;
   padding: 20px 0;
 }
 
@@ -665,22 +573,6 @@ const handleSubmit = async () => {
 
 .uploaded-preview {
   display: inline-flex;
-  align-items: center;
-}
-
-.form-tip {
-  margin-top: 8px;
-  font-size: 12px;
-  color: #909399;
-  line-height: 1.5;
-}
-
-/* 步骤条样式优化 */
-:deep(.el-steps) {
-  margin-bottom: 30px;
-}
-
-:deep(.el-step__title) {
-  font-size: 14px;
+  align-items: flex-start;
 }
 </style>
