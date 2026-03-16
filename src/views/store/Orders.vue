@@ -382,7 +382,7 @@
           {{ currentOrder.reporterId?.phone || '-' }}
         </el-descriptions-item>
         <el-descriptions-item label="预约时间">
-          {{ currentOrder.appointmentAt ? formatDate(currentOrder.appointmentAt) : '-' }}
+          {{ getAppointmentDisplay(currentOrder) }}
         </el-descriptions-item>
         <el-descriptions-item label="当前里程">
           {{ currentOrder.milestone ? currentOrder.milestone + ' 公里' : '-' }}
@@ -392,6 +392,75 @@
           :span="2"
         >
           {{ currentOrder.faultDescription }}
+        </el-descriptions-item>
+        <el-descriptions-item
+          label="里程图片"
+          :span="2"
+        >
+          <div
+            v-if="currentOrder.milestonePhotos?.length"
+            class="detail-image-list"
+          >
+            <el-image
+              v-for="(img, idx) in currentOrder.milestonePhotos"
+              :key="`milestone-${idx}`"
+              :src="getImageUrl(img)"
+              :preview-src-list="getDetailImageUrls(currentOrder.milestonePhotos)"
+              :initial-index="idx"
+              class="detail-image-item"
+              fit="cover"
+            />
+          </div>
+          <span
+            v-else
+            class="empty-text"
+          >暂无图片</span>
+        </el-descriptions-item>
+        <el-descriptions-item
+          label="故障图片"
+          :span="2"
+        >
+          <div
+            v-if="currentOrder.faultImages?.length"
+            class="detail-image-list"
+          >
+            <el-image
+              v-for="(img, idx) in currentOrder.faultImages"
+              :key="`fault-${idx}`"
+              :src="getImageUrl(img)"
+              :preview-src-list="getDetailImageUrls(currentOrder.faultImages)"
+              :initial-index="idx"
+              class="detail-image-item"
+              fit="cover"
+            />
+          </div>
+          <span
+            v-else
+            class="empty-text"
+          >暂无图片</span>
+        </el-descriptions-item>
+        <el-descriptions-item
+          label="接车检查图片"
+          :span="2"
+        >
+          <div
+            v-if="currentOrder.receiveCheck?.checkinPhotos?.length"
+            class="detail-image-list"
+          >
+            <el-image
+              v-for="(img, idx) in currentOrder.receiveCheck.checkinPhotos"
+              :key="`checkin-${idx}`"
+              :src="getImageUrl(img)"
+              :preview-src-list="getDetailImageUrls(currentOrder.receiveCheck.checkinPhotos)"
+              :initial-index="idx"
+              class="detail-image-item"
+              fit="cover"
+            />
+          </div>
+          <span
+            v-else
+            class="empty-text"
+          >暂无图片</span>
         </el-descriptions-item>
         <el-descriptions-item
           v-if="currentOrder.receiveCheck"
@@ -1125,6 +1194,8 @@ import { ElMessage } from 'element-plus'
 import { Plus, Search, Download } from '@element-plus/icons-vue'
 import request from '@/utils/request'
 import { getStoreOrders } from '@/api/store'
+import { getOrderDetail } from '@/api/order'
+import { getImageUrl, getImageUrls } from '@/utils/image'
 import dayjs from 'dayjs'
 
 const userRole = localStorage.getItem('role') || ''
@@ -1331,9 +1402,15 @@ async function handleExport(type = 'all') {
 }
 
 // 查看详情
-function viewDetail(row) {
-  currentOrder.value = row
-  detailVisible.value = true
+async function viewDetail(row) {
+  try {
+    const res = await getOrderDetail(row._id)
+    currentOrder.value = res.data
+    detailVisible.value = true
+  } catch (error) {
+    console.error('获取订单详情失败:', error)
+    ElMessage.error(error.response?.data?.message || '获取订单详情失败')
+  }
 }
 
 // 接车检查
@@ -1852,6 +1929,30 @@ function formatDate(dateStr) {
   return dayjs(dateStr).format('YYYY-MM-DD HH:mm')
 }
 
+function getDetailImageUrls(images) {
+  return getImageUrls(images || [])
+}
+
+function getAppointmentDisplay(order) {
+  if (!order) return '-'
+
+  if (order.appointmentAt) {
+    return formatDate(order.appointmentAt)
+  }
+
+  if (order.appointment?.confirmedDate) {
+    const confirmedDate = dayjs(order.appointment.confirmedDate).format('YYYY-MM-DD')
+    return `${confirmedDate} ${order.appointment.confirmedTimeSlot || ''}`.trim()
+  }
+
+  if (order.appointment?.expectedDate) {
+    const expectedDate = dayjs(order.appointment.expectedDate).format('YYYY-MM-DD')
+    return `${expectedDate} ${order.appointment.expectedTimeSlot || ''}`.trim()
+  }
+
+  return '-'
+}
+
 // 打开确认时间对话框
 function openConfirmTimeDialog(order) {
   currentOrder.value = order
@@ -1987,5 +2088,22 @@ async function handleConfirmTime() {
   color: #f56c6c;
   font-size: 20px;
   font-weight: bold;
+}
+
+.detail-image-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.detail-image-item {
+  width: 80px;
+  height: 80px;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.empty-text {
+  color: #909399;
 }
 </style>

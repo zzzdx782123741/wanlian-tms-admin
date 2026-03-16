@@ -93,6 +93,19 @@
           width="200"
         />
         <el-table-column
+          label="套餐分类"
+          width="110"
+        >
+          <template #default="{ row }">
+            <el-tag
+              :type="getCategoryType(row.category)"
+              size="small"
+            >
+              {{ getCategoryLabel(row.category) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column
           label="车型分组"
           width="100"
         >
@@ -214,6 +227,27 @@
             v-model="form.name"
             placeholder="请输入规范名称"
           />
+        </el-form-item>
+
+        <el-form-item
+          label="套餐分类"
+          prop="category"
+        >
+          <el-select
+            v-model="form.category"
+            placeholder="请选择套餐分类"
+            style="width: 100%"
+          >
+            <el-option
+              v-for="option in categoryOptions"
+              :key="option.value"
+              :label="option.label"
+              :value="option.value"
+            />
+          </el-select>
+          <div class="form-item-tip">
+            请选择套餐所属的保养分类
+          </div>
         </el-form-item>
 
         <el-form-item
@@ -450,6 +484,21 @@
           :model="batchForm"
           label-width="120px"
         >
+          <el-form-item label="套餐分类">
+            <el-select
+              v-model="batchForm.category"
+              placeholder="请选择套餐分类"
+              style="width: 240px"
+            >
+              <el-option
+                v-for="option in categoryOptions"
+                :key="option.value"
+                :label="option.label"
+                :value="option.value"
+              />
+            </el-select>
+          </el-form-item>
+
           <el-form-item label="选择车型分组">
             <el-checkbox-group v-model="batchForm.vehicleGroups">
               <el-checkbox label="牵引车" />
@@ -600,6 +649,12 @@ import {
   deletePackageStandard
 } from '@/api/packageStandard'
 
+const categoryOptions = [
+  { label: '小保养', value: 'minor' },
+  { label: '大保养', value: 'major' },
+  { label: '专项保养', value: 'special' }
+]
+
 // 省市数据（简化版）
 const provinces = [
   '北京市', '天津市', '上海市', '重庆市',
@@ -667,6 +722,7 @@ const formRef = ref(null)
 
 const form = reactive({
   name: '',
+  category: 'minor',
   vehicleGroup: '',
   tier: '',
   priceRanges: [],
@@ -676,6 +732,7 @@ const form = reactive({
 
 const formRules = {
   name: [{ required: true, message: '请输入规范名称', trigger: 'blur' }],
+  category: [{ required: true, message: '请选择套餐分类', trigger: 'change' }],
   vehicleGroup: [{ required: true, message: '请选择车型分组', trigger: 'change' }],
   tier: [{ required: true, message: '请选择套餐档位', trigger: 'change' }]
 }
@@ -685,6 +742,7 @@ const batchDialogVisible = ref(false)
 const batchSubmitting = ref(false)
 
 const batchForm = reactive({
+  category: 'minor',
   vehicleGroups: [],
   tiers: [],
   nameTemplate: '{vehicleGroup}{tier}保养套餐',
@@ -748,6 +806,7 @@ const handleCreate = () => {
   isEdit.value = false
   Object.assign(form, {
     name: '',
+    category: 'minor',
     vehicleGroup: '',
     tier: '',
     priceRanges: [
@@ -764,6 +823,7 @@ const handleEdit = (row) => {
   Object.assign(form, {
     _id: row._id,
     name: row.name,
+    category: row.category || 'minor',
     vehicleGroup: row.vehicleGroup,
     tier: row.tier,
     priceRanges: row.priceRanges ? [...row.priceRanges] : [],
@@ -881,6 +941,7 @@ const removeServiceItem = (index) => {
 // 批量创建相关函数
 const handleBatchCreate = () => {
   // 重置批量创建表单
+  batchForm.category = 'minor'
   batchForm.vehicleGroups = []
   batchForm.tiers = []
   batchForm.nameTemplate = '{vehicleGroup}{tier}保养套餐'
@@ -952,6 +1013,7 @@ const handleBatchSubmit = async () => {
       try {
         await createPackageStandard({
           name: item.name,
+          category: batchForm.category,
           vehicleGroup: item.vehicleGroup,
           tier: item.tier,
           priceRanges: batchForm.priceRanges,
@@ -982,6 +1044,19 @@ const handleBatchSubmit = async () => {
 
 const getCityOptions = (province) => {
   return cityMap[province] || []
+}
+
+const getCategoryLabel = (category) => {
+  return categoryOptions.find(option => option.value === category)?.label || category || '-'
+}
+
+const getCategoryType = (category) => {
+  const map = {
+    minor: 'success',
+    major: 'warning',
+    special: 'danger'
+  }
+  return map[category] || 'info'
 }
 
 const getVehicleGroupType = (group) => {

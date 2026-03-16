@@ -153,7 +153,7 @@
           width="100"
         >
           <template #default="{ row }">
-            {{ row.reporterId?.name || '-' }}
+            {{ getReporterDisplayName(row.reporterId) }}
           </template>
         </el-table-column>
         <el-table-column
@@ -253,7 +253,7 @@
             {{ currentOrder.milestone || '-' }} km
           </el-descriptions-item>
           <el-descriptions-item label="报修人">
-            {{ currentOrder.reporterId?.name }}
+            {{ getReporterDisplayName(currentOrder.reporterId) }}
           </el-descriptions-item>
           <el-descriptions-item label="联系电话">
             {{ currentOrder.reporterId?.phone }}
@@ -460,7 +460,7 @@
             {{ currentOrder.milestone || '-' }} km
           </el-descriptions-item>
           <el-descriptions-item label="报修人">
-            {{ currentOrder.reporterId?.name }}
+            {{ getReporterDisplayName(currentOrder.reporterId) }}
           </el-descriptions-item>
           <el-descriptions-item label="联系电话">
             {{ currentOrder.reporterId?.phone }}
@@ -578,6 +578,10 @@ const getStoreName = (storeId) => {
 const getStoreAddress = (storeId) => {
   const store = storeList.value.find(s => s._id === storeId)
   return store?.address || '-'
+}
+
+const getReporterDisplayName = (reporter) => {
+  return reporter?.name || reporter?.nickname || '-'
 }
 
 // 获取车队配置

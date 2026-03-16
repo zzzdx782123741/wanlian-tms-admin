@@ -226,6 +226,14 @@
           </template>
         </el-table-column>
         <el-table-column
+          label="报修人"
+          width="110"
+        >
+          <template #default="{ row }">
+            {{ getReporterDisplayName(row.reporterId) }}
+          </template>
+        </el-table-column>
+        <el-table-column
           label="报价金额"
           width="110"
           align="right"
@@ -361,7 +369,7 @@
             {{ currentOrder.milestone || '-' }} km
           </el-descriptions-item>
           <el-descriptions-item label="报修人">
-            {{ currentOrder.reporterId?.name || '-' }}
+            {{ getReporterDisplayName(currentOrder.reporterId) }}
           </el-descriptions-item>
           <el-descriptions-item label="联系电话">
             {{ currentOrder.reporterId?.phone || '-' }}
@@ -794,7 +802,7 @@
             {{ currentOrder.milestone || '-' }} km
           </el-descriptions-item>
           <el-descriptions-item label="报修人">
-            {{ currentOrder.reporterId?.name || '-' }}
+            {{ getReporterDisplayName(currentOrder.reporterId) }}
           </el-descriptions-item>
           <el-descriptions-item label="联系电话">
             {{ currentOrder.reporterId?.phone || '-' }}
@@ -1131,6 +1139,10 @@ const formatStoreAddress = (address) => {
 }
 
 // 获取车队配置
+const getReporterDisplayName = (reporter) => {
+  return reporter?.name || reporter?.nickname || '-'
+}
+
 const fetchFleetConfig = async () => {
   try {
     const res = await getFleetConfig(userFleetId.value)
