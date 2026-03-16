@@ -46,6 +46,7 @@ service.interceptors.response.use(
 
     const status = error.response?.status
     const requestUrl = error.config?.url || ''
+    const skipErrorMessage = error.config?.skipErrorMessage === true
     const isAuthLoginRequest = [
       '/auth/test-login',
       '/auth/web-login',
@@ -69,7 +70,7 @@ service.interceptors.response.use(
       ElMessage.error('登录已过期，请重新登录')
       clearAuthState()
       window.location.href = '/login'
-    } else {
+    } else if (!skipErrorMessage) {
       ElMessage.error(errorMessage)
     }
 

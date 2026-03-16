@@ -14,9 +14,15 @@
       </template>
     </el-table-column>
 
-    <el-table-column label="佣金比例" width="120" align="center">
+    <el-table-column label="维修佣金" width="120" align="center">
       <template #default="{ row }">
-        <span class="commission-rate">{{ (Number(row.commissionRate || 0) * 100).toFixed(1) }}%</span>
+        <span class="commission-rate">{{ formatRate(row.repairCommissionRate, row.commissionRate) }}</span>
+      </template>
+    </el-table-column>
+
+    <el-table-column label="保养佣金" width="120" align="center">
+      <template #default="{ row }">
+        <span class="commission-rate maintenance">{{ formatRate(row.maintenanceCommissionRate, row.commissionRate) }}</span>
       </template>
     </el-table-column>
 
@@ -26,28 +32,21 @@
           <el-tag type="warning" size="small">全局默认</el-tag>
         </div>
 
-        <div v-else-if="row.configType === 'service_type'" class="scope-text">
-          <el-tag
-            v-for="type in row.serviceTypes"
-            :key="type"
-            :type="getServiceTypeTag(type)"
-            size="small"
-            style="margin-right: 6px"
-          >
-            {{ getServiceTypeName(type) }}
-          </el-tag>
-        </div>
-
         <div v-else-if="row.configType === 'region'" class="scope-text">
           <el-tag type="success" size="small">{{ row.province }}</el-tag>
           <el-tag v-if="row.city" type="info" size="small" style="margin-left: 6px">
             {{ row.city }}
           </el-tag>
+          <span v-else class="scope-note">全省</span>
         </div>
 
         <div v-else-if="row.configType === 'store'" class="scope-text">
           <el-tag type="danger" size="small">门店级</el-tag>
           <span class="store-name">{{ getStoreName(row) }}</span>
+        </div>
+
+        <div v-else class="scope-text">
+          <el-tag type="info" size="small">历史配置</el-tag>
         </div>
       </template>
     </el-table-column>
@@ -104,22 +103,9 @@ defineProps({
 
 defineEmits(['edit', 'delete', 'toggle'])
 
-const getServiceTypeName = (type) => {
-  const map = {
-    repair: '维修',
-    maintenance: '保养',
-    addon: '增项'
-  }
-  return map[type] || type
-}
-
-const getServiceTypeTag = (type) => {
-  const map = {
-    repair: 'danger',
-    maintenance: 'warning',
-    addon: 'success'
-  }
-  return map[type] || 'info'
+const formatRate = (value, fallbackValue) => {
+  const numericValue = Number(value ?? fallbackValue ?? 0)
+  return `${(numericValue * 100).toFixed(1)}%`
 }
 
 const getStoreName = (row) => row.storeName || row.storeId?.name || '未关联门店'
@@ -138,16 +124,25 @@ const formatDateTime = (date) => dayjs(date).format('YYYY-MM-DD HH:mm:ss')
   font-size: 16px;
   font-weight: 600;
   color: #f56c6c;
+
+  &.maintenance {
+    color: #e6a23c;
+  }
 }
 
 .scope-text {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
+  gap: 6px;
+}
+
+.scope-note {
+  color: #909399;
+  font-size: 12px;
 }
 
 .store-name {
-  margin-left: 8px;
   color: #303133;
   font-weight: 500;
 }

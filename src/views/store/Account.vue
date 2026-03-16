@@ -450,6 +450,72 @@ const viewSettlementDetail = (row) => {
 }
 
 // 导出收入明细
+const EXCEL_MIME_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+
+const getExportResponseMeta = (response) => {
+  if (response && typeof response === 'object' && 'data' in response) {
+    return {
+      blob: response.data,
+      headers: response.headers || {}
+    }
+  }
+
+  return {
+    blob: response,
+    headers: {}
+  }
+}
+
+const getFilenameFromHeaders = (headers, fallbackName) => {
+  const contentDisposition = headers?.['content-disposition'] || headers?.['Content-Disposition'] || ''
+  const utf8Match = contentDisposition.match(/filename\*=(?:UTF-8'')?([^;]+)/i)
+
+  if (utf8Match?.[1]) {
+    return decodeURIComponent(utf8Match[1].replace(/['"]/g, '').trim())
+  }
+
+  const plainMatch = contentDisposition.match(/filename=\"?([^\";]+)\"?/i)
+  if (plainMatch?.[1]) {
+    return decodeURIComponent(plainMatch[1].trim())
+  }
+
+  return fallbackName
+}
+
+const downloadExportFile = async (response, fallbackName) => {
+  const { blob, headers } = getExportResponseMeta(response)
+  let downloadBlob = blob
+
+  if (blob instanceof Blob && blob.type?.includes('application/json')) {
+    const errorText = await blob.text()
+
+    try {
+      const errorJson = JSON.parse(errorText)
+      throw new Error(errorJson.message || '导出失败')
+    } catch (parseError) {
+      if (parseError instanceof SyntaxError) {
+        throw new Error('导出失败')
+      }
+
+      throw parseError
+    }
+  }
+
+  if (!(downloadBlob instanceof Blob)) {
+    downloadBlob = new Blob([downloadBlob], { type: EXCEL_MIME_TYPE })
+  }
+
+  const filename = getFilenameFromHeaders(headers, fallbackName)
+  const url = window.URL.createObjectURL(downloadBlob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  window.URL.revokeObjectURL(url)
+}
+
 const handleExportIncome = async () => {
   try {
     const params = {}
@@ -459,62 +525,24 @@ const handleExportIncome = async () => {
       params.endDate = dateRange.value[1]
     }
 
-    const blob = await exportStoreIncome(params)
-
-    // 从响应头获取文件名
-    const contentDisposition = blob.headers?.['content-disposition'] || ''
-    let filename = `服务收入明细_${dayjs().format('YYYY-MM-DD')}.xlsx`
-
-    const match = contentDisposition.match(/filename\*?=['"]*UTF-8['"]*''([^;]+)/i)
-    if (match && match[1]) {
-      filename = decodeURIComponent(match[1])
-    }
-
-    // 创建下载链接
-    const url = window.URL.createObjectURL(new Blob([blob.data]))
-    const link = document.createElement('a')
-    link.href = url
-    link.download = filename
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    window.URL.revokeObjectURL(url)
-
+    const response = await exportStoreIncome(params)
+    await downloadExportFile(response, `store-income-details_${dayjs().format('YYYY-MM-DD')}.xlsx`)
     ElMessage.success('导出成功')
   } catch (error) {
     console.error('导出失败:', error)
-    ElMessage.error('导出失败')
+    ElMessage.error(error.message || '导出失败')
   }
 }
 
 // 导出结算记录
 const handleExportSettlements = async () => {
   try {
-    const blob = await exportStoreSettlements()
-
-    // 从响应头获取文件名
-    const contentDisposition = blob.headers?.['content-disposition'] || ''
-    let filename = `结算记录_${dayjs().format('YYYY-MM-DD')}.xlsx`
-
-    const match = contentDisposition.match(/filename\*?=['"]*UTF-8['"]*''([^;]+)/i)
-    if (match && match[1]) {
-      filename = decodeURIComponent(match[1])
-    }
-
-    // 创建下载链接
-    const url = window.URL.createObjectURL(new Blob([blob.data]))
-    const link = document.createElement('a')
-    link.href = url
-    link.download = filename
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    window.URL.revokeObjectURL(url)
-
+    const response = await exportStoreSettlements()
+    await downloadExportFile(response, `store-settlements_${dayjs().format('YYYY-MM-DD')}.xlsx`)
     ElMessage.success('导出成功')
   } catch (error) {
     console.error('导出失败:', error)
-    ElMessage.error('导出失败')
+    ElMessage.error(error.message || '导出失败')
   }
 }
 

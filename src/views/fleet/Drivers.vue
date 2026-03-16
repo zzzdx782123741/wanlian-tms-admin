@@ -387,6 +387,42 @@ function normalizeImportErrors(errors = []) {
   }))
 }
 
+function buildImportMessage({ message, total, successCount, failedCount, fallbackMessage }) {
+  if (message) {
+    return message
+  }
+
+  if (total > 0 || successCount > 0 || failedCount > 0) {
+    return failedCount > 0
+      ? `共 ${total} 行，成功导入 ${successCount} 行，失败 ${failedCount} 行，请根据失败明细修正后重试`
+      : `成功导入 ${successCount} 行`
+  }
+
+  return fallbackMessage || '批量导入失败'
+}
+
+function buildImportResult(payload = {}, fallbackMessage = '') {
+  const summary = payload?.data || payload || {}
+  const errors = normalizeImportErrors(summary?.errors || payload?.errors || [])
+  const total = Number(summary?.total ?? payload?.total ?? 0)
+  const successCount = Number(summary?.success ?? summary?.successCount ?? payload?.success ?? payload?.successCount ?? 0)
+  const failedCount = Number(summary?.failed ?? summary?.failedCount ?? payload?.failed ?? payload?.failedCount ?? errors.length ?? 0)
+
+  return {
+    message: buildImportMessage({
+      message: payload?.message || summary?.message || '',
+      total,
+      successCount,
+      failedCount,
+      fallbackMessage
+    }),
+    total,
+    successCount,
+    failedCount,
+    errors
+  }
+}
+
 function downloadBlob(blob, filename) {
   const url = window.URL.createObjectURL(blob)
   const link = document.createElement('a')
@@ -590,17 +626,20 @@ async function startImport() {
   try {
     const formData = new FormData()
     formData.append('file', uploadFile.value)
-    const response = await batchImportDrivers(formData)
+    const response = await batchImportDrivers(formData, { skipErrorMessage: true })
+    const normalizedImportResult = buildImportResult(response, '导入完成')
 
     importResult.value = {
       message: response?.message || '导入完成',
-      total: Number(response?.data?.total || 0),
-      successCount: Number(response?.data?.successCount || 0),
-      failedCount: Number(response?.data?.failedCount || 0),
-      errors: normalizeImportErrors(response?.data?.errors || [])
+      total: normalizedImportResult.total,
+      successCount: normalizedImportResult.successCount,
+      failedCount: normalizedImportResult.failedCount,
+      errors: normalizedImportResult.errors
     }
 
-    await Promise.all([loadDrivers(), loadStats(), loadVehicleOptions()])
+    if (importResult.value.successCount > 0) {
+      await Promise.all([loadDrivers(), loadStats(), loadVehicleOptions()])
+    }
   } catch (error) {
     ElMessage.error(error.response?.data?.message || error.message || '批量导入失败')
   } finally {

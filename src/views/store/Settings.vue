@@ -150,7 +150,7 @@
               </div>
             </template>
 
-            <el-form :model="storeForm.serviceCapabilities" label-width="140px">
+            <el-form :model="storeForm.serviceCapabilities" label-width="140px" class="capability-form">
               <el-form-item label="服务类型">
                 <el-checkbox-group v-model="serviceTypesArray">
                   <el-checkbox label="repair_repair">维修</el-checkbox>
@@ -176,8 +176,8 @@
                 />
               </el-form-item>
 
-              <el-row :gutter="20">
-                <el-col :xs="24" :md="6">
+              <el-row :gutter="20" class="capability-grid-row staffing-row">
+                <el-col :xs="24" :sm="12" :lg="6">
                   <el-form-item label="高级技师">
                     <el-input-number
                       v-model="storeForm.serviceCapabilities.staffing.seniorTechnicians"
@@ -186,7 +186,7 @@
                     />
                   </el-form-item>
                 </el-col>
-                <el-col :xs="24" :md="6">
+                <el-col :xs="24" :sm="12" :lg="6">
                   <el-form-item label="技师">
                     <el-input-number
                       v-model="storeForm.serviceCapabilities.staffing.technicians"
@@ -195,7 +195,7 @@
                     />
                   </el-form-item>
                 </el-col>
-                <el-col :xs="24" :md="6">
+                <el-col :xs="24" :sm="12" :lg="6">
                   <el-form-item label="维修工">
                     <el-input-number
                       v-model="storeForm.serviceCapabilities.staffing.workers"
@@ -204,7 +204,7 @@
                     />
                   </el-form-item>
                 </el-col>
-                <el-col :xs="24" :md="6">
+                <el-col :xs="24" :sm="12" :lg="6">
                   <el-form-item label="学徒">
                     <el-input-number
                       v-model="storeForm.serviceCapabilities.staffing.apprentices"
@@ -215,7 +215,7 @@
                 </el-col>
               </el-row>
 
-              <el-row :gutter="20">
+              <el-row :gutter="20" class="capability-grid-row">
                 <el-col :xs="24" :md="12">
                   <el-form-item label="日最大接单量">
                     <el-input-number
@@ -1284,6 +1284,10 @@ onMounted(() => {
   font-weight: 600;
 }
 
+.capability-form :deep(.el-input-number) {
+  width: 100%;
+}
+
 .upload-block {
   display: flex;
   flex-direction: column;
@@ -1360,6 +1364,27 @@ onMounted(() => {
 
   .photo-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1400px) {
+  .capability-grid-row :deep(.el-form-item) {
+    display: block;
+    margin-bottom: 18px;
+  }
+
+  .capability-grid-row :deep(.el-form-item__label) {
+    display: block;
+    width: auto !important;
+    padding: 0 0 8px;
+    line-height: 1.5;
+    text-align: left;
+  }
+
+  .capability-grid-row :deep(.el-form-item__content) {
+    display: flex;
+    margin-left: 0 !important;
+    min-width: 0;
   }
 }
 </style>

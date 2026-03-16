@@ -24,24 +24,10 @@
             @change="fetchPackages"
           >
             <el-option
-              label="牵引车"
-              value="牵引车"
-            />
-            <el-option
-              label="载货车"
-              value="载货车"
-            />
-            <el-option
-              label="轻卡"
-              value="轻卡"
-            />
-            <el-option
-              label="自卸"
-              value="自卸"
-            />
-            <el-option
-              label="全部"
-              value="ALL"
+              v-for="option in packageVehicleGroupOptions"
+              :key="option.value"
+              :label="option.label"
+              :value="option.value"
             />
           </el-select>
           <el-select
@@ -276,24 +262,10 @@
             style="width: 100%"
           >
             <el-option
-              label="牵引车"
-              value="牵引车"
-            />
-            <el-option
-              label="载货车"
-              value="载货车"
-            />
-            <el-option
-              label="轻卡"
-              value="轻卡"
-            />
-            <el-option
-              label="自卸"
-              value="自卸"
-            />
-            <el-option
-              label="全部"
-              value="ALL"
+              v-for="option in packageVehicleGroupOptions"
+              :key="option.value"
+              :label="option.label"
+              :value="option.value"
             />
           </el-select>
         </el-form-item>
@@ -605,6 +577,11 @@ import axios from 'axios'
 import { getPackages, createPackage, updatePackage, deletePackage } from '@/api/maintenance'
 import { getProducts } from '@/api/product'
 import { getImageUrl } from '@/utils/image'
+import {
+  PACKAGE_VEHICLE_GROUP_OPTIONS,
+  getVehicleGroupLabel as formatVehicleGroupLabel,
+  getVehicleGroupTagType
+} from '@/utils/vehicleGroups'
 
 // 省市数据（简化版，实际应该从外部文件导入）
 const provinces = [
@@ -632,6 +609,7 @@ const saving = ref(false)
 const uploading = ref(false)
 const packages = ref([])
 const allProducts = ref([])
+const packageVehicleGroupOptions = PACKAGE_VEHICLE_GROUP_OPTIONS
 const total = ref(0)
 const imageFileList = ref([]) // 用于 el-upload 组件的文件列表
 
@@ -654,7 +632,7 @@ const form = ref({
   name: '',
   code: '',
   description: '',
-  vehicleGroup: 'ALL',
+  vehicleGroup: '',
   mileageRangeMin: 0,
   mileageRangeMax: 999999,
   tier: '标准',
@@ -803,7 +781,7 @@ const handleCreate = () => {
     name: '',
     code: '',
     description: '',
-    vehicleGroup: 'ALL',
+    vehicleGroup: '',
     mileageRangeMin: 0,
     mileageRangeMax: 999999,
     tier: '标准',
@@ -956,26 +934,12 @@ const handleToggleFeatured = async (row) => {
 
 // 获取车型分组类型
 const getVehicleGroupType = (type) => {
-  const typeMap = {
-    '牵引车': 'primary',
-    '载货车': 'success',
-    '轻卡': 'warning',
-    '自卸': 'info',
-    'ALL': 'info'
-  }
-  return typeMap[type] || 'info'
+  return getVehicleGroupTagType(type)
 }
 
 // 获取车型分组标签
 const getVehicleGroupLabel = (type) => {
-  const labelMap = {
-    '牵引车': '牵引车',
-    '载货车': '载货车',
-    '轻卡': '轻卡',
-    '自卸': '自卸',
-    'ALL': '全部'
-  }
-  return labelMap[type] || type
+  return formatVehicleGroupLabel(type)
 }
 
 // 获取档位类型

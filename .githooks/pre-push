@@ -1,0 +1,7 @@
+#!/bin/sh
+
+repo_root="$(git rev-parse --show-toplevel)"
+cd "$repo_root" || exit 1
+
+echo "[pre-push] Running text integrity check..."
+node scripts/check-text-integrity.cjs src package.json vite.config.js .gitattributes .gitignore index.html

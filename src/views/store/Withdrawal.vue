@@ -6,7 +6,7 @@
       :gutter="20"
       style="margin-top: 20px"
     >
-      <el-col :span="8">
+      <el-col :span="6">
         <el-card class="balance-card">
           <el-statistic
             title="可提现余额"
@@ -16,7 +16,7 @@
           />
         </el-card>
       </el-col>
-      <el-col :span="8">
+      <el-col :span="6">
         <el-card class="balance-card balance-card-success">
           <el-statistic
             title="已结算收入"
@@ -26,7 +26,17 @@
           />
         </el-card>
       </el-col>
-      <el-col :span="8">
+      <el-col :span="6">
+        <el-card class="balance-card balance-card-warning">
+          <el-statistic
+            title="已提现金额"
+            :value="displayBalance.totalWithdrawn"
+            :precision="2"
+            prefix="¥"
+          />
+        </el-card>
+      </el-col>
+      <el-col :span="6">
         <el-card class="balance-card balance-card-info">
           <el-statistic
             title="待结算金额(D+1)"
@@ -324,6 +334,7 @@ const submitting = ref(false)
 const balanceData = ref({
   withdrawableBalance: 0,
   settledIncome: 0,
+  totalWithdrawn: 0,
   pendingSettlement: 0,
   totalEarned: 0
 })
@@ -331,6 +342,7 @@ const balanceData = ref({
 const displayBalance = computed(() => ({
   withdrawableBalance: (balanceData.value.withdrawableBalance || 0) / 100,
   settledIncome: (balanceData.value.settledIncome || 0) / 100,
+  totalWithdrawn: (balanceData.value.totalWithdrawn || 0) / 100,
   pendingSettlement: (balanceData.value.pendingSettlement || 0) / 100,
   totalEarned: (balanceData.value.totalEarned || 0) / 100
 }))
@@ -390,7 +402,8 @@ const fetchBalance = async () => {
       balanceData.value = {
         withdrawableBalance: res.data.withdrawableBalance ?? res.data.pendingBalance ?? 0,
         settledIncome: res.data.settledIncome ?? res.data.settledBalance ?? 0,
-        pendingSettlement: res.data.pendingSettlement ?? 0,
+        totalWithdrawn: res.data.totalWithdrawn ?? 0,
+        pendingSettlement: res.data.pendingSettlement ?? res.data.pendingAmount ?? res.data.pendingBalance ?? 0,
         totalEarned: res.data.totalEarned || 0
       }
     }
@@ -590,6 +603,10 @@ onMounted(async () => {
 
     &.balance-card-success :deep(.el-statistic__number) {
       color: #67c23a;
+    }
+
+    &.balance-card-warning :deep(.el-statistic__number) {
+      color: #e6a23c;
     }
 
     &.balance-card-info :deep(.el-statistic__number) {

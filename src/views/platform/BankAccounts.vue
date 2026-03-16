@@ -56,7 +56,7 @@
         </el-col>
         <el-col :span="6">
           <div class="stat-card">
-            <div class="stat-value">¥ {{ formatAmount(statistics.totalReceived) }}</div>
+            <div class="stat-value">¥ {{ formatCentAmount(statistics.totalReceived) }}</div>
             <div class="stat-label">累计收款</div>
           </div>
         </el-col>
@@ -109,7 +109,7 @@
 
         <el-table-column label="累计收款" width="160" align="right">
           <template #default="{ row }">
-            <div>¥ {{ formatAmount(row.totalReceived || 0) }}</div>
+            <div>¥ {{ formatCentAmount(row.totalReceived || 0) }}</div>
             <div class="muted-text">{{ row.transactionCount || 0 }} 笔</div>
           </template>
         </el-table-column>
@@ -715,8 +715,8 @@ function getAccountDetail(account) {
   }
 }
 
-function formatAmount(value) {
-  return Number(value || 0).toFixed(2)
+function formatCentAmount(value) {
+  return (Number(value || 0) / 100).toFixed(2)
 }
 
 function formatDate(value) {

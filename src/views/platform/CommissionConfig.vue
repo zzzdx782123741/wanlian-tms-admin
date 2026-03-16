@@ -13,7 +13,7 @@
       <el-tabs v-model="activeTab">
         <el-tab-pane label="全局配置" name="global">
           <div class="tab-header">
-            <span class="tab-desc">全局默认佣金比例，未命中其他配置时使用</span>
+            <span class="tab-desc">全局默认配置内可分别设置维修和保养佣金比例，未命中其他配置时使用。</span>
             <el-button type="primary" size="small" @click="handleCreate('global')">
               <el-icon><Plus /></el-icon>
               新增全局配置
@@ -28,26 +28,9 @@
           />
         </el-tab-pane>
 
-        <el-tab-pane label="服务类型配置" name="service_type">
-          <div class="tab-header">
-            <span class="tab-desc">按维修、保养、增项服务设置不同佣金比例</span>
-            <el-button type="primary" size="small" @click="handleCreate('service_type')">
-              <el-icon><Plus /></el-icon>
-              新增服务类型配置
-            </el-button>
-          </div>
-          <ConfigTable
-            :configs="serviceTypeConfigs"
-            :loading="loading"
-            @edit="handleEdit"
-            @delete="handleDelete"
-            @toggle="handleToggle"
-          />
-        </el-tab-pane>
-
         <el-tab-pane label="区域配置" name="region">
           <div class="tab-header">
-            <span class="tab-desc">按省市设置不同佣金比例</span>
+            <span class="tab-desc">按省市维度分别设置维修和保养佣金比例，优先级高于全局配置。</span>
             <el-button type="primary" size="small" @click="handleCreate('region')">
               <el-icon><Plus /></el-icon>
               新增区域配置
@@ -64,7 +47,7 @@
 
         <el-tab-pane label="门店配置" name="store">
           <div class="tab-header">
-            <span class="tab-desc">按具体门店设置佣金比例，优先级高于区域、服务类型和全局配置</span>
+            <span class="tab-desc">按具体门店分别设置维修和保养佣金比例，优先级最高。</span>
             <el-button type="primary" size="small" @click="handleCreate('store')">
               <el-icon><Plus /></el-icon>
               新增门店配置
@@ -116,9 +99,10 @@ const stats = reactive({
 })
 
 const globalConfigs = ref([])
-const serviceTypeConfigs = ref([])
 const regionConfigs = ref([])
 const storeConfigs = ref([])
+
+const visibleConfigTypes = ['global', 'region', 'store']
 
 const fetchStats = async () => {
   try {
@@ -132,11 +116,10 @@ const fetchStats = async () => {
 const fetchConfigs = async () => {
   loading.value = true
   try {
-    const res = await getCommissionConfigs()
-    const allConfigs = res.data?.list || []
+    const res = await getCommissionConfigs({ limit: 1000 })
+    const allConfigs = (res.data?.list || []).filter(item => visibleConfigTypes.includes(item.configType))
 
     globalConfigs.value = allConfigs.filter(item => item.configType === 'global')
-    serviceTypeConfigs.value = allConfigs.filter(item => item.configType === 'service_type')
     regionConfigs.value = allConfigs.filter(item => item.configType === 'region')
     storeConfigs.value = allConfigs.filter(item => item.configType === 'store')
   } catch (error) {

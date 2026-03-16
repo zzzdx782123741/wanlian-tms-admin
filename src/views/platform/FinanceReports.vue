@@ -373,8 +373,9 @@
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Search, Download } from '@element-plus/icons-vue'
-import { getRechargeList } from '@/api/recharge'
+import { getRechargeStats, getReviewedRecharges } from '@/api/recharge'
 import { getWithdrawalList } from '@/api/withdrawal'
+import { getPlatformIncomeRecords } from '@/api/platform'
 import * as echarts from 'echarts'
 import dayjs from 'dayjs'
 import ExcelJS from 'exceljs'
@@ -387,6 +388,7 @@ const customDateRange = ref([])
 const reportsData = ref({
   totalRecharge: 0,
   rechargeCount: 0,
+  totalRechargeFee: 0,
   totalIncome: 0,
   totalWithdrawal: 0,
   netIncome: 0,
@@ -394,6 +396,10 @@ const reportsData = ref({
   withdrawalList: [],
   incomeList: []
 })
+
+const allRechargeList = ref([])
+const allWithdrawalList = ref([])
+const allIncomeList = ref([])
 
 const incomePagination = ref({
   page: 1,
@@ -432,6 +438,35 @@ const getDateRange = () => {
   }
 }
 
+const fetchPagedRecords = async (requestFn, params, pageSize = 200) => {
+  const firstRes = await requestFn({
+    ...params,
+    page: 1,
+    limit: pageSize
+  })
+
+  const firstPageList = firstRes.data.list || []
+  const total = Number(firstRes.data.total || firstPageList.length || 0)
+  const totalPages = Math.max(Math.ceil(total / pageSize), 1)
+
+  if (totalPages === 1) {
+    return firstPageList
+  }
+
+  const restResponses = await Promise.all(
+    Array.from({ length: totalPages - 1 }, (_, index) => requestFn({
+      ...params,
+      page: index + 2,
+      limit: pageSize
+    }))
+  )
+
+  return [
+    ...firstPageList,
+    ...restResponses.flatMap((response) => response.data.list || [])
+  ]
+}
+
 // 获取报表数据
 const fetchReportsData = async () => {
   loading.value = true
@@ -443,41 +478,49 @@ const fetchReportsData = async () => {
     }
 
     // 并行获取数据
-    const [rechargeRes, withdrawalRes] = await Promise.all([
-      getRechargeList({
-        page: 1,
-        limit: 10,
+    const [rechargeStatsRes, rechargeList, withdrawalList, incomeList] = await Promise.all([
+      getRechargeStats({
+        startDate: dateRange[0],
+        endDate: dateRange[1]
+      }),
+      fetchPagedRecords(getReviewedRecharges, {
         startDate: dateRange[0],
         endDate: dateRange[1],
         status: 'approved'
       }),
-      getWithdrawalList({
-        page: 1,
-        limit: 10,
+      fetchPagedRecords(getWithdrawalList, {
         startDate: dateRange[0],
         endDate: dateRange[1],
         status: 'completed'
+      }),
+      fetchPagedRecords(getPlatformIncomeRecords, {
+        startDate: dateRange[0],
+        endDate: dateRange[1]
       })
     ])
 
-    const rechargeList = rechargeRes.data.list || []
-    const withdrawalList = withdrawalRes.data.list || []
-
     // 计算统计数据
-    const totalRecharge = rechargeList.reduce((sum, item) => sum + item.amount, 0)
+    const approvedStats = rechargeStatsRes.data?.approved || { total: 0, count: 0 }
+    const totalRecharge = Number(approvedStats.total || 0)
+    const totalRechargeFee = rechargeList.reduce((sum, item) => sum + (item.fee || 0), 0)
     const totalWithdrawal = withdrawalList.reduce((sum, item) => sum + item.withdrawalAmount, 0)
 
     // 平台收入（从提现记录中获取平台手续费）
-    const totalIncome = withdrawalList.reduce((sum, item) => sum + (item.platformFee || 0), 0)
+    const totalIncome = incomeList.reduce((sum, item) => sum + (item.feeAmount || 0), 0)
+
+    allRechargeList.value = rechargeList
+    allWithdrawalList.value = withdrawalList
+    allIncomeList.value = incomeList
 
     reportsData.value = {
       totalRecharge: totalRecharge / 100,
-      rechargeCount: rechargeList.length,
+      rechargeCount: Number(approvedStats.count || rechargeList.length),
+      totalRechargeFee: totalRechargeFee / 100,
       totalIncome: totalIncome / 100,
       totalWithdrawal: totalWithdrawal / 100,
-      netIncome: (totalIncome - totalWithdrawal) / 100,
-      rechargeList,
-      withdrawalList,
+      netIncome: (totalIncome - totalRechargeFee) / 100,
+      rechargeList: rechargeList.slice(0, 10),
+      withdrawalList: withdrawalList.slice(0, 10),
       incomeList: []
     }
 
@@ -500,8 +543,10 @@ const fetchReportsData = async () => {
 const fetchIncomeList = async () => {
   try {
     // 这里应该调用平台收入API，暂时模拟数据
-    reportsData.value.incomeList = []
-    incomePagination.value.total = 0
+    const start = (incomePagination.value.page - 1) * incomePagination.value.limit
+    const end = start + incomePagination.value.limit
+    reportsData.value.incomeList = allIncomeList.value.slice(start, end)
+    incomePagination.value.total = allIncomeList.value.length
   } catch (error) {
     console.error('获取收入列表失败:', error)
   }
@@ -520,7 +565,7 @@ const updateCharts = () => {
     },
     xAxis: {
       type: 'category',
-      data: reportsData.value.rechargeList.map(item => dayjs(item.appliedAt).format('MM-DD'))
+        data: allRechargeList.value.map(item => dayjs(item.appliedAt || item.createdAt).format('MM-DD'))
     },
     yAxis: {
       type: 'value',
@@ -532,7 +577,7 @@ const updateCharts = () => {
       {
         name: '充值金额',
         type: 'line',
-        data: reportsData.value.rechargeList.map(item => item.amount / 100),
+        data: allRechargeList.value.map(item => item.amount / 100),
         smooth: true,
         areaStyle: {
           color: {
@@ -567,7 +612,7 @@ const updateCharts = () => {
     },
     xAxis: {
       type: 'category',
-      data: reportsData.value.withdrawalList.map(item => dayjs(item.appliedAt).format('MM-DD'))
+      data: allIncomeList.value.map(item => dayjs(item.settledAt || item.createdAt).format('MM-DD'))
     },
     yAxis: {
       type: 'value',
@@ -579,7 +624,7 @@ const updateCharts = () => {
       {
         name: '平台收入',
         type: 'bar',
-        data: reportsData.value.withdrawalList.map(item => item.platformFee / 100),
+        data: allIncomeList.value.map(item => (item.feeAmount || 0) / 100),
         itemStyle: {
           color: '#67c23a'
         }
@@ -592,7 +637,7 @@ const updateCharts = () => {
 
 // 导出报表
 const handleExport = async () => {
-  if (!reportsData.value.rechargeList.length && !reportsData.value.withdrawalList.length) {
+  if (!allRechargeList.value.length && !allWithdrawalList.value.length) {
     ElMessage.warning('暂无数据可导出')
     return
   }
@@ -614,7 +659,7 @@ const handleExport = async () => {
     summarySheet.addRow(['平台净收入', `¥${reportsData.value.netIncome.toFixed(2)}`])
 
     // 充值记录Sheet
-    if (reportsData.value.rechargeList.length > 0) {
+    if (allRechargeList.value.length > 0) {
       const rechargeSheet = workbook.addWorksheet('充值记录')
       rechargeSheet.columns = [
         { header: '订单号', width: 20 },
@@ -626,21 +671,21 @@ const handleExport = async () => {
         { header: '审核时间', width: 20 }
       ]
 
-      reportsData.value.rechargeList.forEach(item => {
+      allRechargeList.value.forEach(item => {
         rechargeSheet.addRow([
-          item.orderNumber,
-          item.fleetId?.name || '-',
+          item.rechargeNo,
+          item.fleetName || item.fleetId?.name || '-',
           `¥${(item.amount / 100).toFixed(2)}`,
-          item.paymentMethod || '-',
+          item.paymentMethodName || item.paymentMethod || '-',
           item.status === 'approved' ? '已审核' : item.status === 'pending' ? '待审核' : item.status,
-          formatDate(item.createdAt),
-          item.approvedAt ? formatDate(item.approvedAt) : '-'
+          formatDate(item.appliedAt || item.createdAt),
+          item.reviewedAt ? formatDate(item.reviewedAt) : '-'
         ])
       })
     }
 
     // 提现记录Sheet
-    if (reportsData.value.withdrawalList.length > 0) {
+    if (allWithdrawalList.value.length > 0) {
       const withdrawalSheet = workbook.addWorksheet('提现记录')
       withdrawalSheet.columns = [
         { header: '订单号', width: 20 },
@@ -653,17 +698,17 @@ const handleExport = async () => {
         { header: '完成时间', width: 20 }
       ]
 
-      reportsData.value.withdrawalList.forEach(item => {
-        const actualAmount = item.withdrawalAmount - (item.platformFee || 0)
+      allWithdrawalList.value.forEach(item => {
+        const actualAmount = item.withdrawalAmount || 0
         withdrawalSheet.addRow([
-          item.orderNumber,
-          item.storeId?.name || '-',
+          item.withdrawalNo,
+          item.storeName || item.storeId?.name || '-',
           `¥${(item.withdrawalAmount / 100).toFixed(2)}`,
           `¥${((item.platformFee || 0) / 100).toFixed(2)}`,
           `¥${(actualAmount / 100).toFixed(2)}`,
           item.status === 'completed' ? '已完成' : item.status === 'pending' ? '待审核' : item.status,
-          formatDate(item.createdAt),
-          item.completedAt ? formatDate(item.completedAt) : '-'
+          formatDate(item.appliedAt || item.createdAt),
+          item.processedAt ? formatDate(item.processedAt) : '-'
         ])
       })
     }

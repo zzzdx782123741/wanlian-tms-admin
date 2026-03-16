@@ -28,24 +28,10 @@
             @change="fetchPackages"
           >
             <el-option
-              label="牵引车"
-              value="牵引车"
-            />
-            <el-option
-              label="载货车"
-              value="载货车"
-            />
-            <el-option
-              label="轻卡"
-              value="轻卡"
-            />
-            <el-option
-              label="自卸"
-              value="自卸"
-            />
-            <el-option
-              label="全部"
-              value="ALL"
+              v-for="option in packageVehicleGroupOptions"
+              :key="option.value"
+              :label="option.label"
+              :value="option.value"
             />
           </el-select>
         </el-col>
@@ -462,8 +448,14 @@ import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Search } from '@element-plus/icons-vue'
 import { getPackages } from '@/api/maintenance'
+import {
+  PACKAGE_VEHICLE_GROUP_OPTIONS,
+  getVehicleGroupLabel as formatVehicleGroupLabel,
+  getVehicleGroupTagType
+} from '@/utils/vehicleGroups'
 
 const router = useRouter()
+const packageVehicleGroupOptions = PACKAGE_VEHICLE_GROUP_OPTIONS
 const loading = ref(false)
 const packages = ref([])
 const total = ref(0)
@@ -533,26 +525,12 @@ const handleViewDetail = async (pkg) => {
 
 // 获取车型分组类型
 const getVehicleGroupType = (type) => {
-  const typeMap = {
-    '牵引车': 'primary',
-    '载货车': 'success',
-    '轻卡': 'warning',
-    '自卸': 'info',
-    'ALL': 'info'
-  }
-  return typeMap[type] || 'info'
+  return getVehicleGroupTagType(type)
 }
 
 // 获取车型分组标签
 const getVehicleGroupLabel = (type) => {
-  const labelMap = {
-    '牵引车': '牵引车',
-    '载货车': '载货车',
-    '轻卡': '轻卡',
-    '自卸': '自卸',
-    'ALL': '全部'
-  }
-  return labelMap[type] || type
+  return formatVehicleGroupLabel(type)
 }
 
 // 获取档位类型

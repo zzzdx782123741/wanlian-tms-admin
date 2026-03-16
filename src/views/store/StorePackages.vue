@@ -31,20 +31,10 @@
             @change="handleFilterChange"
           >
             <el-option
-              label="牵引车"
-              value="牵引车"
-            />
-            <el-option
-              label="载货车"
-              value="载货车"
-            />
-            <el-option
-              label="轻卡"
-              value="轻卡"
-            />
-            <el-option
-              label="自卸"
-              value="自卸"
+              v-for="option in packageVehicleGroupOptions"
+              :key="option.value"
+              :label="option.label"
+              :value="option.value"
             />
           </el-select>
           <el-select
@@ -126,7 +116,7 @@
                 size="small"
                 type="info"
               >
-                {{ row.vehicleGroup || '-' }}
+                {{ formatVehicleGroupLabel(row.vehicleGroup) || '-' }}
               </el-tag>
               <el-tag
                 size="small"
@@ -315,20 +305,10 @@
             style="width: 100%"
           >
             <el-option
-              label="牵引车"
-              value="牵引车"
-            />
-            <el-option
-              label="载货车"
-              value="载货车"
-            />
-            <el-option
-              label="轻卡"
-              value="轻卡"
-            />
-            <el-option
-              label="自卸"
-              value="自卸"
+              v-for="option in packageVehicleGroupOptions"
+              :key="option.value"
+              :label="option.label"
+              :value="option.value"
             />
           </el-select>
         </el-form-item>
@@ -714,7 +694,7 @@
           </el-descriptions-item>
           <el-descriptions-item label="套餐类型">
             <div v-if="currentPackage.standardId">
-              {{ currentPackage.vehicleGroup || '-' }} - {{ currentPackage.tier || '-' }}
+              {{ formatVehicleGroupLabel(currentPackage.vehicleGroup) || '-' }} - {{ currentPackage.tier || '-' }}
               <div style="font-size: 12px; color: #909399;">
                 {{ currentPackage.standardId.name }}
               </div>
@@ -941,6 +921,10 @@ import { Plus, Search, InfoFilled, Upload, Download, UploadFilled, Refresh } fro
 import request from '@/utils/request'
 import { batchImportStorePackages } from '@/api/batch'
 import {
+  PACKAGE_VEHICLE_GROUP_OPTIONS,
+  getVehicleGroupLabel as formatVehicleGroupLabel
+} from '@/utils/vehicleGroups'
+import {
   getMyStorePackages,
   createStorePackage,
   updateStorePackage,
@@ -954,6 +938,7 @@ import {
 const loading = ref(false)
 const submitting = ref(false)
 const packages = ref([])
+const packageVehicleGroupOptions = PACKAGE_VEHICLE_GROUP_OPTIONS
 const total = ref(0)
 const activeTab = ref('draft')
 

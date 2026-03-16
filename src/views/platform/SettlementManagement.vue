@@ -697,6 +697,17 @@ const historyPagination = ref({
   total: 0
 })
 
+const buildPaidStatsParams = (start, end) => ({
+  page: 1,
+  limit: 1,
+  status: 'completed',
+  summaryOnly: true,
+  dateField: 'processedAt',
+  sortField: 'processedAt',
+  startDate: start.toISOString(),
+  endDate: end.toISOString()
+})
+
 // 确认打款
 const confirmDialogVisible = ref(false)
 const confirmFormRef = ref()
@@ -782,12 +793,19 @@ const fetchHistoryList = async () => {
   try {
     const params = {
       page: historyPagination.value.page,
-      limit: historyPagination.value.limit
+      limit: historyPagination.value.limit,
+      sortField: 'processedAt',
+      dateField: 'processedAt'
     }
     if (historyStatusFilter.value) {
       params.status = historyStatusFilter.value
     }
-    const res = await getWithdrawalList(params)
+    const now = dayjs()
+    const [res, todayStatsRes, monthStatsRes] = await Promise.all([
+      getWithdrawalList(params),
+      getWithdrawalList(buildPaidStatsParams(now.startOf('day'), now.endOf('day'))),
+      getWithdrawalList(buildPaidStatsParams(now.startOf('month'), now.endOf('month')))
+    ])
     const list = res.data.list || []
 
     // 确保收款账户字段存在
@@ -797,6 +815,8 @@ const fetchHistoryList = async () => {
     }))
 
     historyPagination.value.total = res.data.total || 0
+    stats.value.todayPaid = Number(todayStatsRes.data.totalAmount || 0) / 100
+    stats.value.monthlyPaid = Number(monthStatsRes.data.totalAmount || 0) / 100
   } catch (error) {
     console.error('获取打款记录失败:', error)
     ElMessage.error('获取打款记录失败')

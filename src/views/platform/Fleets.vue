@@ -125,12 +125,12 @@
           min-width="180"
         />
         <el-table-column
-          label="规模"
+          label="司机数"
           width="100"
           align="center"
         >
           <template #default="{ row }">
-            {{ row.scale }} 辆
+            {{ row.driverCount || 0 }} 人
           </template>
         </el-table-column>
         <el-table-column
@@ -291,8 +291,8 @@
         >
           {{ currentFleet.name }}
         </el-descriptions-item>
-        <el-descriptions-item label="车队规模">
-          {{ currentFleet.scale }} 辆
+        <el-descriptions-item label="司机规模">
+          {{ currentFleet.driverCount || 0 }} 人
         </el-descriptions-item>
         <el-descriptions-item label="状态">
           <el-tag :type="getStatusType(currentFleet.status)">
@@ -558,7 +558,14 @@ const handleRegister = () => {
 const handleViewDetail = async (row) => {
   try {
     const res = await getFleetDetail(row._id)
-    currentFleet.value = res.data
+    currentFleet.value = {
+      ...(res.data.fleet || {}),
+      managers: res.data.managers || [],
+      vehicles: res.data.vehicles || [],
+      vehicleStats: res.data.vehicleStats || {},
+      account: res.data.account || { balance: 0, transactions: [] },
+      driverCount: res.data.driverCount || 0
+    }
     detailDialogVisible.value = true
   } catch (error) {
     console.error('获取详情失败:', error)

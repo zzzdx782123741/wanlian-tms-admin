@@ -85,34 +85,34 @@
             size="small"
             type="info"
           >
-            密码统一为: 123456
+            仅开发环境可用，测试账号由服务端控制
           </el-text>
         </div>
         <div class="account-buttons">
           <el-button
             size="small"
             type="danger"
-            @click="handleQuickTestLogin('admin', '123456')"
+            @click="handleQuickTestLogin('admin')"
           >
             平台运营
           </el-button>
           <el-button
             size="small"
             type="warning"
-            @click="handleQuickTestLogin('fleet001', '123456')"
+            @click="handleQuickTestLogin('fleet001')"
           >
             车队管理员
           </el-button>
           <el-button
             size="small"
             type="success"
-            @click="handleQuickTestLogin('store001', '123456')"
+            @click="handleQuickTestLogin('store001')"
           >
             门店管理员
           </el-button>
           <el-button
             size="small"
-            @click="handleQuickTestLogin('tech001', '123456')"
+            @click="handleQuickTestLogin('tech001')"
           >
             门店技师
           </el-button>
@@ -233,11 +233,11 @@ const submitLogin = async (loginApi, payload) => {
   }
 }
 
-const handleQuickTestLogin = async (username, password) => {
+const handleQuickTestLogin = async (username) => {
   if (!isTestLoginEnabled.value) return
   loginForm.value.username = username
-  loginForm.value.password = password
-  await submitLogin(testLogin, { username, password })
+  loginForm.value.password = ''
+  await submitLogin(testLogin, { username })
 }
 
 // 登录

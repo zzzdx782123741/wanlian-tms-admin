@@ -42,20 +42,10 @@
             @change="fetchPackages"
           >
             <el-option
-              label="牵引车"
-              value="牵引车"
-            />
-            <el-option
-              label="载货车"
-              value="载货车"
-            />
-            <el-option
-              label="轻卡"
-              value="轻卡"
-            />
-            <el-option
-              label="自卸"
-              value="自卸"
+              v-for="option in packageVehicleGroupOptions"
+              :key="option.value"
+              :label="option.label"
+              :value="option.value"
             />
           </el-select>
           <el-select
@@ -127,7 +117,7 @@
               size="small"
               type="info"
             >
-              {{ row.vehicleGroup }}
+              {{ formatVehicleGroupLabel(row.vehicleGroup) }}
             </el-tag>
             <el-tag
               size="small"
@@ -313,7 +303,7 @@
             {{ currentPackage.storeProvince }} {{ currentPackage.storeCity }}
           </el-descriptions-item>
           <el-descriptions-item label="车型分组">
-            {{ currentPackage.vehicleGroup }}
+            {{ formatVehicleGroupLabel(currentPackage.vehicleGroup) }}
           </el-descriptions-item>
           <el-descriptions-item label="套餐档位">
             {{ currentPackage.tier }}
@@ -484,6 +474,10 @@ import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Refresh } from '@element-plus/icons-vue'
 import {
+  PACKAGE_VEHICLE_GROUP_OPTIONS,
+  getVehicleGroupLabel as formatVehicleGroupLabel
+} from '@/utils/vehicleGroups'
+import {
   getPendingStorePackages,
   auditStorePackage,
   batchAuditPackages
@@ -491,6 +485,7 @@ import {
 
 // 数据
 const router = useRouter()
+const packageVehicleGroupOptions = PACKAGE_VEHICLE_GROUP_OPTIONS
 
 const loading = ref(false)
 const packages = ref([])

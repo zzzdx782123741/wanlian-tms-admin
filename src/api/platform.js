@@ -41,3 +41,11 @@ export function deletePlatformBankAccount(id) {
     method: 'delete'
   })
 }
+
+export function getPlatformIncomeRecords(params) {
+  return request({
+    url: '/platform/income-records',
+    method: 'get',
+    params
+  })
+}

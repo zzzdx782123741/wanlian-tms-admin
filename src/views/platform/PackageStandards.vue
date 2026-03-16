@@ -31,24 +31,10 @@
             @change="fetchStandards"
           >
             <el-option
-              label="牵引车"
-              value="牵引车"
-            />
-            <el-option
-              label="载货车"
-              value="载货车"
-            />
-            <el-option
-              label="轻卡"
-              value="轻卡"
-            />
-            <el-option
-              label="自卸"
-              value="自卸"
-            />
-            <el-option
-              label="全部"
-              value="ALL"
+              v-for="option in packageVehicleGroupOptions"
+              :key="option.value"
+              :label="option.label"
+              :value="option.value"
             />
           </el-select>
           <el-select
@@ -114,7 +100,7 @@
               :type="getVehicleGroupType(row.vehicleGroup)"
               size="small"
             >
-              {{ row.vehicleGroup }}
+              {{ getVehicleGroupLabel(row.vehicleGroup) }}
             </el-tag>
           </template>
         </el-table-column>
@@ -261,24 +247,10 @@
             @change="handleVehicleGroupChange"
           >
             <el-option
-              label="牵引车"
-              value="牵引车"
-            />
-            <el-option
-              label="载货车"
-              value="载货车"
-            />
-            <el-option
-              label="轻卡"
-              value="轻卡"
-            />
-            <el-option
-              label="自卸"
-              value="自卸"
-            />
-            <el-option
-              label="全部"
-              value="ALL"
+              v-for="option in packageVehicleGroupOptions"
+              :key="option.value"
+              :label="option.label"
+              :value="option.value"
             />
           </el-select>
           <div class="form-item-tip">
@@ -501,10 +473,13 @@
 
           <el-form-item label="选择车型分组">
             <el-checkbox-group v-model="batchForm.vehicleGroups">
-              <el-checkbox label="牵引车" />
-              <el-checkbox label="载货车" />
-              <el-checkbox label="轻卡" />
-              <el-checkbox label="自卸" />
+              <el-checkbox
+                v-for="option in packageVehicleGroupOptions"
+                :key="option.value"
+                :label="option.value"
+              >
+                {{ option.label }}
+              </el-checkbox>
             </el-checkbox-group>
           </el-form-item>
 
@@ -643,6 +618,11 @@ import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, InfoFilled } from '@element-plus/icons-vue'
 import {
+  PACKAGE_VEHICLE_GROUP_OPTIONS,
+  getVehicleGroupLabel,
+  getVehicleGroupTagType
+} from '@/utils/vehicleGroups'
+import {
   getPackageStandards,
   createPackageStandard,
   updatePackageStandard,
@@ -703,6 +683,7 @@ const cityMap = {
 const loading = ref(false)
 const submitting = ref(false)
 const standards = ref([])
+const packageVehicleGroupOptions = PACKAGE_VEHICLE_GROUP_OPTIONS
 const total = ref(0)
 
 const filters = reactive({
@@ -760,12 +741,14 @@ const batchForm = reactive({
 const previewBatchItems = computed(() => {
   const items = []
   for (const vg of batchForm.vehicleGroups) {
+    const vehicleGroupLabel = getVehicleGroupLabel(vg)
     for (const t of batchForm.tiers) {
       const name = batchForm.nameTemplate
-        .replace('{vehicleGroup}', vg)
+        .replace('{vehicleGroup}', vehicleGroupLabel)
         .replace('{tier}', t)
       items.push({
         vehicleGroup: vg,
+        vehicleGroupLabel,
         tier: t,
         name
       })
@@ -1060,14 +1043,7 @@ const getCategoryType = (category) => {
 }
 
 const getVehicleGroupType = (group) => {
-  const map = {
-    '牵引车': 'danger',
-    '载货车': 'warning',
-    '轻卡': 'success',
-    '自卸': 'info',
-    'ALL': ''
-  }
-  return map[group] || ''
+  return getVehicleGroupTagType(group)
 }
 
 const getTierType = (tier) => {

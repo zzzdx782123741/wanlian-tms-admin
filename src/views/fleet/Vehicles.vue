@@ -303,7 +303,6 @@ import {
   addVehicle,
   deleteVehicle,
   exportVehicles,
-  getFleetDrivers,
   getFleetVehicles,
   getVehicleStats,
   updateVehicle,
@@ -449,6 +448,42 @@ function normalizeImportErrors(errors = []) {
   }))
 }
 
+function buildImportMessage({ message, total, successCount, failedCount, fallbackMessage }) {
+  if (message) {
+    return message
+  }
+
+  if (total > 0 || successCount > 0 || failedCount > 0) {
+    return failedCount > 0
+      ? `共 ${total} 行，成功导入 ${successCount} 行，失败 ${failedCount} 行，请根据失败明细修正后重试`
+      : `成功导入 ${successCount} 行`
+  }
+
+  return fallbackMessage || '批量导入失败'
+}
+
+function buildImportResult(payload = {}, fallbackMessage = '') {
+  const summary = payload?.data || payload || {}
+  const errors = normalizeImportErrors(summary?.errors || payload?.errors || [])
+  const total = Number(summary?.total ?? payload?.total ?? 0)
+  const successCount = Number(summary?.success ?? summary?.successCount ?? payload?.success ?? payload?.successCount ?? 0)
+  const failedCount = Number(summary?.failed ?? summary?.failedCount ?? payload?.failed ?? payload?.failedCount ?? errors.length ?? 0)
+
+  return {
+    message: buildImportMessage({
+      message: payload?.message || summary?.message || '',
+      total,
+      successCount,
+      failedCount,
+      fallbackMessage
+    }),
+    total,
+    successCount,
+    failedCount,
+    errors
+  }
+}
+
 function downloadBlob(blob, filename) {
   const url = window.URL.createObjectURL(blob)
   const link = document.createElement('a')
@@ -522,8 +557,7 @@ function handleEdit(row) {
     brand: row.brand || '',
     model: row.model || '',
     driveType: row.driveType || '',
-    year: Number(row.year || new Date().getFullYear()),
-    currentDriverId: row.currentDriverId?._id || ''
+    year: Number(row.year || new Date().getFullYear())
   })
   formDialogVisible.value = true
 }
@@ -534,21 +568,16 @@ async function confirmSave() {
     normalizeVehicleForm()
     await vehicleFormRef.value?.validate()
 
-    const payload = {
-      ...vehicleForm,
-      currentDriverId: vehicleForm.currentDriverId || undefined
-    }
-
     if (isEdit.value) {
-      await updateVehicle(currentVehicleId.value, payload)
+      await updateVehicle(currentVehicleId.value, vehicleForm)
       ElMessage.success('车辆信息已更新')
     } else {
-      await addVehicle(payload)
+      await addVehicle(vehicleForm)
       ElMessage.success('车辆新增成功')
     }
 
     formDialogVisible.value = false
-    await Promise.all([loadVehicles(), loadStats(), loadDrivers()])
+    await Promise.all([loadVehicles(), loadStats()])
   } catch (error) {
     ElMessage.error(error.response?.data?.message || error.message || '保存车辆失败')
   } finally {
@@ -584,7 +613,7 @@ async function handleDelete(row) {
 
     await deleteVehicle(row._id)
     ElMessage.success('车辆已删除')
-    await Promise.all([loadVehicles(), loadStats(), loadDrivers()])
+    await Promise.all([loadVehicles(), loadStats()])
   } catch (error) {
     if (error !== 'cancel') {
       ElMessage.error(error.response?.data?.message || error.message || '删除车辆失败')
@@ -633,19 +662,23 @@ async function startImport() {
   try {
     const formData = new FormData()
     formData.append('file', uploadFile.value)
-    const response = await batchImportVehicles(formData)
+    const response = await batchImportVehicles(formData, { skipErrorMessage: true })
+    const normalizedImportResult = buildImportResult(response, '导入完成')
 
     importResult.value = {
       message: response?.message || '导入完成',
-      total: Number(response?.data?.total || 0),
-      successCount: Number(response?.data?.successCount || 0),
-      failedCount: Number(response?.data?.failedCount || 0),
-      errors: normalizeImportErrors(response?.data?.errors || [])
+      total: normalizedImportResult.total,
+      successCount: normalizedImportResult.successCount,
+      failedCount: normalizedImportResult.failedCount,
+      errors: normalizedImportResult.errors
     }
 
-    await Promise.all([loadVehicles(), loadStats(), loadDrivers()])
+    if (importResult.value.successCount > 0) {
+      await Promise.all([loadVehicles(), loadStats()])
+    }
   } catch (error) {
     ElMessage.error(error.response?.data?.message || error.message || '批量导入失败')
+    importResult.value = buildImportResult(error.response?.data || {}, error.message || '批量导入失败')
   } finally {
     importing.value = false
   }
@@ -686,7 +719,6 @@ async function handleExport(type = 'all') {
 onMounted(() => {
   loadVehicles()
   loadStats()
-  loadDrivers()
 })
 </script>
 
@@ -771,6 +803,27 @@ onMounted(() => {
   justify-content: center;
   gap: 24px;
   flex-wrap: wrap;
+}
+
+.fleet-vehicles-page :deep(.el-dialog__body .el-form > .el-form-item:last-of-type) {
+  display: none;
+}
+
+.fleet-vehicles-page :deep(.el-dialog__body .el-form::after) {
+  content: '司机绑定请在司机管理中维护';
+  display: block;
+  margin-top: 8px;
+  color: var(--el-color-info);
+  font-size: 13px;
+}
+
+.fleet-vehicles-page :deep(.el-dialog__body .el-form::after) {
+  content: '司机关联已改为在“司机管理”中统一维护，新增车辆时无需选择司机';
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: var(--el-color-info-light-9);
+  border: 1px solid var(--el-color-info-light-7);
+  line-height: 1.6;
 }
 
 @media (max-width: 768px) {
