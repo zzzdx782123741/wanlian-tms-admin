@@ -44,45 +44,6 @@
           </div>
         </el-form-item>
 
-        <el-divider content-position="left">
-          保养配置
-        </el-divider>
-
-        <el-form-item label="保养商品权限">
-          <el-radio-group
-            v-model="fleetConfig.maintenanceProductPermission"
-            @change="handleConfigChange"
-          >
-            <el-radio label="fleet_control">
-              车队管理选择
-            </el-radio>
-            <el-radio label="driver_select">
-              司机可选择商品
-            </el-radio>
-          </el-radio-group>
-          <div class="form-item-tip">
-            {{ fleetConfig.maintenanceProductPermission === 'driver_select'
-              ? '司机可选择保养包或商品组合，并显示价格'
-              : '司机仅选择保养包档位，具体套餐和价格由车队确认' }}
-          </div>
-        </el-form-item>
-
-        <el-form-item label="保养预算阈值">
-          <el-input-number
-            v-model="fleetConfig.maintenanceBudgetThreshold"
-            :min="0"
-            :step="100"
-            :precision="0"
-            controls-position="right"
-            style="width: 200px"
-            @change="handleConfigChange"
-          />
-          <span style="margin-left: 12px; color: #909399;">元</span>
-          <div class="form-item-tip">
-            超过此金额的保养申请需要额外审批
-          </div>
-        </el-form-item>
-
         <el-form-item label="当前配置状态">
           <el-space
             direction="vertical"
@@ -99,12 +60,6 @@
               size="large"
             >
               保养门店: {{ fleetConfig.storeSelectionConfig.maintenance ? '司机选择' : '车队管理选择' }}
-            </el-tag>
-            <el-tag
-              :type="fleetConfig.maintenanceProductPermission === 'driver_select' ? 'success' : 'warning'"
-              size="large"
-            >
-              保养商品: {{ fleetConfig.maintenanceProductPermission === 'driver_select' ? '司机可选商品' : '车队管理选择' }}
             </el-tag>
           </el-space>
         </el-form-item>
@@ -496,9 +451,7 @@ const fleetConfig = ref({
   storeSelectionConfig: {
     repair: false,
     maintenance: true
-  },
-  maintenanceProductPermission: 'fleet_control',
-  maintenanceBudgetThreshold: 5000
+  }
 })
 
 const approveDialogVisible = ref(false)
@@ -545,9 +498,7 @@ const fetchFleetConfig = async () => {
         storeSelectionConfig: {
           repair: fleet.storeSelectionConfig.repair ?? false,
           maintenance: fleet.storeSelectionConfig.maintenance ?? true
-        },
-        maintenanceProductPermission: fleet.maintenanceProductPermission || 'fleet_control',
-        maintenanceBudgetThreshold: fleet.maintenanceBudgetThreshold || 5000
+        }
       }
     } else {
       // 兼容旧配置
@@ -556,9 +507,7 @@ const fetchFleetConfig = async () => {
         storeSelectionConfig: {
           repair: allowDriverSelectStore,
           maintenance: allowDriverSelectStore
-        },
-        maintenanceProductPermission: fleet.maintenanceProductPermission || 'fleet_control',
-        maintenanceBudgetThreshold: fleet.maintenanceBudgetThreshold || 5000
+        }
       }
     }
   } catch (error) {
@@ -570,9 +519,7 @@ const fetchFleetConfig = async () => {
 const handleConfigChange = async () => {
   try {
     await updateFleetStoreConfig(userFleetId.value, {
-      storeSelectionConfig: fleetConfig.value.storeSelectionConfig,
-      maintenanceProductPermission: fleetConfig.value.maintenanceProductPermission,
-      maintenanceBudgetThreshold: fleetConfig.value.maintenanceBudgetThreshold
+      storeSelectionConfig: fleetConfig.value.storeSelectionConfig
     })
     ElMessage.success('配置更新成功')
   } catch (error) {

@@ -1050,8 +1050,7 @@ const quoteApproveForm = ref({
 })
 
 const fleetConfig = ref({
-  allowDriverSelectStore: false,
-  maintenanceProductPermission: 'fleet_control'
+  allowDriverSelectStore: false
 })
 
 // 获取用户车队ID

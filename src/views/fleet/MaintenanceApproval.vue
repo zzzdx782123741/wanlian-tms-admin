@@ -269,7 +269,6 @@
           style="margin-bottom: 20px"
         >
           <div>门店选择模式：{{ fleetConfig.allowDriverSelectStore ? '司机自选门店' : '车队分配门店' }}</div>
-          <div>商品选择权限：{{ fleetConfig.maintenanceProductPermission === 'driver_select' ? '司机可选' : '车队管理' }}</div>
         </el-alert>
 
         <!-- 司机已选择的门店信息 -->
@@ -512,9 +511,7 @@ const rejectForm = ref({
 })
 
 const fleetConfig = ref({
-  allowDriverSelectStore: false,
-  maintenanceProductPermission: 'fleet_control',
-  maintenanceBudgetThreshold: 5000
+  allowDriverSelectStore: false
 })
 
 const userFleetId = computed(() => {
